@@ -2,3 +2,5 @@
 - MNIST test + CNN
 - Basic Seq2seq test
 - Neural transducer test
+
+- Setup cuDNN
