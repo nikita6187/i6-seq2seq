@@ -4,9 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import helpers
 
-# TASK:      Memorize the provided number sequence and return it again
+# TASK:      Memorize the provided number sequence and return it again @TODO: make this harder (e.g. longer, reverse...)
 # TECHNICAL: Use Bidirectional LSTM in the encoder and during training feed generated outputs (greedily)
-#            as inputs to decoder
+#            as inputs to decoder, then use attention mechanism (@TODO: specify which one)
 
 # Constants
 PAD = 0
@@ -53,6 +53,8 @@ pad_step_embedded = tf.nn.embedding_lookup(embeddings, pad_time_slice)
 W = tf.Variable(tf.random_uniform([decoder_hidden_units, vocab_size], -1, 1), dtype=tf.float32)
 b = tf.Variable(tf.zeros([vocab_size]), dtype=tf.float32)
 
+# TODO: Add attention mechanism, add attention layer, make it work
+
 
 def loop_fn_initial():
     initial_elements_finished = (0 >= decoder_lengths)
@@ -88,6 +90,7 @@ def loop_fn(time, previous_output, previous_state, previous_loop_state):
 decoder_outputs_ta, decoder_final_state, _ = tf.nn.raw_rnn(decoder_cell, loop_fn)
 decoder_outputs = decoder_outputs_ta.stack()
 
+# TODO: Modify for attention layers here
 decoder_max_steps, decoder_batch_size, decoder_dims = tf.unstack(tf.shape(decoder_outputs))
 decoder_outputs_flat = tf.reshape(decoder_outputs, (-1, decoder_dims))
 decoder_logits_flat = tf.add(tf.matmul(decoder_outputs_flat, W), b)
