@@ -107,10 +107,10 @@ init = tf.global_variables_initializer()
 def next_batch(amount=100):
     random_lists_raw = helpers.generate_random_lists(amount=amount)
     e_in, e_in_length = helpers.batch(random_lists_raw)
-    d_targets, _ = helpers.batch([(sequence) + [EOS] + [PAD] * 2 for sequence in random_lists_raw])
+    d_targets, _ = helpers.batch([(sequence) + [EOS] + [PAD] + [PAD] for sequence in random_lists_raw])
     return {
         encoder_inputs: e_in,
-        encoder_inputs_length: [10]*amount, #e_in_length,
+        encoder_inputs_length: e_in_length,
         decoder_targets: d_targets,
     }
 
