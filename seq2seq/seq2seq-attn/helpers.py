@@ -37,3 +37,4 @@ def generate_random_lists(amount=10000, min_size=5, max_size=10, min_n=2, max_n=
             tlist.append(random.randrange(min_n, max_n))
         rlist.append(tlist)
     return rlist
+
