@@ -52,15 +52,14 @@ pad_time_slice = tf.zeros([batch_size], tf.int32, name='PAD')
 eos_step_embedded = tf.nn.embedding_lookup(embeddings, eos_time_slice)
 pad_step_embedded = tf.nn.embedding_lookup(embeddings, pad_time_slice)
 
-final_W = tf.Variable(tf.random_uniform([decoder_hidden_units+encoder_hidden_units, vocab_size], -1, 1), dtype=tf.float32)
-final_b = tf.Variable(tf.zeros([vocab_size]), dtype=tf.float32)
-
 # TODO: Add attention mechanism, add attention layer, make it work
 attention_W = tf.Variable(tf.random_uniform([2 * encoder_hidden_units+decoder_hidden_units, 1]), dtype=tf.float32)
 attention_b = tf.Variable(tf.random_uniform([1]), dtype=tf.float32)
 
 
+
 def tf_map_multiple(fn, arrays, dtype=tf.float32):
+    # applies map in sync over all tensors passed, returns a single tensor
     # assumes all arrays have same leading dim
     indices = tf.range(tf.shape(arrays[0])[0])
     out = tf.map_fn(lambda ii: fn(*[array[ii] for array in arrays]), indices, dtype=dtype)
@@ -69,27 +68,33 @@ def tf_map_multiple(fn, arrays, dtype=tf.float32):
 
 def get_new_state(current_state):
 
-    def get_attn_raw_scalars_over_encoder_hidden(current_state):
+    def get_attn_raw_scalars_over_encoder_hidden(sub_current_state):
 
         def get_attn_scalars_for_ith_state(i_hidden):
             # Makes a basic 1 layer MLP; current state is the state vectors as a batch, i_hidden is the ith output
             # of the encoder
-            totalinput = tf.concat([current_state, i_hidden], axis=1)
+            totalinput = tf.concat([sub_current_state, i_hidden], axis=1)
+            print 'Total input ' + str(totalinput.get_shape()) + ' attention W ' + str(attention_W.get_shape())
             totalinput = tf.Print(totalinput, [tf.shape(i_hidden), tf.shape(totalinput)], message="Ith state, hidden + total")
             return tf.add(tf.matmul(totalinput, attention_W), attention_b)
 
         # Makes matrix over raw weights for attention alignment
         combined_batch = tf.map_fn(get_attn_scalars_for_ith_state, encoder_outputs)
+        print 'Encoder outputs shape ' + str(encoder_outputs.get_shape())
+        #combined_batch = tf.reshape(combined_batch, shape=[encoder_inputs_length, -1])
         combined_batch = tf.Print(combined_batch, [tf.shape(combined_batch)], message="Combined batch")
+        print 'Combined multiplied batch ' + str(combined_batch.get_shape())
         return combined_batch
 
-    def get_attn_scalars_over_encoder_hidden(current_state):
+    def get_attn_scalars_over_encoder_hidden(current_state_i):
         # Applies softmax over the attention alignment, batchwise
-        return tf.nn.softmax(get_attn_raw_scalars_over_encoder_hidden(current_state), dim=1)
+        return tf.nn.softmax(get_attn_raw_scalars_over_encoder_hidden(current_state_i), dim=1)
 
     # WTF did i do here???
-    def get_attn_vectors_from_scalars(current_state):
-        weights = get_attn_scalars_over_encoder_hidden(current_state)
+    def get_attn_vectors_from_scalars(current_state_i):
+        weights = get_attn_scalars_over_encoder_hidden(current_state_i)
+        print 'Attention weights ' + str(weights.get_shape())
+        # NOTE: CURRENTLY WE GOT THE DIMS WRONG, AND NEED TO DO SOME PREPROCESSING BEFORE
         encoder_outputs_batch_first = tf.transpose(encoder_outputs, perm=[1, 0, 2])
         encoder_outputs_batch_first = tf.Print(encoder_outputs_batch_first, [tf.shape(encoder_outputs_batch_first)],
                                                message='Decoder batch first shape: ')
@@ -97,25 +102,32 @@ def get_new_state(current_state):
         def get_weighted_sum_vector(weights, state_vectors):
             # gets a 2d tensor of states and 1d tensor of weights
             def get_weighted_vector(weight, vector):
+                print 'Weight ' + str(weight.get_shape()) + ' current vector shape ' + str(vector.get_shape())
                 return tf.multiply(weight, vector)
             #TODO: apply sum and reduce dims
             final_vectors = tf_map_multiple(get_weighted_vector, [weights, state_vectors])
             final_vector = tf.reduce_sum(final_vectors, 1)
-            print final_vector.get_shape()
+            print 'Final vector shape ' +  str(final_vector.get_shape())
             final_vector = tf.Print(final_vector, [tf.shape(final_vector)], message="Final vector")
             return final_vector
 
         weighted_vectors = tf_map_multiple(get_weighted_sum_vector, [weights, encoder_outputs_batch_first])
-        print weighted_vectors.get_shape()
+        print 'Weighted vectors' + str(weighted_vectors.get_shape())
         weighted_vectors = tf.Print(weighted_vectors, [tf.shape(weighted_vectors)], message='Final weighted vector')
         return weighted_vectors
 
     current_state = tf.Print(current_state, [current_state], message='Current state: ')
+    print 'Initial current state ' + str(current_state.get_shape())
     attention_vectors = get_attn_vectors_from_scalars(current_state)
     new_state = tf.concat([current_state, attention_vectors], axis=1)
     new_state = tf.Print(new_state, [tf.shape(new_state)], message='New state: ')
+    print 'New state ' + str(new_state.get_shape())
+    print ' '
     return new_state
 
+
+final_W = tf.Variable(tf.random_uniform([decoder_hidden_units, vocab_size], -1, 1), dtype=tf.float32)
+final_b = tf.Variable(tf.zeros([vocab_size]), dtype=tf.float32)
 
 def loop_fn_initial():
     initial_elements_finished = (0 >= decoder_lengths)
@@ -137,7 +149,8 @@ def loop_fn_transition(time, previous_output, previous_state, previous_loop_stat
     finished = tf.reduce_all(elements_finished)  # true if all are finished else false
     next_input = tf.cond(finished, lambda: pad_step_embedded, get_next_input)  # if finished PAD else provide next input
     state = previous_state
-    output = get_new_state(previous_state)  # attention concatenated to the end
+    output = get_new_state(previous_state.c)  # attention concatenated to the end
+    print 'Output shape ' + str(output.get_shape())
     loop_state = None
     return elements_finished, next_input, state, output, loop_state
 
