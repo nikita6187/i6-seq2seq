@@ -80,8 +80,10 @@ def get_new_state(current_state):
 
         # Makes matrix over raw weights for attention alignment
         combined_batch = tf.map_fn(get_attn_scalars_for_ith_state, encoder_outputs)
+
         print 'Encoder outputs shape ' + str(encoder_outputs.get_shape())
-        #combined_batch = tf.reshape(combined_batch, shape=[encoder_inputs_length, -1])
+        combined_batch = tf.transpose(combined_batch, perm=[1, 0, 2])
+        combined_batch = tf.reshape(combined_batch, shape=[-1, encoder_max_time])
         combined_batch = tf.Print(combined_batch, [tf.shape(combined_batch)], message="Combined batch")
         print 'Combined multiplied batch ' + str(combined_batch.get_shape())
         return combined_batch
@@ -97,17 +99,18 @@ def get_new_state(current_state):
         # NOTE: CURRENTLY WE GOT THE DIMS WRONG, AND NEED TO DO SOME PREPROCESSING BEFORE
         encoder_outputs_batch_first = tf.transpose(encoder_outputs, perm=[1, 0, 2])
         encoder_outputs_batch_first = tf.Print(encoder_outputs_batch_first, [tf.shape(encoder_outputs_batch_first)],
-                                               message='Decoder batch first shape: ')
+                                               message='Encoder batch first shape: ')
+        print 'Encoder output batch first shape ' + str(encoder_outputs_batch_first.get_shape())
 
         def get_weighted_sum_vector(weights, state_vectors):
             # gets a 2d tensor of states and 1d tensor of weights
             def get_weighted_vector(weight, vector):
                 print 'Weight ' + str(weight.get_shape()) + ' current vector shape ' + str(vector.get_shape())
                 return tf.multiply(weight, vector)
-            #TODO: apply sum and reduce dims
+
             final_vectors = tf_map_multiple(get_weighted_vector, [weights, state_vectors])
             final_vector = tf.reduce_sum(final_vectors, 1)
-            print 'Final vector shape ' +  str(final_vector.get_shape())
+            print 'Final vector shape ' + str(final_vector.get_shape())
             final_vector = tf.Print(final_vector, [tf.shape(final_vector)], message="Final vector")
             return final_vector
 
@@ -126,19 +129,24 @@ def get_new_state(current_state):
     return new_state
 
 
+# + 10 for attention vector concatenated at the end
 final_W = tf.Variable(tf.random_uniform([decoder_hidden_units, vocab_size], -1, 1), dtype=tf.float32)
 final_b = tf.Variable(tf.zeros([vocab_size]), dtype=tf.float32)
+
 
 def loop_fn_initial():
     initial_elements_finished = (0 >= decoder_lengths)
     initial_input = eos_step_embedded
     initial_cell_state = encoder_final_state
-    initial_cell_output = get_new_state(encoder_final_state.c)
+    initial_cell_output = None#get_new_state(encoder_final_state.c)
     initial_loop_state = None
     return initial_elements_finished, initial_input, initial_cell_state, initial_cell_output, initial_loop_state
 
 
 def loop_fn_transition(time, previous_output, previous_state, previous_loop_state):
+
+    #TODO: look into why previous output is only [batch_size, 40] and not [batch_size, 50]
+    #TODO: also look at what type of output is mean, maybe move attention upwards
     def get_next_input():
         output_logits = tf.add(tf.matmul(previous_output, final_W), final_b)
         prediction = tf.argmax(output_logits, axis=1)
@@ -147,10 +155,11 @@ def loop_fn_transition(time, previous_output, previous_state, previous_loop_stat
 
     elements_finished = (time >= decoder_lengths)  # produces tensor shape [batch_size]; says which elements are fin
     finished = tf.reduce_all(elements_finished)  # true if all are finished else false
+    finished = tf.Print(finished, [finished], message='Finished vector')
     next_input = tf.cond(finished, lambda: pad_step_embedded, get_next_input)  # if finished PAD else provide next input
     state = previous_state
     output = get_new_state(previous_state.c)  # attention concatenated to the end
-    print 'Output shape ' + str(output.get_shape())
+    output = tf.Print(output, [tf.shape(output)], message='Output shape ')
     loop_state = None
     return elements_finished, next_input, state, output, loop_state
 
