@@ -1,10 +1,10 @@
 import tensorflow as tf
 
-a = tf.constant([[[5.0], [6.0]], [[7.0], [8.0]]])
-a = tf.Print(a, [a.get_shape()], message='Shape of a')
+a = tf.constant(0.1)
+b = tf.constant([[3.0, 4.0], [5.0, 6.0]])
+c = tf.multiply(a, b)
 
-b = tf.reshape(a, [a.get_shape().as_list()[0], a.get_shape().as_list()[1]])
-b = tf.Print(b, [b.get_shape()], message='Shape of b')
+c = tf.Print(c, [c, a.get_shape()])
 
 sess = tf.Session()
-sess.run(b)
+sess.run(c)
