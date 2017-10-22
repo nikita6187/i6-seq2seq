@@ -39,8 +39,6 @@ encoder_final_state_c = tf.concat((encoder_fw_final_state.c, encoder_bw_final_st
 encoder_final_state_h = tf.concat((encoder_fw_final_state.h, encoder_bw_final_state.h), 1)
 encoder_final_state = LSTMStateTuple(c=encoder_final_state_c, h=encoder_final_state_h)
 
-#encoder_outputs = tf.Print(encoder_outputs, [tf.shape(encoder_outputs)], message="Encoder outputs: ")
-
 # Decoder
 decoder_cell = LSTMCell(decoder_hidden_units)
 encoder_max_time, batch_size = tf.unstack(tf.shape(encoder_inputs))
@@ -53,11 +51,9 @@ eos_step_embedded = tf.nn.embedding_lookup(embeddings, eos_time_slice)
 pad_step_embedded = tf.concat([tf.nn.embedding_lookup(embeddings, pad_time_slice), tf.zeros([batch_size, encoder_hidden_units * 2])],
                               axis=1)  # to account for attention
 
-# TODO: Add attention mechanism, add attention layer, make it work
+# Attention
 attention_W = tf.Variable(tf.random_uniform([2 * encoder_hidden_units+decoder_hidden_units, 1]), dtype=tf.float32)
 attention_b = tf.Variable(tf.random_uniform([1]), dtype=tf.float32)
-
-print 'Decoder output size ' + str(decoder_cell.output_size)
 
 
 def tf_map_multiple(fn, arrays, dtype=tf.float32):
@@ -71,63 +67,37 @@ def tf_map_multiple(fn, arrays, dtype=tf.float32):
 def get_attention_from_current_state(current_state):
     #returns attention vectors of shape [batch_size, encoder_hidden_size]
 
-    def get_attn_raw_scalars_over_encoder_hidden(sub_current_state):
-
+    def get_attn_scalars_over_encoder_hidden(sub_current_state):
         def get_attn_scalars_for_ith_state(i_hidden):
             # Makes a basic 1 layer MLP; current state is the state vectors as a batch, i_hidden is the ith output
             # of the encoder
             totalinput = tf.concat([sub_current_state, i_hidden], axis=1)
-            print 'Total input ' + str(totalinput.get_shape()) + ' attention W ' + str(attention_W.get_shape())
-            #totalinput = tf.Print(totalinput, [tf.shape(i_hidden), tf.shape(totalinput)], message="Ith state, hidden + total")
-            return tf.add(tf.matmul(totalinput, attention_W), attention_b)
+            o = tf.add(tf.matmul(totalinput, attention_W), attention_b)
+            return o
 
         # Makes matrix over raw weights for attention alignment
         combined_batch = tf.map_fn(get_attn_scalars_for_ith_state, encoder_outputs)
-
-        print 'Encoder outputs shape ' + str(encoder_outputs.get_shape())
-        combined_batch = tf.transpose(combined_batch, perm=[1, 0, 2])
+        # Reshape to be batch first
         combined_batch = tf.reshape(combined_batch, shape=[-1, encoder_max_time])
-        #combined_batch = tf.Print(combined_batch, [tf.shape(combined_batch)], message="Combined batch")
-        print 'Combined multiplied batch ' + str(combined_batch.get_shape())
-        return combined_batch
+        return tf.nn.softmax(combined_batch, dim=1)
 
-    def get_attn_scalars_over_encoder_hidden(current_state_i):
-        # Applies softmax over the attention alignment, batchwise
-        return tf.nn.softmax(get_attn_raw_scalars_over_encoder_hidden(current_state_i), dim=1)
+    weights = get_attn_scalars_over_encoder_hidden(current_state)
+    #weights = tf.Print(weights, [weights], message='Attention weights ', summarize=10)
+    encoder_outputs_batch_first = tf.transpose(encoder_outputs, perm=[1, 0, 2])
 
-    # WTF did i do here???
-    def get_attn_vectors_from_scalars(current_state_i):
-        weights = get_attn_scalars_over_encoder_hidden(current_state_i)
-        #weights = tf.Print(weights, [weights], message='Attention weights ')
-        encoder_outputs_batch_first = tf.transpose(encoder_outputs, perm=[1, 0, 2])
-        # encoder_outputs_batch_first = tf.Print(encoder_outputs_batch_first, [tf.shape(encoder_outputs_batch_first)],
-        #                                       message='Encoder batch first shape: ')
-        print 'Encoder output batch first shape ' + str(encoder_outputs_batch_first.get_shape())
+    def get_weighted_sum_vector(weights, state_vectors):
+        # gets a 2d tensor of states and 1d tensor of weights
+        def get_weighted_vector(weight, vector):
+            return tf.multiply(weight, vector)
 
-        def get_weighted_sum_vector(weights, state_vectors):
-            # gets a 2d tensor of states and 1d tensor of weights
-            def get_weighted_vector(weight, vector):
-                #weight = tf.Print(weight, [weight, tf.shape(vector)], message='Weight and vector shape ')
-                return tf.multiply(weight, vector)
+        final_vectors = tf_map_multiple(get_weighted_vector, [weights, state_vectors])
+        final_vector = tf.reduce_sum(final_vectors, 0)
+        return final_vector
 
-            final_vectors = tf_map_multiple(get_weighted_vector, [weights, state_vectors])
-            #final_vectors = tf.Print(final_vectors, [tf.shape(final_vectors)], message='Vectors before red ')
-            final_vector = tf.reduce_sum(final_vectors, 0)
-            #final_vector = tf.Print(final_vector, [tf.shape(final_vector)], message="Final vector")
-            return final_vector
-
-        weighted_vectors = tf_map_multiple(get_weighted_sum_vector, [weights, encoder_outputs_batch_first])
-        #weighted_vectors = tf.Print(weighted_vectors, [tf.shape(weighted_vectors)], message='Final weighted vector')
-        return weighted_vectors
-
-    #current_state = tf.Print(current_state, [current_state], message='Current state: ')
-    print 'Initial current state ' + str(current_state.get_shape())
-    attention_vectors = get_attn_vectors_from_scalars(current_state)
-    #attention_vectors = tf.Print(attention_vectors, [tf.shape(attention_vectors)], message='Attention vectors')
-    return attention_vectors
+    weighted_vectors = tf_map_multiple(get_weighted_sum_vector, [weights, encoder_outputs_batch_first])
+    return weighted_vectors
 
 
-# + 10 for attention vector concatenated at the end
 final_W = tf.Variable(tf.random_uniform([decoder_hidden_units, vocab_size], -1, 1), dtype=tf.float32)
 final_b = tf.Variable(tf.zeros([vocab_size]), dtype=tf.float32)
 
@@ -144,24 +114,18 @@ def loop_fn_initial():
 
 def loop_fn_transition(time, previous_output, previous_state, previous_loop_state):
 
-    attention = get_attention_from_current_state(previous_state.c)
-    output_and_attention = tf.concat([previous_state.h, attention], axis=1)
+    attention = get_attention_from_current_state(previous_output)
+    #output_and_attention = tf.concat([previous_state.h, attention], axis=1)
 
-    # TODO: look into where something goes [batch_size, 40] and not [batch_size, 50], error happens when we
-    # TODO: reach the last output, someplace inside raw_rnn in a where condition
-    # TODO: PROBLEM: output size has to be the same as that of the cell
     def get_next_input():
         output_logits = tf.add(tf.matmul(previous_output, final_W), final_b)
         prediction = tf.argmax(output_logits, axis=1)
-        #prediction = tf.Print(prediction, [prediction], message='Prediction test ')
         next_input_e = tf.nn.embedding_lookup(embeddings, prediction)
         next_input = tf.concat([next_input_e, attention], axis=1)  # add attention to next input
-        #next_input = tf.Print(next_input, [tf.shape(next_input)], message='Next input shape ')
         return next_input
 
     elements_finished = (time >= decoder_lengths)  # produces tensor shape [batch_size]; says which elements are fin
     finished = tf.reduce_all(elements_finished)  # true if all are finished else false
-    #finished = tf.Print(finished, [finished], message='Finished vector')
     next_input = tf.cond(finished, lambda: pad_step_embedded, get_next_input)  # if finished PAD else provide next input
     state = previous_state
     output = previous_output
@@ -195,7 +159,7 @@ train_op = tf.train.AdamOptimizer().minimize(loss)
 init = tf.global_variables_initializer()
 
 
-def next_batch(amount=100):
+def next_batch(amount=64):
     random_lists_raw = helpers.generate_random_lists(amount=amount)
     e_in, e_in_length = helpers.batch(random_lists_raw)
     d_targets, _ = helpers.batch([(sequence) + [EOS] + [PAD] + [PAD] for sequence in random_lists_raw])
@@ -214,7 +178,6 @@ with tf.Session() as sess:
         feed = next_batch()
         _, l = sess.run([train_op, loss], feed)
         losses.append(l)
-        sess.run([encoder_outputs], feed)
 
         if batch % 10 == 0:
             print('Batch: {0} Loss:{1:2f}'.format(batch, losses[-1]))

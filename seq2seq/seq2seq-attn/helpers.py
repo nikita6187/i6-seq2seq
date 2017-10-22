@@ -8,8 +8,9 @@ def batch(x, max_sequence_length=10):
 	:param x:
 	:return:
 	"""
-    sequence_lengths = [len(i)+1 for i in x]
     max_length = max_sequence_length
+    #sequence_lengths = [len(i)+1 for i in x]
+    sequence_lengths = [max_length for i in x]
     for i in x:
         while len(i) < max_length:
             i.append(0)
