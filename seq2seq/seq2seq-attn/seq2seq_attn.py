@@ -15,6 +15,7 @@ vocab_size = 10
 input_embedding_size = 20
 encoder_hidden_units = 20
 decoder_hidden_units = encoder_hidden_units * 2  # due to encoder being BiLSTM and decoder being LSTM
+attention_hidden_layer_size = 64
 
 # ---- Build model ----
 encoder_inputs = tf.placeholder(shape=(None, None), dtype=tf.int32, name='encode_inputs')
@@ -52,9 +53,11 @@ pad_step_embedded = tf.concat([tf.nn.embedding_lookup(embeddings, pad_time_slice
                               axis=1)  # to account for attention
 
 # Attention
-attention_W = tf.Variable(tf.random_uniform([2 * encoder_hidden_units+decoder_hidden_units, 1]), dtype=tf.float32)
-attention_b = tf.Variable(tf.random_uniform([1]), dtype=tf.float32)
-
+#TEST: add a layer in between with size 64
+attention_W_1 = tf.Variable(tf.random_uniform([2 * encoder_hidden_units+decoder_hidden_units, attention_hidden_layer_size]), dtype=tf.float32)
+attention_b_1 = tf.Variable(tf.random_uniform([attention_hidden_layer_size]), dtype=tf.float32)
+attention_W_2 = tf.Variable(tf.random_uniform([attention_hidden_layer_size, 1], maxval=2), dtype=tf.float32)
+attention_b_2 = tf.Variable(tf.random_uniform([1]), dtype=tf.float32)
 
 def tf_map_multiple(fn, arrays, dtype=tf.float32):
     # applies map in sync over all tensors passed, returns a single tensor
@@ -72,8 +75,9 @@ def get_attention_from_current_state(current_state):
             # Makes a basic 1 layer MLP; current state is the state vectors as a batch, i_hidden is the ith output
             # of the encoder
             totalinput = tf.concat([sub_current_state, i_hidden], axis=1)
-            o = tf.add(tf.matmul(totalinput, attention_W), attention_b)
-            return o
+            o1 = tf.nn.relu(tf.add(tf.matmul(totalinput, attention_W_1), attention_b_1))
+            o2 = tf.add(tf.matmul(o1, attention_W_2), attention_b_2)
+            return o2
 
         # Makes matrix over raw weights for attention alignment
         combined_batch = tf.map_fn(get_attn_scalars_for_ith_state, encoder_outputs)
@@ -82,7 +86,7 @@ def get_attention_from_current_state(current_state):
         return tf.nn.softmax(combined_batch, dim=1)
 
     weights = get_attn_scalars_over_encoder_hidden(current_state)
-    #weights = tf.Print(weights, [weights], message='Attention weights ', summarize=10)
+    weights = tf.Print(weights, [weights], message='Attention weights ', summarize=10)
     encoder_outputs_batch_first = tf.transpose(encoder_outputs, perm=[1, 0, 2])
 
     def get_weighted_sum_vector(weights, state_vectors):
