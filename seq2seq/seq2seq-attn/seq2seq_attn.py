@@ -53,7 +53,8 @@ pad_step_embedded = tf.concat([tf.nn.embedding_lookup(embeddings, pad_time_slice
                               axis=1)  # to account for attention
 
 # Attention
-#TEST: add a layer in between with size 64
+# TEST: add a layer in between with size 64
+# TODO: Test with using inputs to sneak a look at
 attention_W_1 = tf.Variable(tf.random_uniform([2 * encoder_hidden_units+decoder_hidden_units, attention_hidden_layer_size]), dtype=tf.float32)
 attention_b_1 = tf.Variable(tf.random_uniform([attention_hidden_layer_size]), dtype=tf.float32)
 attention_W_2 = tf.Variable(tf.random_uniform([attention_hidden_layer_size, 1], maxval=2), dtype=tf.float32)
@@ -118,7 +119,7 @@ def loop_fn_initial():
 
 def loop_fn_transition(time, previous_output, previous_state, previous_loop_state):
 
-    attention = get_attention_from_current_state(previous_output)
+    attention = get_attention_from_current_state(previous_state.c)
     #output_and_attention = tf.concat([previous_state.h, attention], axis=1)
 
     def get_next_input():
@@ -163,7 +164,7 @@ train_op = tf.train.AdamOptimizer().minimize(loss)
 init = tf.global_variables_initializer()
 
 
-def next_batch(amount=64):
+def next_batch(amount=100):
     random_lists_raw = helpers.generate_random_lists(amount=amount)
     e_in, e_in_length = helpers.batch(random_lists_raw)
     d_targets, _ = helpers.batch([(sequence) + [EOS] + [PAD] + [PAD] for sequence in random_lists_raw])
@@ -183,7 +184,7 @@ with tf.Session() as sess:
         _, l = sess.run([train_op, loss], feed)
         losses.append(l)
 
-        if batch % 10 == 0:
+        if batch % 1 == 0:
             print('Batch: {0} Loss:{1:2f}'.format(batch, losses[-1]))
             predict = sess.run(decoder_prediction, feed)
             for i, (inp, pred) in enumerate(zip(feed[encoder_inputs].T, predict.T)):
