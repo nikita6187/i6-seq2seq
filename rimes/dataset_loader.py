@@ -58,6 +58,7 @@ def get_max_seq_length(arr):
         val = len(arr[i])
         if val > max_length:
             max_length = val
+    #print 'Max length:' + str(max_length)
     return max_length
 
 
@@ -66,9 +67,25 @@ class BatchManager:
         self.inputs = inputs
         self.targets = targets
         self._current_pos = 0
-        self.inputs, self.targets = shuffle_in_unison(self.inputs, self.targets)
+        self.lookup = []
+        self.new_epoch()
+        self.init_integer_encoding()
+
+    def init_integer_encoding(self):
+        # Go over all outputs and create lookup dictionary
+        for target in range(len(self.targets)):
+            for letter in range(len(self.targets[target])):
+                if self.targets[target][letter].lower() not in self.lookup:
+                    self.lookup.append(self.targets[target][letter].lower())
+
+    def lookup_letter(self, letter):
+        return self.lookup.index(letter.lower())
+
+    def get_size_vocab(self):
+        return len(self.lookup)
 
     def new_epoch(self):
+        self._current_pos = 0
         self.inputs, self.targets = shuffle_in_unison(self.inputs, self.targets)
 
     def next_batch(self, batch_size, pad=True):
@@ -80,8 +97,8 @@ class BatchManager:
         :param pad:
         :return:
         """
-        inputs_batch = self.inputs[self._current_pos:self._current_pos + batch_size]
-        targets_batch = self.targets[self._current_pos:self._current_pos + batch_size]
+        inputs_batch = np.copy(self.inputs[self._current_pos:self._current_pos + batch_size])
+        targets_batch = np.copy(self.targets[self._current_pos:self._current_pos + batch_size])
 
         # Pad if needed
         if pad is True:
@@ -94,8 +111,9 @@ class BatchManager:
                         inputs_batch[i] = np.append(inputs_batch[i], [zero_i], axis=0)
 
             # Then do targets
+            # @TODO convert to integers
             max_length_t = get_max_seq_length(targets_batch)
-            zero_t = np.zeros_like(targets_batch[0][0])
+            zero_t = np.zeros_like(targets_batch[0][0], dtype=np.int32)
             for i in range(0, len(targets_batch)):
                 for j in range(0, max_length_t):
                     if j >= len(targets_batch[i]):
@@ -106,13 +124,27 @@ class BatchManager:
             targets_batch = np.asarray(targets_batch.tolist())
 
         self._current_pos += batch_size
-        return inputs_batch, targets_batch
+
+        targets_batch_final = np.zeros_like(targets_batch)
+
+        # Convert targets to integers
+        for item in range(len(targets_batch)):
+            for letter in range(len(targets_batch[item])):
+                targets_batch_final[item][letter] = self.lookup_letter(targets_batch[item][letter])
+
+        # Auto run new epoch if needed
+        if self._current_pos >= len(self.inputs) - batch_size:
+            self.new_epoch()
+
+        return inputs_batch, targets_batch_final
+
 
 """
-Example usage
+# Example usage
 i, t = load_from_file('train.0010')
 bm = BatchManager(i, t)
-ib, tb = bm.next_batch(5)
-
+for i in range(10000):
+    ib, tb = bm.next_batch(5)
+    print tb.shape[1]
 """
 
