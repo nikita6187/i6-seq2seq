@@ -64,12 +64,14 @@ def get_max_seq_length(arr):
 
 class BatchManager:
     def __init__(self, inputs, targets):
+        np.random.seed(1)
         self.inputs = inputs
         self.targets = targets
         self._current_pos = 0
         self.lookup = []
-        self.new_epoch()
         self.init_integer_encoding()
+        self.new_epoch()
+
 
     def init_integer_encoding(self):
         # Go over all outputs and create lookup dictionary
@@ -106,6 +108,8 @@ class BatchManager:
         inputs_batch = np.copy(self.inputs[self._current_pos:self._current_pos + batch_size])
         targets_batch = np.copy(self.targets[self._current_pos:self._current_pos + batch_size])
 
+        # @TODO: bucketing of sequences
+
         # Pad if needed
         if pad is True:
             # First do input padding
@@ -118,7 +122,8 @@ class BatchManager:
 
             # Then do targets
             max_length_t = get_max_seq_length(targets_batch) + pad_outout_extra
-            zero_t = np.zeros_like(targets_batch[0][0], dtype=np.int32)
+            #zero_t = np.zeros_like(targets_batch[0][0], dtype=np.int32)
+            zero_t = np.full_like(targets_batch[0][0], -1, dtype=np.int32)
             for i in range(0, len(targets_batch)):
                 for j in range(0, max_length_t):
                     if j >= len(targets_batch[i]):
@@ -130,7 +135,7 @@ class BatchManager:
 
         self._current_pos += batch_size
 
-        targets_batch_final = np.zeros_like(targets_batch)
+        targets_batch_final = np.zeros_like(targets_batch, dtype=np.int32)
 
         # Convert targets to integers
         for item in range(len(targets_batch)):
@@ -144,12 +149,15 @@ class BatchManager:
         return inputs_batch, targets_batch_final
 
 
-"""
+
 # Example usage
+"""
 i, t = load_from_file('train.0010')
 bm = BatchManager(i, t)
-for i in range(10000):
+bm.lookup.append('-1')
+print bm.lookup
+for i in range(5):
     ib, tb = bm.next_batch(5)
-    print tb.shape[1]
+    print tb
 """
 

@@ -20,7 +20,7 @@ bm.lookup.append(EOS)
 print bm.lookup
 
 #Constants
-tf.set_random_seed(1)
+tf.set_random_seed(10)
 vocab_size = bm.get_size_vocab()
 input_embedding_size = 50
 encoder_hidden_units = 256
@@ -199,7 +199,7 @@ with tf.Session() as sess:
 
         if batch % 1 == 0:
             print('Batch: {0} Loss:{1:2f}'.format(batch, losses[-1]))
-            for i, (inp, pred, target) in enumerate(zip(feed[encoder_inputs].T, predict.T, feed[decoder_targets])):
+            for i, (inp, pred, target) in enumerate(zip(feed[encoder_inputs].T, predict.T, feed[decoder_targets].T)):
                 print(' Sample {0}'.format(i + 1))
                 # print('  Input     > {0}'.format(inp))
                 print('  Predicted > {0}'.format(pred))
