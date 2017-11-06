@@ -88,7 +88,13 @@ class BatchManager:
         self._current_pos = 0
         self.inputs, self.targets = shuffle_in_unison(self.inputs, self.targets)
 
-    def next_batch(self, batch_size, pad=True):
+    def get_letter_from_index(self, index):
+        if 0 <= index < len(self.lookup):
+            return self.lookup[index]
+        else:
+            return ''
+
+    def next_batch(self, batch_size, pad=True, pad_outout_extra=3):
         """
         Returns the next batch of inputs and outputs. Padding with 0 of correct dims in both input and output
         so that batch size is the same.
@@ -111,8 +117,7 @@ class BatchManager:
                         inputs_batch[i] = np.append(inputs_batch[i], [zero_i], axis=0)
 
             # Then do targets
-            # @TODO convert to integers
-            max_length_t = get_max_seq_length(targets_batch)
+            max_length_t = get_max_seq_length(targets_batch) + pad_outout_extra
             zero_t = np.zeros_like(targets_batch[0][0], dtype=np.int32)
             for i in range(0, len(targets_batch)):
                 for j in range(0, max_length_t):

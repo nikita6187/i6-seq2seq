@@ -13,11 +13,15 @@ import dataset_loader
 # Load batch manager
 i, t = dataset_loader.load_from_file('train.0010')
 bm = dataset_loader.BatchManager(i, t)
+PAD = '-1'
+EOS = '-2'
+bm.lookup.append(PAD)
+bm.lookup.append(EOS)
+print bm.lookup
 
-# Constants
-PAD = '0'
-EOS = '1'
-vocab_size = bm.get_size_vocab() + 2  # Vocab size + Pad + EOS
+#Constants
+tf.set_random_seed(1)
+vocab_size = bm.get_size_vocab()
 input_embedding_size = 50
 encoder_hidden_units = 256
 decoder_hidden_units = encoder_hidden_units * 2  # due to encoder being BiLSTM and decoder being LSTM
@@ -169,9 +173,10 @@ loss = tf.reduce_mean(stepwise_cross_entropy)
 train_op = tf.train.AdamOptimizer().minimize(loss)
 
 init = tf.global_variables_initializer()
+saver = tf.train.Saver()
 
 
-def next_batch(batch_manager, amount=16):
+def next_batch(batch_manager, amount=32):
     e_in, d_targets = batch_manager.next_batch(batch_size=amount)
     e_in_length = np.full(amount, e_in.shape[1])
     d_targets_length = np.full(amount, d_targets.shape[1])
@@ -187,17 +192,24 @@ with tf.Session() as sess:
     sess.run(init)
     losses = []
 
-    for batch in range(3000):
+    for batch in range(20000):
         feed = next_batch(batch_manager=bm)
         _, l, predict = sess.run([train_op, loss, decoder_prediction], feed)
         losses.append(l)
 
         if batch % 1 == 0:
             print('Batch: {0} Loss:{1:2f}'.format(batch, losses[-1]))
-            for i, (inp, pred) in enumerate(zip(feed[encoder_inputs].T, predict.T)):
+            for i, (inp, pred, target) in enumerate(zip(feed[encoder_inputs].T, predict.T, feed[decoder_targets])):
                 print(' Sample {0}'.format(i + 1))
-                #print('  Input     > {0}'.format(inp))
+                # print('  Input     > {0}'.format(inp))
                 print('  Predicted > {0}'.format(pred))
+                print('  Predicted > {0}'.format([bm.get_letter_from_index(x) for x in pred]))
+                print('  Target > {0}'.format(target))
+                print('  Target > {0}'.format([bm.get_letter_from_index(x) for x in target]))
                 if i > 2:
                     break
             print
+
+        # Auto saver
+        if batch % 200 == 0:
+            saver.save(sess, 'model_save/seq2seq_attn_saver', global_step=batch)
