@@ -12,7 +12,7 @@ import dataset_loader
 
 # Load batch manager
 i, t = dataset_loader.load_from_file('train.0010')
-bm = dataset_loader.BatchManager(i, t)
+bm = dataset_loader.BatchManager(i, t, buckets=[5, 10, 15])
 PAD = '-1'
 EOS = '-2'
 bm.lookup.append(PAD)
@@ -176,17 +176,17 @@ init = tf.global_variables_initializer()
 saver = tf.train.Saver()
 
 
-def next_batch(batch_manager, amount=32):
+def next_batch(batch_manager, amount=16):
     e_in, d_targets = batch_manager.next_batch(batch_size=amount)
     e_in_length = np.full(amount, e_in.shape[1])
     d_targets_length = np.full(amount, d_targets.shape[1])
+    #print d_targets_length
     return {
         encoder_inputs: np.transpose(e_in, axes=[1, 0, 2]),
         encoder_inputs_length: e_in_length,
         decoder_targets: np.transpose(d_targets),
         decoder_inputs_length: d_targets_length,
     }
-
 
 with tf.Session() as sess:
     sess.run(init)

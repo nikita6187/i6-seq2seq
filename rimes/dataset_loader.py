@@ -1,6 +1,7 @@
 import h5py
 import numpy as np
 import random
+import collections
 
 
 def load_from_file(file_name):
@@ -82,6 +83,7 @@ def sort_based_on_b(a, b):
 
 class BatchManager:
     def __init__(self, inputs, targets, buckets):
+        #NOTE: Error happens if bucket_size < batch_size
         np.random.seed(1)
         self.inputs, self.targets = sort_based_on_b(inputs, targets)
         self.inputs_buckets = []
@@ -103,6 +105,7 @@ class BatchManager:
                 current_arr_in.append(self.inputs[i])
                 current_arr_tg.append(self.targets[i])
                 i += 1
+            #print 'Bucket ' + str(bucket) + ' is of size ' + str(len(current_arr_in))
             self.inputs_buckets.append(np.asarray(current_arr_in))
             self.targets_buckets.append(np.asarray(current_arr_tg))
 
@@ -116,8 +119,6 @@ class BatchManager:
         self.inputs_buckets.append(np.asarray(last_bucket_in))
         self.targets_buckets.append(np.asarray(last_bucket_tg))
 
-        print self.inputs_buckets
-        print self.targets_buckets
 
     def init_integer_encoding(self):
         # Go over all outputs and create lookup dictionary
@@ -165,6 +166,13 @@ class BatchManager:
         inputs_batch = np.copy(current_in[self._current_pos[current_bucket_index]:self._current_pos[current_bucket_index] + batch_size])
         targets_batch = np.copy(current_target[self._current_pos[current_bucket_index]:self._current_pos[current_bucket_index] + batch_size])
 
+        # Prevent returning objects smaller than batch size, by hoping the next random number doesn't hit small bucket
+        # NOTE: Could lead to fatal error if unlucky
+        if targets_batch.shape[0] < batch_size:
+            return self.next_batch(batch_size, pad=pad, pad_outout_extra=pad_outout_extra)
+
+        # Currently error with shuffling
+
         #print len(self.buckets)
         #print current_bucket_index
         #print targets_batch
@@ -181,14 +189,14 @@ class BatchManager:
 
             # Then do targets
             max_length_t = get_max_seq_length(targets_batch) + pad_outout_extra
+            print 'Max length targets ' +  str(max_length_t) + ' with random ' + str(current_bucket_index)
             #zero_t = np.zeros_like(targets_batch[0][0], dtype=np.int32)
             zero_t = np.full_like(targets_batch[0][0], -1, dtype=np.int32)
             #print zero_t
             for i in range(0, len(targets_batch)):
                 for j in range(0, max_length_t):
                     if j >= len(targets_batch[i]):
-                        #print targets_batch[i]
-                        targets_batch[i] = np.append(targets_batch[i], zero_t)
+                        targets_batch[i] = np.append(targets_batch[i], [zero_t], axis=0)
 
             # Hack to get dims right
             inputs_batch = np.asarray(inputs_batch.tolist())
@@ -211,9 +219,9 @@ class BatchManager:
         return inputs_batch, targets_batch_final
 
 """
-a = np.asarray([[1, 1, 1, 1, 1], [1, 1, 1, 1, 2], [1, 1, 1, 1, 3], [1, 1, 1, 1, 4], [1, 1, 1, 1, 5]])
-b = np.asarray([['a'], ['b', 'b'], ['c', 'c', 'c'], ['d','d','d','d'], ['e', 'e', 'e', 'e', 'e']])
-bm = BatchManager(a, b, buckets=[2, 3])
+a = np.asarray([[1, 1, 1, 1, 1], [1, 1, 1, 1, 2], [1, 1, 1, 1, 3], [1, 1, 1, 1, 4], [1, 1, 1, 1, 5], [1, 1, 1, 1, 6]])
+b = np.asarray([['a'], ['b', 'b'], ['c', 'c', 'c'], ['d','d','d','d'], ['e', 'e', 'e', 'e', 'e'], ['f', 'f', 'f', 'f', 'f', 'f']])
+bm = BatchManager(a, b, buckets=[2, 4])
 bm.lookup.append('-1')
 print bm.lookup
 for i in range(5):
@@ -223,11 +231,26 @@ for i in range(5):
 """
 # Example usage
 
-i, t = load_from_file('train.0010')
-bm = BatchManager(i, t, buckets=[5, 10, 15])
-bm.lookup.append('-1')
-print bm.lookup
-for i in range(5000):
-    ib, tb = bm.next_batch(5)
-    print tb
+#i, t = load_from_file('train.0010')
+#bm = BatchManager(i, t, buckets=[5, 10, 15])
+#bm.lookup.append('-1')
+"""
+#a = ['s', 'a', 'l', 'u', 't', 'a', 't', 'i', 'o', 'n', 's']
+k = 0
+for x in range(len(t)):
+    if len(t[x]) == len(a):
+        s = 0
+        for x2 in range(len(t[x])):
+            if t[x][x2] == a[x2]:
+                s += 1
+        if s == len(a):
+            k += 1
+            print t[x]
+            print x
+print k
+"""
+#print bm.lookup
+#for i in range(5000):
+#    ib, tb = bm.next_batch(32)
+#    print tb
 
