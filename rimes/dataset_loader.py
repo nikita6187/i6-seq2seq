@@ -86,7 +86,7 @@ class BatchManager:
         self.inputs, self.targets = sort_based_on_b(inputs, targets)
         self.inputs_buckets = []
         self.targets_buckets = []
-        self._current_pos = [0] * len(buckets)
+        self._current_pos = [0] * (len(buckets)+1)
         self.lookup = []
         self.init_integer_encoding()
         self.new_epoch()
@@ -95,17 +95,29 @@ class BatchManager:
 
     def slice_data_into_buckets(self):
         # Slices the input/target arrays into the assigned buckets
-        for bucket in range(self.buckets[0], self.buckets[len(self.buckets) - 1], self.buckets[1] - self.buckets[0]):
+        i = 0
+        for bucket in self.buckets:
             current_arr_in = []
             current_arr_tg = []
-            i = 0
-
             while len(self.targets[i]) <= bucket:
                 current_arr_in.append(self.inputs[i])
                 current_arr_tg.append(self.targets[i])
                 i += 1
             self.inputs_buckets.append(np.asarray(current_arr_in))
             self.targets_buckets.append(np.asarray(current_arr_tg))
+
+        # Add the leftover sequences
+        last_bucket_in = []
+        last_bucket_tg = []
+        while i < len(self.targets):
+            last_bucket_in.append(self.inputs[i])
+            last_bucket_tg.append(self.targets[i])
+            i += 1
+        self.inputs_buckets.append(np.asarray(last_bucket_in))
+        self.targets_buckets.append(np.asarray(last_bucket_tg))
+
+        print self.inputs_buckets
+        print self.targets_buckets
 
     def init_integer_encoding(self):
         # Go over all outputs and create lookup dictionary
@@ -130,7 +142,7 @@ class BatchManager:
 
         for i in range(len(self.inputs_buckets)):
             self._current_pos[i] = 0
-            #self.inputs_buckets[i], self.targets_buckets[i] = shuffle_in_unison(self.inputs_buckets[i], self.targets_buckets[i])
+            self.inputs_buckets[i], self.targets_buckets[i] = shuffle_in_unison(self.inputs_buckets[i], self.targets_buckets[i])
 
     def get_letter_from_index(self, index):
         if 0 <= index < len(self.lookup):
@@ -138,7 +150,7 @@ class BatchManager:
         else:
             return ''
 
-    def next_batch(self, batch_size, pad=True, pad_outout_extra=2):
+    def next_batch(self, batch_size, pad=True, pad_outout_extra=1):
         """
         Returns the next batch of inputs and outputs. Padding with 0 of correct dims in both input and output
         so that batch size is the same.
@@ -147,13 +159,15 @@ class BatchManager:
         :param pad:
         :return:
         """
-        current_bucket_index = random.randrange(0, len(self.buckets) - 1)
+        current_bucket_index = random.randrange(0, len(self.buckets)+1)
         current_in = np.copy(self.inputs_buckets[current_bucket_index])
         current_target = np.copy(self.targets_buckets[current_bucket_index])
         inputs_batch = np.copy(current_in[self._current_pos[current_bucket_index]:self._current_pos[current_bucket_index] + batch_size])
         targets_batch = np.copy(current_target[self._current_pos[current_bucket_index]:self._current_pos[current_bucket_index] + batch_size])
 
-        #print current_target.shape
+        #print len(self.buckets)
+        #print current_bucket_index
+        #print targets_batch
 
         # Pad if needed
         if pad is True:
@@ -169,9 +183,11 @@ class BatchManager:
             max_length_t = get_max_seq_length(targets_batch) + pad_outout_extra
             #zero_t = np.zeros_like(targets_batch[0][0], dtype=np.int32)
             zero_t = np.full_like(targets_batch[0][0], -1, dtype=np.int32)
+            #print zero_t
             for i in range(0, len(targets_batch)):
                 for j in range(0, max_length_t):
                     if j >= len(targets_batch[i]):
+                        #print targets_batch[i]
                         targets_batch[i] = np.append(targets_batch[i], zero_t)
 
             # Hack to get dims right
@@ -195,15 +211,20 @@ class BatchManager:
         return inputs_batch, targets_batch_final
 
 """
-a = np.asarray([1, 2, 3, 4, 5])
-b = np.asarray([[2, 2], [3, 3, 3], [1], [5,5,5,5,5], [4,4,4,4]])
-print sort_based_on_b(a, b)
+a = np.asarray([[1, 1, 1, 1, 1], [1, 1, 1, 1, 2], [1, 1, 1, 1, 3], [1, 1, 1, 1, 4], [1, 1, 1, 1, 5]])
+b = np.asarray([['a'], ['b', 'b'], ['c', 'c', 'c'], ['d','d','d','d'], ['e', 'e', 'e', 'e', 'e']])
+bm = BatchManager(a, b, buckets=[2, 3])
+bm.lookup.append('-1')
+print bm.lookup
+for i in range(5):
+    ib, tb = bm.next_batch(5)
+    print ib
+    print tb
 """
-
 # Example usage
 
 i, t = load_from_file('train.0010')
-bm = BatchManager(i, t, buckets=[5, 10, 15, 20])
+bm = BatchManager(i, t, buckets=[5, 10, 15])
 bm.lookup.append('-1')
 print bm.lookup
 for i in range(5000):
