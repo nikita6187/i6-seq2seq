@@ -176,11 +176,12 @@ init = tf.global_variables_initializer()
 saver = tf.train.Saver()
 
 
-def next_batch(batch_manager, amount=16):
-    e_in, d_targets = batch_manager.next_batch(batch_size=amount)
-    e_in_length = np.full(amount, e_in.shape[1])
-    d_targets_length = np.full(amount, d_targets.shape[1])
+def next_batch(batch_manager, amount=32):
+    e_in, e_in_length, d_targets, d_targets_length = batch_manager.next_batch(batch_size=amount)
     #print d_targets_length
+    # @TODO: make seq2seq basic training baseline
+    print str(np.transpose(e_in, axes=[1, 0, 2]))
+    print str(np.transpose(e_in, axes=[1, 0, 2]).shape)
     return {
         encoder_inputs: np.transpose(e_in, axes=[1, 0, 2]),
         encoder_inputs_length: e_in_length,

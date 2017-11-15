@@ -91,9 +91,9 @@ class BatchManager:
         self._current_pos = [0] * (len(buckets)+1)
         self.lookup = []
         self.init_integer_encoding()
-        self.new_epoch()
         self.buckets = buckets
         self.slice_data_into_buckets()
+        self.new_epoch()
 
     def slice_data_into_buckets(self):
         # Slices the input/target arrays into the assigned buckets
@@ -171,11 +171,8 @@ class BatchManager:
         if targets_batch.shape[0] < batch_size:
             return self.next_batch(batch_size, pad=pad, pad_outout_extra=pad_outout_extra)
 
-        # Currently error with shuffling
-
-        #print len(self.buckets)
-        #print current_bucket_index
-        #print targets_batch
+        input_lengths = []
+        target_lengths = []
 
         # Pad if needed
         if pad is True:
@@ -183,17 +180,16 @@ class BatchManager:
             max_length_i = get_max_seq_length(inputs_batch)
             zero_i = np.zeros_like(inputs_batch[0][0])
             for i in range(0, len(inputs_batch)):
+                input_lengths.append(len(inputs_batch[i]))
                 for j in range(0, max_length_i):
                     if j >= len(inputs_batch[i]):
                         inputs_batch[i] = np.append(inputs_batch[i], [zero_i], axis=0)
 
             # Then do targets
             max_length_t = get_max_seq_length(targets_batch) + pad_outout_extra
-            print 'Max length targets ' +  str(max_length_t) + ' with random ' + str(current_bucket_index)
-            #zero_t = np.zeros_like(targets_batch[0][0], dtype=np.int32)
             zero_t = np.full_like(targets_batch[0][0], -1, dtype=np.int32)
-            #print zero_t
             for i in range(0, len(targets_batch)):
+                target_lengths.append(len(targets_batch[i]) + 1)
                 for j in range(0, max_length_t):
                     if j >= len(targets_batch[i]):
                         targets_batch[i] = np.append(targets_batch[i], [zero_t], axis=0)
@@ -216,7 +212,10 @@ class BatchManager:
         if self._current_pos[current_bucket_index] >= len(self.inputs_buckets[current_bucket_index]) - batch_size:
             self.new_epoch()
 
-        return inputs_batch, targets_batch_final
+        input_lengths = np.asarray(input_lengths)
+        target_lengths = np.asarray(target_lengths)
+
+        return inputs_batch, input_lengths, targets_batch_final, target_lengths
 
 """
 a = np.asarray([[1, 1, 1, 1, 1], [1, 1, 1, 1, 2], [1, 1, 1, 1, 3], [1, 1, 1, 1, 4], [1, 1, 1, 1, 5], [1, 1, 1, 1, 6]])
@@ -231,26 +230,19 @@ for i in range(5):
 """
 # Example usage
 
-#i, t = load_from_file('train.0010')
-#bm = BatchManager(i, t, buckets=[5, 10, 15])
-#bm.lookup.append('-1')
-"""
-#a = ['s', 'a', 'l', 'u', 't', 'a', 't', 'i', 'o', 'n', 's']
-k = 0
-for x in range(len(t)):
-    if len(t[x]) == len(a):
-        s = 0
-        for x2 in range(len(t[x])):
-            if t[x][x2] == a[x2]:
-                s += 1
-        if s == len(a):
-            k += 1
-            print t[x]
-            print x
-print k
-"""
-#print bm.lookup
-#for i in range(5000):
-#    ib, tb = bm.next_batch(32)
-#    print tb
+i, t = load_from_file('train.0010')
+bm = BatchManager(i, t, buckets=[5, 10, 15])
+bm.lookup.append('-1')
 
+a = -1.81057
+b = -1.80862
+
+#@TODO: look if input data is being correctly sorted
+
+"""
+print bm.lookup
+for i in range(2):
+    ib, il, tb, tl = bm.next_batch(1)
+    print ib
+
+"""
