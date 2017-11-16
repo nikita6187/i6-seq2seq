@@ -229,14 +229,14 @@ for i in range(5):
     print tb
 """
 # Example usage
-
+"""
 i, t = load_from_file('train.0010')
 bm = BatchManager(i, t, buckets=[5, 10, 15])
 bm.lookup.append('-1')
 
 a = -1.81057
 b = -1.80862
-
+"""
 #@TODO: look if input data is being correctly sorted
 
 """

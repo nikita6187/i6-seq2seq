@@ -23,9 +23,9 @@ print bm.lookup
 tf.set_random_seed(10)
 vocab_size = bm.get_size_vocab()
 input_embedding_size = 50
-encoder_hidden_units = 256
+encoder_hidden_units = 512
 decoder_hidden_units = encoder_hidden_units * 2  # due to encoder being BiLSTM and decoder being LSTM
-attention_hidden_layer_size = 64
+attention_hidden_layer_size = 128
 input_dimensions = 20
 
 # ---- Build model ----
@@ -180,8 +180,9 @@ def next_batch(batch_manager, amount=32):
     e_in, e_in_length, d_targets, d_targets_length = batch_manager.next_batch(batch_size=amount)
     #print d_targets_length
     # @TODO: make seq2seq basic training baseline
-    print str(np.transpose(e_in, axes=[1, 0, 2]))
-    print str(np.transpose(e_in, axes=[1, 0, 2]).shape)
+    # @TODO: add ctc loss
+    #print str(np.transpose(e_in, axes=[1, 0, 2]))
+    #print str(np.transpose(e_in, axes=[1, 0, 2]).shape)
     return {
         encoder_inputs: np.transpose(e_in, axes=[1, 0, 2]),
         encoder_inputs_length: e_in_length,
