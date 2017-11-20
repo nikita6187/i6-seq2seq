@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow.contrib.rnn import LSTMCell, LSTMStateTuple
 import numpy as np
-import matplotlib.pyplot as plt
+import keras
 import dataset_loader
 
 # TASK:      RIMES classification
@@ -34,6 +34,7 @@ encoder_inputs_length = tf.placeholder(shape=(None,), dtype=tf.int32, name='enco
 decoder_targets = tf.sparse_placeholder(dtype=tf.int32, name='decoder_targets')
 decoder_inputs_length = tf.placeholder(shape=(None,), dtype=tf.int32, name='decoder_inputs_length')
 decoder_targets_raw = tf.placeholder(shape=(None, None), dtype=tf.int32, name='decoder_targets_raw')
+
 
 embeddings = tf.Variable(tf.random_uniform([vocab_size, input_embedding_size], -1.0, 1.0), dtype=tf.float32)
 
@@ -115,7 +116,7 @@ def get_attention_from_current_state(current_state):
     return weighted_vectors
 
 
-final_W = tf.Variable(tf.random_uniform([decoder_hidden_units, vocab_size], -1, 1), dtype=tf.float32)
+final_W = tf.Variable(tf.random_uniform([decoder_hidden_units, vocab_size], 0, 2), dtype=tf.float32)
 final_b = tf.Variable(tf.zeros([vocab_size]), dtype=tf.float32)
 
 
@@ -162,21 +163,25 @@ decoder_outputs = decoder_outputs_ta.stack()
 decoder_max_steps, decoder_batch_size, decoder_dims = tf.unstack(tf.shape(decoder_outputs))
 decoder_outputs_flat = tf.reshape(decoder_outputs, (-1, decoder_dims))
 decoder_logits_flat = tf.add(tf.matmul(decoder_outputs_flat, final_W), final_b)
-decoder_logits = tf.reshape(decoder_logits_flat, (decoder_max_steps, decoder_batch_size, vocab_size))
-
+#decoder_logits = tf.reshape(decoder_logits_flat, (decoder_max_steps, decoder_batch_size, vocab_size))
+decoder_logits = tf.reshape(decoder_logits_flat, (decoder_batch_size, decoder_max_steps, vocab_size))
 
 # Use CTC loss and training
-idx = tf.where(tf.not_equal(decoder_targets_raw, 0))
-# Use tf.shape(a_t, out_type=tf.int64) instead of a_t.get_shape() if tensor shape is dynamic
-sparse = tf.SparseTensor(idx, tf.gather_nd(decoder_targets_raw, idx), tf.shape(decoder_targets_raw, out_type=tf.int64))
-
-step_loss = tf.nn.ctc_loss(sparse, decoder_logits, decoder_inputs_length, time_major=True)
+targets_sparse = tf.contrib.keras.backend.ctc_label_dense_to_sparse(labels=decoder_targets_raw, label_lengths=decoder_inputs_length)
+step_loss = tf.nn.ctc_loss(labels=targets_sparse, inputs=decoder_logits, sequence_length=decoder_inputs_length, time_major=False,
+                           ctc_merge_repeated=False)
 loss = tf.reduce_mean(step_loss)
-train_op = tf.train.MomentumOptimizer(0.0009, 0.9).minimize(loss)
+
+#train_op = tf.train.MomentumOptimizer(0.0009, 0.9).minimize(loss)
+params = tf.trainable_variables()
+gradients = tf.gradients(loss, params)
+clipped_gradients, _ = tf.clip_by_global_norm(gradients, 2.0)
+optimizer = tf.train.AdamOptimizer(0.00001)
+train_op = optimizer.apply_gradients(zip(clipped_gradients, params))
 
 # Option 2: ctc_beam_search_decoder
-decoder_prediction_sparse, _ = tf.nn.ctc_greedy_decoder(decoder_logits, decoder_inputs_length)
-decoder_prediction = tf.sparse_tensor_to_dense(decoder_prediction_sparse[0])
+#decoder_prediction_sparse, _ = tf.nn.ctc_greedy_decoder(decoder_logits, decoder_inputs_length)
+#decoder_prediction = tf.sparse_tensor_to_dense(decoder_prediction_sparse[0])
 
 #decoder_prediction = tf.argmax(decoder_logits, 2)
 #decoder_targets_one_hot = tf.one_hot(decoder_targets, depth=vocab_size, dtype=tf.float32)
@@ -190,7 +195,7 @@ init = tf.global_variables_initializer()
 saver = tf.train.Saver()
 
 
-def next_batch(batch_manager, amount=4):
+def next_batch(batch_manager, amount=16):
     e_in, e_in_length, d_targets, d_targets_length = batch_manager.next_batch(batch_size=amount)
     d_fin_targets = dataset_loader.sparse_tuple_from(d_targets.tolist())
 
@@ -198,11 +203,10 @@ def next_batch(batch_manager, amount=4):
     d_targets_length = np.full(amount, d_targets.shape[1])  # for ctc to work
     #print e_in_length
 
-    # @TODO: make seq2seq basic training baseline
     return {
         encoder_inputs: np.transpose(e_in, axes=[1, 0, 2]),
         encoder_inputs_length: e_in_length,
-        decoder_targets: np.transpose(d_targets),
+        #decoder_targets: np.transpose(d_targets),
         decoder_inputs_length: d_targets_length,
         decoder_targets_raw: d_targets,
     }
@@ -213,12 +217,13 @@ with tf.Session() as sess:
 
     for batch in range(20000):
         feed = next_batch(batch_manager=bm)
-        _, l, predict = sess.run([train_op, loss, decoder_prediction], feed)
+        #_, l, predict = sess.run([train_op, loss, decoder_prediction], feed)
+        _, l = sess.run([train_op, loss], feed)
         losses.append(l)
 
         if batch % 1 == 0:
             print('Batch: {0} Loss:{1:2f}'.format(batch, losses[-1]))
-            for i, (inp, pred, target) in enumerate(zip(feed[encoder_inputs].T, predict, feed[decoder_targets_raw])):
+            for i, (inp, pred, target) in enumerate(zip(feed[encoder_inputs].T, feed[decoder_targets_raw], feed[decoder_targets_raw])):
                 print(' Sample {0}'.format(i + 1))
                 # print('  Input     > {0}'.format(inp))
                 print('  Predicted > {0}'.format(pred))
