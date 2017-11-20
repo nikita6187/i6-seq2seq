@@ -81,6 +81,27 @@ def sort_based_on_b(a, b):
     return shuffled_a, shuffled_b
 
 
+def sparse_tuple_from(sequences, dtype=np.int32):
+    """Create a sparse representention of x.
+    Args:
+        sequences: a list of lists of type dtype where each element is a sequence
+    Returns:
+        A tuple with (indices, values, shape)
+    """
+    indices = []
+    values = []
+
+    for n, seq in enumerate(sequences):
+        indices.extend(zip([n]*len(seq), range(len(seq))))
+        values.extend(seq)
+
+    indices = np.asarray(indices, dtype=np.int64)
+    values = np.asarray(values, dtype=dtype)
+    shape = np.asarray([len(sequences), np.asarray(indices).max(0)[1]+1], dtype=np.int64)
+
+    return indices, values, shape
+
+
 class BatchManager:
     def __init__(self, inputs, targets, buckets):
         #NOTE: Error happens if bucket_size < batch_size
@@ -151,7 +172,7 @@ class BatchManager:
         else:
             return ''
 
-    def next_batch(self, batch_size, pad=True, pad_outout_extra=1):
+    def next_batch(self, batch_size, pad=True, pad_outout_extra=2):
         """
         Returns the next batch of inputs and outputs. Padding with 0 of correct dims in both input and output
         so that batch size is the same.
@@ -177,7 +198,7 @@ class BatchManager:
         # Pad if needed
         if pad is True:
             # First do input padding
-            max_length_i = get_max_seq_length(inputs_batch)
+            max_length_i = max(get_max_seq_length(inputs_batch), 200)
             zero_i = np.zeros_like(inputs_batch[0][0])
             for i in range(0, len(inputs_batch)):
                 input_lengths.append(len(inputs_batch[i]))
@@ -189,7 +210,7 @@ class BatchManager:
             max_length_t = get_max_seq_length(targets_batch) + pad_outout_extra
             zero_t = np.full_like(targets_batch[0][0], -1, dtype=np.int32)
             for i in range(0, len(targets_batch)):
-                target_lengths.append(len(targets_batch[i]) + 1)
+                target_lengths.append(len(targets_batch[i]) + pad_outout_extra)
                 for j in range(0, max_length_t):
                     if j >= len(targets_batch[i]):
                         targets_batch[i] = np.append(targets_batch[i], [zero_t], axis=0)
