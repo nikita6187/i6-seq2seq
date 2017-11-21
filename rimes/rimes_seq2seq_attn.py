@@ -13,8 +13,8 @@ import dataset_loader
 # Load batch manager
 i, t = dataset_loader.load_from_file('train.0010')
 bm = dataset_loader.BatchManager(i, t, buckets=[5, 10, 15])
-EOS = '-1'
-PAD = '-2'
+EOS = '-2'
+PAD = '-1'
 bm.lookup.append(EOS)
 bm.lookup.append(PAD)
 print bm.lookup
@@ -116,7 +116,7 @@ def get_attention_from_current_state(current_state):
     return weighted_vectors
 
 
-final_W = tf.Variable(tf.random_uniform([decoder_hidden_units, vocab_size], 0, 2), dtype=tf.float32)
+final_W = tf.Variable(tf.random_uniform([decoder_hidden_units, vocab_size], -1, 1), dtype=tf.float32)
 final_b = tf.Variable(tf.zeros([vocab_size]), dtype=tf.float32)
 
 
@@ -145,7 +145,7 @@ def loop_fn_transition(time, previous_output, previous_state, previous_loop_stat
     finished = tf.reduce_all(elements_finished)  # true if all are finished else false
     next_input = tf.cond(finished, lambda: pad_step_embedded, get_next_input)  # if finished PAD else provide next input
     state = previous_state
-    output = previous_output
+    output = previous_output  #@TODO: look if forced output of PAD
     loop_state = None
     return elements_finished, next_input, state, output, loop_state
 
@@ -175,13 +175,15 @@ loss = tf.reduce_mean(step_loss)
 #train_op = tf.train.MomentumOptimizer(0.0009, 0.9).minimize(loss)
 params = tf.trainable_variables()
 gradients = tf.gradients(loss, params)
-clipped_gradients, _ = tf.clip_by_global_norm(gradients, 2.0)
-optimizer = tf.train.AdamOptimizer(0.00001)
+clipped_gradients, _ = tf.clip_by_global_norm(gradients, 1.0)
+optimizer = tf.train.AdamOptimizer(0.001)
 train_op = optimizer.apply_gradients(zip(clipped_gradients, params))
 
-# Option 2: ctc_beam_search_decoder
-#decoder_prediction_sparse, _ = tf.nn.ctc_greedy_decoder(decoder_logits, decoder_inputs_length)
-#decoder_prediction = tf.sparse_tensor_to_dense(decoder_prediction_sparse[0])
+# Option 1: ctc_beam_search_decoder, option 2: greedy
+decoder_logits_time_first = tf.reshape(decoder_logits_flat, (decoder_max_steps, decoder_batch_size, vocab_size))
+decoder_prediction_sparse, _ = tf.nn.ctc_beam_search_decoder(decoder_logits_time_first, decoder_inputs_length, merge_repeated=False)
+#decoder_prediction_sparse, _ = tf.nn.ctc_greedy_decoder(decoder_logits_time_first, decoder_inputs_length)
+decoder_prediction = tf.sparse_tensor_to_dense(decoder_prediction_sparse[0])
 
 #decoder_prediction = tf.argmax(decoder_logits, 2)
 #decoder_targets_one_hot = tf.one_hot(decoder_targets, depth=vocab_size, dtype=tf.float32)
@@ -195,14 +197,14 @@ init = tf.global_variables_initializer()
 saver = tf.train.Saver()
 
 
-def next_batch(batch_manager, amount=16):
+def next_batch(batch_manager, amount=8):
     e_in, e_in_length, d_targets, d_targets_length = batch_manager.next_batch(batch_size=amount)
     d_fin_targets = dataset_loader.sparse_tuple_from(d_targets.tolist())
 
     e_in_length = np.full(amount, e_in.shape[1])
     d_targets_length = np.full(amount, d_targets.shape[1])  # for ctc to work
-    #print e_in_length
-
+    # @TODO: look at whether the lengths are correct especially in loop functions; why are there so many 0s?
+    # @TODO: try seq2seq-basic
     return {
         encoder_inputs: np.transpose(e_in, axes=[1, 0, 2]),
         encoder_inputs_length: e_in_length,
@@ -217,13 +219,12 @@ with tf.Session() as sess:
 
     for batch in range(20000):
         feed = next_batch(batch_manager=bm)
-        #_, l, predict = sess.run([train_op, loss, decoder_prediction], feed)
-        _, l = sess.run([train_op, loss], feed)
+        _, l, predict = sess.run([train_op, loss, decoder_prediction], feed)
         losses.append(l)
 
         if batch % 1 == 0:
             print('Batch: {0} Loss:{1:2f}'.format(batch, losses[-1]))
-            for i, (inp, pred, target) in enumerate(zip(feed[encoder_inputs].T, feed[decoder_targets_raw], feed[decoder_targets_raw])):
+            for i, (inp, pred, target) in enumerate(zip(feed[encoder_inputs].T, predict, feed[decoder_targets_raw])):
                 print(' Sample {0}'.format(i + 1))
                 # print('  Input     > {0}'.format(inp))
                 print('  Predicted > {0}'.format(pred))

@@ -172,7 +172,7 @@ class BatchManager:
         else:
             return ''
 
-    def next_batch(self, batch_size, pad=True, pad_outout_extra=2):
+    def next_batch(self, batch_size, pad=True, pad_outout_extra=3):
         """
         Returns the next batch of inputs and outputs. Padding with 0 of correct dims in both input and output
         so that batch size is the same.
