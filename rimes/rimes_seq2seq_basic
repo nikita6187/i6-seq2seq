@@ -9,8 +9,8 @@ import dataset_loader
 # Load batch manager
 i, t = dataset_loader.load_from_file('train.0010')
 bm = dataset_loader.BatchManager(i, t, buckets=[5, 10, 15])
-EOS = '-2'
-PAD = '-1'
+EOS = '-1'
+PAD = '-2'
 bm.lookup.append(EOS)
 bm.lookup.append(PAD)
 print bm.lookup
@@ -29,10 +29,13 @@ encoder_inputs_length = tf.placeholder(shape=(None,), dtype=tf.int32, name='enco
 decoder_targets = tf.placeholder(shape=(None, None), dtype=tf.int32, name='decoder_targets')
 decoder_inputs_length = tf.placeholder(shape=(None,), dtype=tf.int32, name='decoder_inputs_length')
 decoder_targets_raw = tf.placeholder(shape=(None, None), dtype=tf.int32, name='decoder_targets_raw')
+decoder_inputs = tf.placeholder(shape=(None, None), dtype=tf.int32, name='decoder_inputs')
+batch_size = tf.placeholder(shape=(), dtype=tf.int32, name='batch_size')
+max_time = tf.placeholder(shape=(), dtype=tf.int32, name='max_time')
 
 embeddings = tf.Variable(tf.random_uniform([vocab_size, input_embedding_size], -1.0, 1.0), dtype=tf.float32)
 encoder_inputs_embedded = encoder_inputs
-decoder_inputs_embedded = tf.nn.embedding_lookup(embeddings, decoder_targets_raw)
+decoder_inputs_embedded = tf.nn.embedding_lookup(embeddings, decoder_inputs)
 
 
 
@@ -48,39 +51,46 @@ decoder_cell = tf.contrib.rnn.LSTMCell(decoder_hidden_units)
 
 # To make the inputs time major
 decoder_inputs_embedded = tf.transpose(decoder_inputs_embedded, perm=[1, 0, 2])
-decoder_inputs_embedded = tf.Print(decoder_inputs_embedded, [tf.shape(decoder_inputs_embedded)], summarize=100, message='Decoder inputs')
-decoder_outputs, decoder_final_state = tf.nn.dynamic_rnn(decoder_cell, decoder_inputs_embedded,
-                                                         initial_state=encoder_final_state, dtype=tf.float32,
-                                                         time_major=True, scope="plain_decoder",
-                                                         sequence_length=decoder_inputs_length)
+decoder_outputs, decoder_final_state = tf.nn.dynamic_rnn(
+                                                        decoder_cell, decoder_inputs_embedded,
+                                                        sequence_length=decoder_inputs_length,
+                                                        initial_state=encoder_final_state,
+                                                        time_major=True, scope="plain_decoder"
+                                                        )
 decoder_logits = tf.contrib.layers.fully_connected(decoder_outputs, vocab_size, activation_fn=None)
 decoder_prediction = tf.argmax(decoder_logits, 2)
 
 # Training
-stepwise_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=tf.one_hot(decoder_targets, depth=vocab_size,
-                                                                                   dtype=tf.float32),
-                                                                 logits=decoder_logits)
-loss = tf.reduce_mean(stepwise_cross_entropy)
-train_op = tf.train.AdamOptimizer().minimize(loss)
+decoder_targets_batch_first = tf.transpose(decoder_targets, perm=[1, 0])
+decoder_logits_batch_first = tf.transpose(decoder_logits, perm=[1, 0, 2])
+crossent = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=decoder_targets_batch_first, logits=decoder_logits_batch_first)
+target_weights = tf.sequence_mask(decoder_inputs_length, max_time, dtype=tf.float32)
+loss = (tf.reduce_sum(crossent * target_weights) / tf.to_float(batch_size))
+params = tf.trainable_variables()
+gradients = tf.gradients(loss, params)
+clipped_gradients, _ = tf.clip_by_global_norm(gradients, 2.0)
+
+optimizer = tf.train.AdamOptimizer(0.001)
+train_op = optimizer.apply_gradients(zip(clipped_gradients, params))
+
 
 init = tf.global_variables_initializer()
 
 
-def next_batch(batch_manager, amount=4):
+def next_batch(batch_manager, amount=5):
     e_in, e_in_length, d_targets, d_targets_length = batch_manager.next_batch(batch_size=amount)
-    d_fin_targets = dataset_loader.sparse_tuple_from(d_targets.tolist())
+    offset_din = bm.offset(d_targets, bm.lookup_letter(EOS))
+    d_targets = bm.offset(d_targets, bm.lookup_letter(PAD), position=-1)
 
-    #@TODO: some error with d_targets shape, way too short
-    #@TODO: maybe make custom decoder_inputs
-
-    #e_in_length = np.full(amount, e_in.shape[1])
-    #d_targets_length = np.full(amount, d_targets.shape[1])  # for ctc to work
     return {
         encoder_inputs: np.transpose(e_in, axes=[1, 0, 2]),
         encoder_inputs_length: e_in_length,
         decoder_targets: np.transpose(d_targets),
         decoder_inputs_length: d_targets_length,
         decoder_targets_raw: d_targets,
+        decoder_inputs: offset_din,
+        max_time: d_targets.shape[1],
+        batch_size:amount,
     }
 
 with tf.Session() as sess:
@@ -94,7 +104,7 @@ with tf.Session() as sess:
 
         if batch % 1 == 0:
             print('Batch: {0} Loss:{1:2f}'.format(batch, losses[-1]))
-            for i, (inp, pred, target) in enumerate(zip(feed[encoder_inputs].T, predict, feed[decoder_targets_raw])):
+            for i, (inp, pred, target) in enumerate(zip(feed[encoder_inputs].T, predict.T, feed[decoder_targets_raw])):
                 print(' Sample {0}'.format(i + 1))
                 # print('  Input     > {0}'.format(inp))
                 print('  Predicted > {0}'.format(pred))

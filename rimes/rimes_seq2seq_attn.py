@@ -204,7 +204,6 @@ def next_batch(batch_manager, amount=8):
     e_in_length = np.full(amount, e_in.shape[1])
     d_targets_length = np.full(amount, d_targets.shape[1])  # for ctc to work
     # @TODO: look at whether the lengths are correct especially in loop functions; why are there so many 0s?
-    # @TODO: try seq2seq-basic
     return {
         encoder_inputs: np.transpose(e_in, axes=[1, 0, 2]),
         encoder_inputs_length: e_in_length,

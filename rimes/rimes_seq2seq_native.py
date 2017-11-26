@@ -29,9 +29,10 @@ decoder_inputs_length = tf.placeholder(shape=(None,), dtype=tf.int32, name='deco
 batch_size = tf.placeholder(shape=(), dtype=tf.int32, name='batch_size')
 max_time = tf.placeholder(shape=(), dtype=tf.int32, name='max_time')
 decoder_targets_raw = tf.placeholder(shape=(None, None), dtype=tf.int32, name='decoder_targets_raw')
+decoder_inputs = tf.placeholder(shape=(None, None), dtype=tf.int32, name='decoder_inputs')
 
 embeddings = tf.Variable(tf.random_uniform([vocab_size, input_embedding_size], -1.0, 1.0), dtype=tf.float32)
-decoder_inputs_embedding = tf.nn.embedding_lookup(embeddings, decoder_targets_raw)
+decoder_inputs_embedding = tf.nn.embedding_lookup(embeddings, decoder_inputs)
 
 idx = tf.where(tf.not_equal(decoder_targets_raw, 0))
 decoder_targets = tf.SparseTensor(idx, tf.gather_nd(decoder_targets_raw, idx), tf.shape(decoder_targets_raw, out_type=tf.int64))
@@ -52,6 +53,7 @@ encoder_outputs, encoder_state = tf.nn.dynamic_rnn(
 # Decoder
 decoder_cell = tf.nn.rnn_cell.BasicLSTMCell(encoder_hidden_units)
 helper = tf.contrib.seq2seq.TrainingHelper(decoder_inputs_embedding, decoder_inputs_length, time_major=False)
+#helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(embeddings, bm.lookup_letter(EOS), bm.lookup_letter(PAD))
 
 # Decoding outputs
 projection_layer = layers_core.Dense(vocab_size, use_bias=False)
@@ -62,6 +64,9 @@ decoder = tf.contrib.seq2seq.BasicDecoder(
 decoder_outputs, _, _ = tf.contrib.seq2seq.dynamic_decode(decoder, output_time_major=False)
 logits = decoder_outputs.rnn_output
 decoder_prediction = decoder_outputs.sample_id
+
+logits = tf.Print(logits, [tf.shape(logits)], message='Logits shape')
+logits = tf.Print(logits, [tf.shape(decoder_targets_raw)], message='Decode targ raw shape')
 
 # Loss
 crossent = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=decoder_targets_raw, logits=logits)
@@ -86,7 +91,7 @@ def next_batch(batch_manager, amount=4):
 
     e_in_length = np.full(amount, e_in.shape[1])
     d_targets_length = np.full(amount, d_targets.shape[1])  # for ctc to work
-    #print e_in_length
+    offset_din = bm.offset(d_targets, bm.lookup_letter(EOS))
 
     return {
         encoder_inputs: e_in,#np.transpose(e_in, axes=[1, 0, 2]),
@@ -96,6 +101,7 @@ def next_batch(batch_manager, amount=4):
         decoder_targets_raw: d_targets,
         batch_size: amount,
         max_time: d_targets.shape[1],
+        decoder_inputs: offset_din,
     }
 
 with tf.Session() as sess:

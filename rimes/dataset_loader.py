@@ -155,7 +155,6 @@ class BatchManager:
         return len(self.lookup)
 
     def new_epoch(self):
-
         for i in range(len(self.inputs_buckets)):
             min_t = 30
             max_t = 0
@@ -171,6 +170,19 @@ class BatchManager:
             return self.lookup[index]
         else:
             return ''
+
+    def offset(self, data, filler, amount=1, position=0):
+        """
+        Offsets either at the start or the end of the numpy array the filler object.
+        :param data:
+        :param filler:
+        :param amount:
+        :param position:
+        :return:
+        """
+        for i in range(0, amount):
+            data = np.insert(data, position, filler, axis=1)
+        return data
 
     def next_batch(self, batch_size, pad=True, pad_outout_extra=3):
         """
@@ -208,7 +220,7 @@ class BatchManager:
 
             # Then do targets
             max_length_t = get_max_seq_length(targets_batch) + pad_outout_extra
-            zero_t = np.full_like(targets_batch[0][0], -1, dtype=np.int32)
+            zero_t = np.full_like(targets_batch[0][0], -2, dtype=np.int32)
             for i in range(0, len(targets_batch)):
                 target_lengths.append(len(targets_batch[i]) + pad_outout_extra)
                 for j in range(0, max_length_t):
