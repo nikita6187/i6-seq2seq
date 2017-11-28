@@ -13,8 +13,8 @@ import dataset_loader
 # Load batch manager
 i, t = dataset_loader.load_from_file('train.0010')
 bm = dataset_loader.BatchManager(i, t, buckets=[5, 10, 15])
-EOS = '-2'
-PAD = '-1'
+EOS = '-1'
+PAD = '-2'
 bm.lookup.append(EOS)
 bm.lookup.append(PAD)
 print bm.lookup
@@ -31,9 +31,11 @@ input_dimensions = 20
 # ---- Build model ----
 encoder_inputs = tf.placeholder(shape=(None, None, input_dimensions), dtype=tf.float32, name='encoder_inputs')
 encoder_inputs_length = tf.placeholder(shape=(None,), dtype=tf.int32, name='encoder_inputs_length')
-decoder_targets = tf.sparse_placeholder(dtype=tf.int32, name='decoder_targets')
+decoder_targets = tf.placeholder(shape=(None, None), dtype=tf.int32, name='decoder_targets')
+decoder_inputs = tf.placeholder(shape=(None, None), dtype=tf.int32, name='decoder_inputs')
 decoder_inputs_length = tf.placeholder(shape=(None,), dtype=tf.int32, name='decoder_inputs_length')
 decoder_targets_raw = tf.placeholder(shape=(None, None), dtype=tf.int32, name='decoder_targets_raw')
+max_time = tf.placeholder(shape=(), dtype=tf.int32, name='max_time')
 
 
 embeddings = tf.Variable(tf.random_uniform([vocab_size, input_embedding_size], -1.0, 1.0), dtype=tf.float32)
@@ -119,11 +121,17 @@ def get_attention_from_current_state(current_state):
 final_W = tf.Variable(tf.random_uniform([decoder_hidden_units, vocab_size], -1, 1), dtype=tf.float32)
 final_b = tf.Variable(tf.zeros([vocab_size]), dtype=tf.float32)
 
+# For better training
+inputs_ta = tf.TensorArray(dtype=tf.int32, size=max_time+1)
+#final_W = tf.Print(final_W, [decoder_inputs], summarize=100)
+inputs_ta = inputs_ta.unstack(decoder_inputs)
+
 
 def loop_fn_initial():
     initial_elements_finished = (0 >= decoder_lengths)
-    attention = get_attention_from_current_state(encoder_final_state.c)
-    initial_input = tf.concat([eos_step_embedded, attention], axis=1)
+    #attention = get_attention_from_current_state(encoder_final_state.c)
+    #initial_input = tf.concat([eos_step_embedded, attention], axis=1)
+    initial_input = eos_step_embedded
     initial_cell_state = encoder_final_state
     initial_cell_output = None
     initial_loop_state = None
@@ -132,20 +140,26 @@ def loop_fn_initial():
 
 def loop_fn_transition(time, previous_output, previous_state, previous_loop_state):
 
-    attention = get_attention_from_current_state(previous_state.c)
+    #attention = get_attention_from_current_state(previous_state.c)
+    attention = tf.zeros([batch_size, decoder_hidden_units], tf.float32)
 
     def get_next_input():
+        """
         output_logits = tf.add(tf.matmul(previous_output, final_W), final_b)
         prediction = tf.argmax(output_logits, axis=1)
         next_input_e = tf.nn.embedding_lookup(embeddings, prediction)
         next_input = tf.concat([next_input_e, attention], axis=1)  # add attention to next input
+        """
+        next_input = inputs_ta.read(time)
+        #next_input = tf.Print(next_input, [next_input], summarize=10)
+        next_input = tf.nn.embedding_lookup(embeddings, next_input)
         return next_input
 
     elements_finished = (time >= decoder_lengths)  # produces tensor shape [batch_size]; says which elements are fin
     finished = tf.reduce_all(elements_finished)  # true if all are finished else false
-    next_input = tf.cond(finished, lambda: pad_step_embedded, get_next_input)  # if finished PAD else provide next input
+    next_input = tf.cond(finished, lambda:  tf.nn.embedding_lookup(embeddings, pad_time_slice), get_next_input)  # if finished PAD else provide next input
     state = previous_state
-    output = previous_output  #@TODO: look if forced output of PAD
+    output = previous_output
     loop_state = None
     return elements_finished, next_input, state, output, loop_state
 
@@ -165,8 +179,24 @@ decoder_outputs_flat = tf.reshape(decoder_outputs, (-1, decoder_dims))
 decoder_logits_flat = tf.add(tf.matmul(decoder_outputs_flat, final_W), final_b)
 #decoder_logits = tf.reshape(decoder_logits_flat, (decoder_max_steps, decoder_batch_size, vocab_size))
 decoder_logits = tf.reshape(decoder_logits_flat, (decoder_batch_size, decoder_max_steps, vocab_size))
+decoder_prediction = tf.argmax(decoder_logits, 2)
+
+# Cross Entropy
+decoder_targets_batch_first = tf.transpose(decoder_targets, perm=[1, 0])
+decoder_logits_batch_first = tf.transpose(decoder_logits, perm=[1, 0, 2])
+crossent = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=decoder_targets_batch_first, logits=decoder_logits_batch_first)
+target_weights = tf.sequence_mask(decoder_inputs_length, max_time, dtype=tf.float32)
+loss = (tf.reduce_sum(crossent * target_weights) / tf.to_float(batch_size))
+params = tf.trainable_variables()
+gradients = tf.gradients(loss, params)
+clipped_gradients, _ = tf.clip_by_global_norm(gradients, 2.0)
+
+optimizer = tf.train.AdamOptimizer(0.001)
+train_op = optimizer.apply_gradients(zip(clipped_gradients, params))
+
 
 # Use CTC loss and training
+"""
 targets_sparse = tf.contrib.keras.backend.ctc_label_dense_to_sparse(labels=decoder_targets_raw, label_lengths=decoder_inputs_length)
 step_loss = tf.nn.ctc_loss(labels=targets_sparse, inputs=decoder_logits, sequence_length=decoder_inputs_length, time_major=False,
                            ctc_merge_repeated=False)
@@ -192,6 +222,7 @@ decoder_prediction = tf.sparse_tensor_to_dense(decoder_prediction_sparse[0])
 #stepwise_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=decoder_targets_one_hot, logits=decoder_logits)
 #loss = tf.reduce_mean(stepwise_cross_entropy)
 #train_op = tf.train.AdamOptimizer().minimize(loss)
+"""
 
 init = tf.global_variables_initializer()
 saver = tf.train.Saver()
@@ -201,15 +232,23 @@ def next_batch(batch_manager, amount=8):
     e_in, e_in_length, d_targets, d_targets_length = batch_manager.next_batch(batch_size=amount)
     d_fin_targets = dataset_loader.sparse_tuple_from(d_targets.tolist())
 
-    e_in_length = np.full(amount, e_in.shape[1])
-    d_targets_length = np.full(amount, d_targets.shape[1])  # for ctc to work
+    # offset needs to 2 because raw_rnn's time goes from 1 and not from 0
+    offset_din, _ = bm.offset(d_targets, bm.lookup_letter(EOS), amount=2)
+    d_targets, d_targets_length = bm.offset(d_targets, bm.lookup_letter(PAD), position=-1, amount=1, length_vector=d_targets_length)
+
+    #print d_targets_length
+
+    #e_in_length = np.full(amount, e_in.shape[1])
+    #d_targets_length = np.full(amount, d_targets.shape[1])  # for ctc to work
     # @TODO: look at whether the lengths are correct especially in loop functions; why are there so many 0s?
     return {
         encoder_inputs: np.transpose(e_in, axes=[1, 0, 2]),
         encoder_inputs_length: e_in_length,
-        #decoder_targets: np.transpose(d_targets),
+        decoder_targets: np.transpose(d_targets, axes=[1, 0]),
+        decoder_inputs: np.transpose(offset_din, axes=[1, 0]),
         decoder_inputs_length: d_targets_length,
         decoder_targets_raw: d_targets,
+        max_time: d_targets.shape[1], # see offset_din
     }
 
 with tf.Session() as sess:

@@ -18,7 +18,7 @@ print bm.lookup
 
 # Constants
 vocab_size = bm.get_size_vocab()
-encoder_hidden_units = 256
+encoder_hidden_units = 512
 decoder_hidden_units = encoder_hidden_units
 input_dimensions = 20
 input_embedding_size = input_dimensions
@@ -79,8 +79,8 @@ init = tf.global_variables_initializer()
 
 def next_batch(batch_manager, amount=5):
     e_in, e_in_length, d_targets, d_targets_length = batch_manager.next_batch(batch_size=amount)
-    offset_din = bm.offset(d_targets, bm.lookup_letter(EOS))
-    d_targets = bm.offset(d_targets, bm.lookup_letter(PAD), position=-1)
+    offset_din, _ = bm.offset(d_targets, bm.lookup_letter(EOS))
+    d_targets, _ = bm.offset(d_targets, bm.lookup_letter(PAD), position=-1)
 
     return {
         encoder_inputs: np.transpose(e_in, axes=[1, 0, 2]),
@@ -90,7 +90,7 @@ def next_batch(batch_manager, amount=5):
         decoder_targets_raw: d_targets,
         decoder_inputs: offset_din,
         max_time: d_targets.shape[1],
-        batch_size:amount,
+        batch_size: amount,
     }
 
 with tf.Session() as sess:

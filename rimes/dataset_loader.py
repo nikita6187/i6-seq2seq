@@ -171,7 +171,7 @@ class BatchManager:
         else:
             return ''
 
-    def offset(self, data, filler, amount=1, position=0):
+    def offset(self, data, filler, amount=1, position=0, length_vector=None):
         """
         Offsets either at the start or the end of the numpy array the filler object.
         :param data:
@@ -182,7 +182,9 @@ class BatchManager:
         """
         for i in range(0, amount):
             data = np.insert(data, position, filler, axis=1)
-        return data
+            if length_vector is not None:
+                length_vector = np.add(length_vector, np.ones(length_vector.shape))
+        return data, length_vector
 
     def next_batch(self, batch_size, pad=True, pad_outout_extra=3):
         """

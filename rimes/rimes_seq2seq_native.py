@@ -16,7 +16,7 @@ print bm.lookup
 tf.set_random_seed(10)
 vocab_size = bm.get_size_vocab()
 input_embedding_size = 50
-encoder_hidden_units = 256
+encoder_hidden_units = 512
 decoder_hidden_units = encoder_hidden_units * 2  # due to encoder being BiLSTM and decoder being LSTM
 attention_hidden_layer_size = 128
 input_dimensions = 20
@@ -70,7 +70,6 @@ logits = tf.Print(logits, [tf.shape(decoder_targets_raw)], message='Decode targ 
 
 # Loss
 crossent = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=decoder_targets_raw, logits=logits)
-#crossent = tf.nn.softmax_cross_entropy_with_logits(labels=decoder_targets, logits=logits)
 target_weights = tf.sequence_mask(decoder_inputs_length, max_time, dtype=logits.dtype)
 train_loss = (tf.reduce_sum(crossent * target_weights) / tf.to_float(batch_size))
 
@@ -91,7 +90,7 @@ def next_batch(batch_manager, amount=4):
 
     e_in_length = np.full(amount, e_in.shape[1])
     d_targets_length = np.full(amount, d_targets.shape[1])  # for ctc to work
-    offset_din = bm.offset(d_targets, bm.lookup_letter(EOS))
+    offset_din,_ = bm.offset(d_targets, bm.lookup_letter(EOS), amount=1)
 
     return {
         encoder_inputs: e_in,#np.transpose(e_in, axes=[1, 0, 2]),
