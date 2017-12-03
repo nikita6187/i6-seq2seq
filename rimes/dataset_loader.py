@@ -4,6 +4,13 @@ import random
 import collections
 
 
+def handle_ascii(s):
+    if all(ord(c) < 128 for c in s) is True:
+        return s
+    else:
+        return ''
+
+
 def load_from_file(file_name):
     """
     Returns inputs [amount_of_inputs, max_seq_length, input_dim] and targets
@@ -17,33 +24,37 @@ def load_from_file(file_name):
     classes = f['targets']['labels']['classes'].value
     targets_raw = f['targets']['data']['classes'].value
 
-    inputs_processed = []
-    targets_processed = []
+    max_length_input, max_length_target, _ = np.asarray(seq_lengths).max(axis=0)
+    dims = inputs_raw.shape[1]
+
+    inputs_array = np.zeros((len(seq_lengths), max_length_input, dims))
+    inputs_lengths = np.asarray(seq_lengths)[:, 0]
+    targets_array = np.zeros((len(seq_lengths), max_length_target), dtype=np.str_)
+    targets_lengths = np.asarray(seq_lengths)[:, 1]
 
     inputs_pointer = 0  # Used to point to location in list where we are
     targets_pointer = 0
 
     for i in range(0, len(seq_lengths)):
         # First go over the inputs
-        curr_input = []
-        for input in range(inputs_pointer, inputs_pointer+seq_lengths[i][0]):
-            curr_input.append(np.asarray(inputs_raw[input]))
-        inputs_processed.append(np.asarray(curr_input))
+        for input in range(inputs_pointer, inputs_pointer + seq_lengths[i][0]):
+            curr_index = input - inputs_pointer
+            for dim in range(0, dims):
+                inputs_array[i][curr_index][dim] = inputs_raw[input][dim]
         inputs_pointer += seq_lengths[i][0]
 
-        # Then go over the targets
-        curr_target = []
-        for output in range(targets_pointer, targets_pointer+seq_lengths[i][1]):
-            curr_target.append(np.asarray(classes[int(targets_raw[output])]))
+        # Then go over targets
+        for output in range(targets_pointer, targets_pointer + seq_lengths[i][1]):
+            curr_index = output - targets_pointer
+            targets_array[i][curr_index] = handle_ascii(classes[int(targets_raw[output])])
         targets_pointer += seq_lengths[i][1]
-        targets_processed.append(np.asarray(curr_target))
 
     f.close()
 
-    return np.asarray(inputs_processed), np.asarray(targets_processed)
+    return inputs_array, inputs_lengths, targets_array, targets_lengths
 
 
-def shuffle_in_unison(a, b):
+def shuffle_in_unison(a):
     assert len(a) == len(b)
     shuffled_a = np.empty(a.shape, dtype=a.dtype)
     shuffled_b = np.empty(b.shape, dtype=b.dtype)
@@ -52,6 +63,22 @@ def shuffle_in_unison(a, b):
         shuffled_a[new_index] = a[old_index]
         shuffled_b[new_index] = b[old_index]
     return shuffled_a, shuffled_b
+
+
+def shuffle_in_unison_multiple(a):
+    """
+    A is list of numpy arrays that will be shuffled in unison.
+    :param a:
+    :return:
+    """
+    shuffled_a = []
+    for i in range(0,len(a)):
+        shuffled_a.append(np.empty(a[i].shape, dtype=a[i].dtype))
+    permutation = np.random.permutation(len(a[0]))
+    for old_index, new_index in enumerate(permutation):
+        for i in range(0, len(a)):
+            shuffled_a[i][new_index] = a[i][old_index]
+    return shuffled_a
 
 
 def get_max_seq_length(arr):
@@ -103,43 +130,20 @@ def sparse_tuple_from(sequences, dtype=np.int32):
 
 
 class BatchManager:
-    def __init__(self, inputs, targets, buckets):
-        #NOTE: Error happens if bucket_size < batch_size
-        np.random.seed(1)
-        self.inputs, self.targets = sort_based_on_b(inputs, targets)
-        self.inputs_buckets = []
-        self.targets_buckets = []
-        self._current_pos = [0] * (len(buckets)+1)
+    def __init__(self, inputs, inputs_lengths, targets, targets_lengths, eos, pad):
+        #np.random.seed(1)
+        self.inputs = inputs
+        self.targets = targets
+        self.inputs_lengths = inputs_lengths
+        self.targets_lengths = targets_lengths
+        self._current_pos = 0
         self.lookup = []
         self.init_integer_encoding()
-        self.buckets = buckets
-        self.slice_data_into_buckets()
+        self.eos = eos
+        self.pad = pad
+        self.lookup.append(self.eos.lower())
+        self.lookup.append(self.pad.lower())
         self.new_epoch()
-
-    def slice_data_into_buckets(self):
-        # Slices the input/target arrays into the assigned buckets
-        i = 0
-        for bucket in self.buckets:
-            current_arr_in = []
-            current_arr_tg = []
-            while len(self.targets[i]) <= bucket:
-                current_arr_in.append(self.inputs[i])
-                current_arr_tg.append(self.targets[i])
-                i += 1
-            #print 'Bucket ' + str(bucket) + ' is of size ' + str(len(current_arr_in))
-            self.inputs_buckets.append(np.asarray(current_arr_in))
-            self.targets_buckets.append(np.asarray(current_arr_tg))
-
-        # Add the leftover sequences
-        last_bucket_in = []
-        last_bucket_tg = []
-        while i < len(self.targets):
-            last_bucket_in.append(self.inputs[i])
-            last_bucket_tg.append(self.targets[i])
-            i += 1
-        self.inputs_buckets.append(np.asarray(last_bucket_in))
-        self.targets_buckets.append(np.asarray(last_bucket_tg))
-
 
     def init_integer_encoding(self):
         # Go over all outputs and create lookup dictionary
@@ -153,17 +157,6 @@ class BatchManager:
 
     def get_size_vocab(self):
         return len(self.lookup)
-
-    def new_epoch(self):
-        for i in range(len(self.inputs_buckets)):
-            min_t = 30
-            max_t = 0
-            #@todo finish testting
-            #for t in range(len(self.inputs_buckets))
-
-        for i in range(len(self.inputs_buckets)):
-            self._current_pos[i] = 0
-            self.inputs_buckets[i], self.targets_buckets[i] = shuffle_in_unison(self.inputs_buckets[i], self.targets_buckets[i])
 
     def get_letter_from_index(self, index):
         if 0 <= index < len(self.lookup):
@@ -186,7 +179,13 @@ class BatchManager:
                 length_vector = np.add(length_vector, np.ones(length_vector.shape))
         return data, length_vector
 
-    def next_batch(self, batch_size, pad=True, pad_outout_extra=3):
+    def new_epoch(self):
+        self.inputs, self.inputs_lengths, self.targets, self.targets_lengths = shuffle_in_unison_multiple(
+            [self.inputs, self.inputs_lengths, self.targets, self.targets_lengths]
+        )
+        self._current_pos = 0
+
+    def next_batch(self, batch_size, convert_outputs_to_ints=True):
         """
         Returns the next batch of inputs and outputs. Padding with 0 of correct dims in both input and output
         so that batch size is the same.
@@ -195,89 +194,40 @@ class BatchManager:
         :param pad:
         :return:
         """
-        current_bucket_index = random.randrange(0, len(self.buckets)+1)
-        current_in = np.copy(self.inputs_buckets[current_bucket_index])
-        current_target = np.copy(self.targets_buckets[current_bucket_index])
-        inputs_batch = np.copy(current_in[self._current_pos[current_bucket_index]:self._current_pos[current_bucket_index] + batch_size])
-        targets_batch = np.copy(current_target[self._current_pos[current_bucket_index]:self._current_pos[current_bucket_index] + batch_size])
+        inputs_batch = np.copy(self.inputs[self._current_pos:self._current_pos+batch_size])
+        targets_batch_raw = np.copy(self.targets[self._current_pos:self._current_pos+batch_size])
 
-        # Prevent returning objects smaller than batch size, by hoping the next random number doesn't hit small bucket
-        # NOTE: Could lead to fatal error if unlucky
-        if targets_batch.shape[0] < batch_size:
-            return self.next_batch(batch_size, pad=pad, pad_outout_extra=pad_outout_extra)
+        input_lengths = np.copy(self.inputs_lengths[self._current_pos:self._current_pos+batch_size])
+        target_lengths = np.copy(self.targets_lengths[self._current_pos:self._current_pos + batch_size])
 
-        input_lengths = []
-        target_lengths = []
+        if convert_outputs_to_ints is True:
+            targets_batch = np.zeros_like(targets_batch_raw, dtype=np.int32)
+            for target in range(0, targets_batch.shape[0]):
+                for char in range(0, targets_batch[target].shape[0]):
+                    if char < target_lengths[target]:
+                        targets_batch[target][char] = self.lookup_letter(targets_batch_raw[target][char])
+                    else:
+                        targets_batch[target][char] = self.lookup_letter(self.pad)
+        else:
+            targets_batch = targets_batch_raw
 
-        # Pad if needed
-        if pad is True:
-            # First do input padding
-            max_length_i = max(get_max_seq_length(inputs_batch), 200)
-            zero_i = np.zeros_like(inputs_batch[0][0])
-            for i in range(0, len(inputs_batch)):
-                input_lengths.append(len(inputs_batch[i]))
-                for j in range(0, max_length_i):
-                    if j >= len(inputs_batch[i]):
-                        inputs_batch[i] = np.append(inputs_batch[i], [zero_i], axis=0)
+        self._current_pos += batch_size
 
-            # Then do targets
-            max_length_t = get_max_seq_length(targets_batch) + pad_outout_extra
-            zero_t = np.full_like(targets_batch[0][0], -2, dtype=np.int32)
-            for i in range(0, len(targets_batch)):
-                target_lengths.append(len(targets_batch[i]) + pad_outout_extra)
-                for j in range(0, max_length_t):
-                    if j >= len(targets_batch[i]):
-                        targets_batch[i] = np.append(targets_batch[i], [zero_t], axis=0)
-
-            # Hack to get dims right
-            inputs_batch = np.asarray(inputs_batch.tolist())
-            targets_batch = np.asarray(targets_batch.tolist())
-
-        #print self._current_pos[0]
-        self._current_pos[current_bucket_index] += batch_size
-
-        targets_batch_final = np.zeros_like(targets_batch, dtype=np.int32)
-
-        # Convert targets to integers
-        for item in range(len(targets_batch)):
-            for letter in range(len(targets_batch[item])):
-                targets_batch_final[item][letter] = self.lookup_letter(targets_batch[item][letter])
-
-        # Auto run new epoch if needed
-        if self._current_pos[current_bucket_index] >= len(self.inputs_buckets[current_bucket_index]) - batch_size:
+        if self._current_pos >= len(self.inputs):
             self.new_epoch()
 
-        input_lengths = np.asarray(input_lengths)
-        target_lengths = np.asarray(target_lengths)
+        return inputs_batch, input_lengths, targets_batch, target_lengths
 
-        return inputs_batch, input_lengths, targets_batch_final, target_lengths
 
-"""
-a = np.asarray([[1, 1, 1, 1, 1], [1, 1, 1, 1, 2], [1, 1, 1, 1, 3], [1, 1, 1, 1, 4], [1, 1, 1, 1, 5], [1, 1, 1, 1, 6]])
-b = np.asarray([['a'], ['b', 'b'], ['c', 'c', 'c'], ['d','d','d','d'], ['e', 'e', 'e', 'e', 'e'], ['f', 'f', 'f', 'f', 'f', 'f']])
-bm = BatchManager(a, b, buckets=[2, 4])
-bm.lookup.append('-1')
-print bm.lookup
-for i in range(5):
-    ib, tb = bm.next_batch(5)
-    print ib
-    print tb
-"""
 # Example usage
 """
-i, t = load_from_file('train.0010')
-bm = BatchManager(i, t, buckets=[5, 10, 15])
-bm.lookup.append('-1')
-
-a = -1.81057
-b = -1.80862
-"""
-#@TODO: look if input data is being correctly sorted
-
-"""
+i, i_l, t, t_l = load_from_file('train.0010')
+bm = BatchManager(i, i_l, t, t_l, 'EOS', 'PAD')
 print bm.lookup
+
 for i in range(2):
     ib, il, tb, tl = bm.next_batch(1)
-    print ib
+    print tb
+    print tl
 
 """
