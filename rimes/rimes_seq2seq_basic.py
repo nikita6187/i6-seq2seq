@@ -3,9 +3,6 @@ import numpy as np
 from tensorflow.contrib.rnn import LSTMCell, LSTMStateTuple
 import dataset_loader
 
-# TASK: Memorize the provided number sequence and return it again
-
-
 # Load batch manager
 i, i_l, t, t_l = dataset_loader.load_from_file('train.0010')
 bm = dataset_loader.BatchManager(i, i_l, t, t_l, 'EOS', 'PAD')
@@ -26,10 +23,6 @@ decoder_inputs = tf.placeholder(shape=(None, None), dtype=tf.int32, name='decode
 embeddings = tf.Variable(tf.random_uniform([vocab_size, input_embedding_size], -1.0, 1.0), dtype=tf.float32)
 
 decoder_inputs_embedded = tf.nn.embedding_lookup(embeddings, decoder_inputs)
-
-#decoder_inputs_embedded = tf.Print(decoder_inputs_embedded, [tf.shape(encoder_inputs)], message='Encoder ')
-#decoder_inputs_embedded = tf.Print(decoder_inputs_embedded, [tf.shape(decoder_inputs_embedded)], message='Decoder ')
-
 
 # Encoder
 encoder_cell = tf.contrib.rnn.LSTMCell(encoder_hidden_units)
