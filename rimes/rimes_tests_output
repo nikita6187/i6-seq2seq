@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/rimes/rimes_seq2seq_attn.py", line 7, in <module>
+    i, i_l, t, t_l = dataset_loader.load_from_file('train.0010')
+  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/rimes/dataset_loader.py", line 43, in load_from_file
+    inputs_array[i][curr_index][dim] = inputs_raw[input][dim]
+KeyboardInterrupt

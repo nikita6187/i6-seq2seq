@@ -12,7 +12,7 @@ print bm.lookup
 vocab_size = bm.get_size_vocab()
 input_dimensions = 20
 input_embedding_size = 50
-encoder_hidden_units = 256
+encoder_hidden_units = 512
 decoder_hidden_units = encoder_hidden_units * 2  # due to encoder being BiLSTM and decoder being LSTM
 attention_hidden_layer_size = 64
 max_time = 18
@@ -78,13 +78,12 @@ def get_attention_from_current_state(current_state):
         def get_attn_scalars_for_ith_state(i_hidden):
             # Makes a basic 1 layer MLP; current state is the state vectors as a batch, i_hidden is the ith output
             # of the encoder
-            # @TODO: try using cos distance
             #totalinput = tf.concat([sub_current_state, i_hidden], axis=1)
             #o1 = tf.nn.relu(tf.add(tf.matmul(totalinput, attention_W_1), attention_b_1))
             #o2 = tf.add(tf.matmul(o1, attention_W_2), attention_b_2)
             o2 = tf.reduce_sum(tf.multiply(tf.nn.l2_normalize(sub_current_state, 1),
-                                           tf.nn.l2_normalize(i_hidden, 1)), axis=1)
-            o2 = tf.Print(o2, [o2], message='o2 can do ', summarize=100)
+                                           tf.nn.l2_normalize(i_hidden, 1)), axis=1)  # Cosine distance
+            #o2 = tf.Print(o2, [o2], message='o2 can do ', summarize=100)
             return o2
 
         # Makes matrix over raw weights for attention alignment
@@ -93,8 +92,8 @@ def get_attention_from_current_state(current_state):
         return combined_batch#tf.nn.softmax(combined_batch, dim=1)
 
     weights = get_attn_scalars_over_encoder_hidden(current_state)
-    #weights = tf.Print(weights, [tf.argmax(weights, axis=1)], message='Attention weights ', summarize=10)
-    weights = tf.Print(weights, [tf.reduce_max(weights, axis=1)], message='Attention weights 2', summarize=10)
+    #weights = tf.Print(weights, [weights], message='Attention weights ', summarize=1000)
+    #weights = tf.Print(weights, [tf.reduce_max(weights, axis=1)], message='Attention weights 2', summarize=10)
     encoder_outputs_batch_first = tf.transpose(encoder_outputs, perm=[1, 0, 2])
 
     def get_weighted_sum_vector(weights, state_vectors):
@@ -115,6 +114,7 @@ final_b = tf.Variable(tf.zeros([vocab_size]), dtype=tf.float32)
 
 decoder_inputs_ta = tf.TensorArray(dtype=tf.float32, size=max_time)
 decoder_inputs_ta = decoder_inputs_ta.unstack(decoder_inputs_embedded)
+
 
 def loop_fn_initial():
     initial_elements_finished = (0 >= decoder_target_length)
@@ -171,12 +171,10 @@ train_op = tf.train.AdamOptimizer().minimize(loss)
 
 init = tf.global_variables_initializer()
 
-# NOTE: Current hack forces all decoder sequences to go full length
 # @TODO: make this more elegant
 
-# @TODO: why are the last 2 weights of attention always 0
 
-def next_batch(batch_manager, amount=4):
+def next_batch(batch_manager, amount=16):
     e_in, e_in_length, d_targets, d_targets_length = batch_manager.next_batch(batch_size=amount)
     offset_din, _ = bm.offset(d_targets, bm.lookup_letter(bm.eos))
     d_targets, _ = bm.offset(d_targets, bm.lookup_letter(bm.pad), position=-1)
