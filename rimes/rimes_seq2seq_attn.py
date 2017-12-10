@@ -172,7 +172,9 @@ train_op = tf.train.AdamOptimizer().minimize(loss)
 init = tf.global_variables_initializer()
 
 # @TODO: make this more elegant
-
+# @TODO: dataset loader needs to be checked if new epoch is correct
+# @TODO: saver
+# @TODO: dot-attention
 
 def next_batch(batch_manager, amount=16):
     e_in, e_in_length, d_targets, d_targets_length = batch_manager.next_batch(batch_size=amount)
