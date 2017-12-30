@@ -16,7 +16,7 @@ encoder_hidden_units = 512
 decoder_hidden_units = encoder_hidden_units
 attention_hidden_layer_size = 64
 max_time = 18
-batch_size = 4
+batch_size = 1
 
 # ---- Build model ----
 encoder_inputs = tf.placeholder(shape=(None, None, input_dimensions), dtype=tf.float32, name='encoder_inputs')
@@ -46,14 +46,14 @@ encoder_outputs, encoder_state = tf.nn.dynamic_rnn(
 
 decoder_inputs_embedded = tf.Print(decoder_inputs_embedded, [tf.shape(encoder_state)], 'Encoder state shape')
 
-# ---- Decoder -----
-#helper = tf.contrib.seq2seq.TrainingHelper(
-#    decoder_inputs_embedded, decoder_full_length, time_major=True)  # TODO: decoder_full_length is bad for training
+#helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
+#            embedding=embeddings,
+#            start_tokens=tf.tile([40], [batch_size]),
+#            end_token=41)
 
-helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
-            embedding=embeddings,
-            start_tokens=tf.tile([40], [batch_size]),
-            end_token=41)
+# ---- Decoder -----
+helper = tf.contrib.seq2seq.TrainingHelper(
+    decoder_inputs_embedded, decoder_full_length, time_major=True)  # TODO: decoder_full_length is bad for training
 
 attention_states = tf.transpose(encoder_outputs, [1, 0, 2])  # attention_states: [batch_size, max_time, num_units]
 attention_mechanism = tf.contrib.seq2seq.LuongAttention(
@@ -67,7 +67,6 @@ decoder_cell = tf.contrib.seq2seq.AttentionWrapper(
 projection_layer = layers_core.Dense(
     vocab_size, use_bias=False)
 
-print encoder_state
 
 decoder = tf.contrib.seq2seq.BasicDecoder(
     decoder_cell, helper, decoder_cell.zero_state(batch_size, tf.float32).clone(cell_state=encoder_state),
