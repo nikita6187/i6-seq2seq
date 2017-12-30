@@ -44,10 +44,16 @@ encoder_outputs, encoder_state = tf.nn.dynamic_rnn(
     sequence_length=encoder_inputs_length, time_major=True,
     dtype=tf.float32)
 
+decoder_inputs_embedded = tf.Print(decoder_inputs_embedded, [tf.shape(encoder_state)], 'Encoder state shape')
 
 # ---- Decoder -----
-helper = tf.contrib.seq2seq.TrainingHelper(
-    decoder_inputs_embedded, decoder_full_length, time_major=True)  # TODO: decoder_full_length is bad for training
+#helper = tf.contrib.seq2seq.TrainingHelper(
+#    decoder_inputs_embedded, decoder_full_length, time_major=True)  # TODO: decoder_full_length is bad for training
+
+helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
+            embedding=embeddings,
+            start_tokens=tf.tile([40], [batch_size]),
+            end_token=41)
 
 attention_states = tf.transpose(encoder_outputs, [1, 0, 2])  # attention_states: [batch_size, max_time, num_units]
 attention_mechanism = tf.contrib.seq2seq.LuongAttention(
@@ -61,14 +67,17 @@ decoder_cell = tf.contrib.seq2seq.AttentionWrapper(
 projection_layer = layers_core.Dense(
     vocab_size, use_bias=False)
 
+print encoder_state
+
 decoder = tf.contrib.seq2seq.BasicDecoder(
-    decoder_cell, helper, decoder_cell.zero_state(batch_size, tf.float32),
+    decoder_cell, helper, decoder_cell.zero_state(batch_size, tf.float32).clone(cell_state=encoder_state),
     output_layer=projection_layer)
 
 # ---- Training ----
-outputs, _, _ = tf.contrib.seq2seq.dynamic_decode(decoder, output_time_major=True)
+outputs, last_state, _ = tf.contrib.seq2seq.dynamic_decode(decoder, output_time_major=True)
 logits = outputs.rnn_output
 decoder_prediction = outputs.sample_id
+
 
 targets_one_hot = tf.one_hot(decoder_targets, depth=vocab_size, dtype=tf.float32)
 stepwise_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=targets_one_hot, logits=logits)
