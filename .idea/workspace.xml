@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d17a6bc1-5a44-454e-8396-d93488e20b4e" name="Default" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/nikita.xml" afterPath="$PROJECT_DIR$/.idea/dictionaries/nikita.xml" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change beforePath="$PROJECT_DIR$/neural-transducer/neural_transducer.py" afterPath="$PROJECT_DIR$/neural-transducer/neural_transducer.py" />
-      <change beforePath="$PROJECT_DIR$/rimes/rimes_seq2seq_tf.py" afterPath="$PROJECT_DIR$/rimes/rimes_seq2seq_tf.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -14,23 +14,43 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="CoverageDataManager">
-    <SUITE FILE_PATH="coverage/i6_seq2seq$rimes_seq2seq_tf.coverage" NAME="rimes_seq2seq_tf Coverage Results" MODIFIED="1514656219447" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/rimes" />
-    <SUITE FILE_PATH="coverage/i6_seq2seq$neural_transducer.coverage" NAME="neural_transducer Coverage Results" MODIFIED="1514673354313" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/neural-transducer" />
+    <SUITE FILE_PATH="coverage/i6_seq2seq$tf_seq2seq_bugfixing_2.coverage" NAME="tf_seq2seq_bugfixing_2 Coverage Results" MODIFIED="1514827868278" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/rimes" />
+    <SUITE FILE_PATH="coverage/i6_seq2seq$tf_seq2seq_bugfixing.coverage" NAME="tf_seq2seq_bugfixing Coverage Results" MODIFIED="1514891689806" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/rimes" />
+    <SUITE FILE_PATH="coverage/i6_seq2seq$rimes_seq2seq_tf.coverage" NAME="rimes_seq2seq_tf Coverage Results" MODIFIED="1514827052271" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/rimes" />
+    <SUITE FILE_PATH="coverage/i6_seq2seq$neural_transducer.coverage" NAME="neural_transducer Coverage Results" MODIFIED="1514913747461" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/neural-transducer" />
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file leaf-file-name="neural_transducer.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-200">
-              <caret line="21" column="0" lean-forward="true" selection-start-line="21" selection-start-column="0" selection-end-line="21" selection-end-column="0" />
+            <state relative-caret-position="1226">
+              <caret line="334" column="0" lean-forward="true" selection-start-line="334" selection-start-column="0" selection-end-line="334" selection-end-column="0" />
               <folding>
                 <element signature="e#0#23#0" expanded="true" />
-                <element signature="e#1440#3415#0" expanded="false" />
-                <element signature="e#3452#6549#0" expanded="false" />
-                <element signature="e#7784#8667#0" expanded="false" />
-                <element signature="e#8763#9803#0" expanded="false" />
-                <element signature="e#9915#10278#0" expanded="false" />
+                <element signature="e#1801#2388#1" expanded="false" />
+                <element signature="e#2932#4907#0" expanded="false" />
+                <element signature="e#4944#8041#0" expanded="false" />
+                <element signature="e#8558#14553#0" expanded="false" />
+                <element signature="e#9928#10996#0" expanded="false" />
+                <element signature="e#11092#12314#0" expanded="false" />
+                <element signature="e#12576#14170#0" expanded="false" />
+                <element signature="e#14289#14502#0" expanded="false" />
+                <element signature="e#16273#16846#0" expanded="false" />
+                <element signature="e#16911#17495#0" expanded="false" />
+                <element signature="e#17528#17706#0" expanded="false" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="tf_seq2seq_bugfixing.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/rimes/tf_seq2seq_bugfixing.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="540">
+              <caret line="48" column="24" lean-forward="false" selection-start-line="48" selection-start-column="24" selection-end-line="48" selection-end-column="24" />
+              <folding>
+                <element signature="e#0#23#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -39,11 +59,21 @@
       <file leaf-file-name="rimes_seq2seq_tf.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/rimes/rimes_seq2seq_tf.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1380">
-              <caret line="69" column="0" lean-forward="true" selection-start-line="69" selection-start-column="0" selection-end-line="69" selection-end-column="0" />
+            <state relative-caret-position="1840">
+              <caret line="95" column="12" lean-forward="false" selection-start-line="95" selection-start-column="12" selection-end-line="95" selection-end-column="12" />
               <folding>
                 <element signature="e#0#23#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="dataset_loader.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/rimes/dataset_loader.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="3680">
+              <caret line="187" column="8" lean-forward="false" selection-start-line="187" selection-start-column="8" selection-end-line="187" selection-end-column="8" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -70,11 +100,23 @@
       </file>
     </leaf>
   </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
   <component name="FindInProjectRecents">
     <findStrings>
       <find>encoder_outputs</find>
       <find>last_encoder_state</find>
       <find>LSTMData</find>
+      <find>encoder_inputs_length</find>
+      <find>decoder_full_length</find>
+      <find>max_time</find>
+      <find>attention_hidden_layer_size</find>
+      <find>input_dimensions</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -84,6 +126,9 @@
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/rimes/rimes_seq2seq_tf.py" />
+        <option value="$PROJECT_DIR$/rimes/tf_seq2seq_bugfixing.py" />
+        <option value="$PROJECT_DIR$/rimes/tf_seq2seq_bugfixing_2.py" />
+        <option value="$PROJECT_DIR$/neural-transducer/neural_transducer_tests.py" />
         <option value="$PROJECT_DIR$/neural-transducer/neural_transducer.py" />
       </list>
     </option>
@@ -143,7 +188,12 @@
   <component name="PropertiesComponent">
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-    <property name="SearchEverywhereHistoryKey" value="&#9;FILE&#9;file:///home/nikita/i6-seq2seq/rimes/rimes_seq2seq_tf.py" />
+    <property name="SearchEverywhereHistoryKey" value="&#9;FILE&#9;file:///home/nikita/i6-seq2seq/rimes/tf_seq2seq_bugfixing.py" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/rimes" />
+    </key>
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -196,14 +246,56 @@
       <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
     </configuration>
-    <list size="2">
+    <configuration name="tf_seq2seq_bugfixing" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/rimes" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="i6-seq2seq" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/rimes/tf_seq2seq_bugfixing.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+    </configuration>
+    <configuration name="tf_seq2seq_bugfixing_2" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/rimes" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="i6-seq2seq" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/rimes/tf_seq2seq_bugfixing_2.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+    </configuration>
+    <list size="4">
       <item index="0" class="java.lang.String" itemvalue="Python.neural_transducer" />
       <item index="1" class="java.lang.String" itemvalue="Python.rimes_seq2seq_tf" />
+      <item index="2" class="java.lang.String" itemvalue="Python.tf_seq2seq_bugfixing" />
+      <item index="3" class="java.lang.String" itemvalue="Python.tf_seq2seq_bugfixing_2" />
     </list>
     <recent_temporary>
-      <list size="2">
+      <list size="4">
         <item index="0" class="java.lang.String" itemvalue="Python.neural_transducer" />
-        <item index="1" class="java.lang.String" itemvalue="Python.rimes_seq2seq_tf" />
+        <item index="1" class="java.lang.String" itemvalue="Python.tf_seq2seq_bugfixing" />
+        <item index="2" class="java.lang.String" itemvalue="Python.tf_seq2seq_bugfixing_2" />
+        <item index="3" class="java.lang.String" itemvalue="Python.rimes_seq2seq_tf" />
       </list>
     </recent_temporary>
   </component>
@@ -240,7 +332,7 @@
       <window_info id="SciView" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.39957717" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -258,22 +350,150 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="11" />
+      <option name="time" value="18" />
     </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
       <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1700">
+          <caret line="117" column="55" lean-forward="false" selection-start-line="117" selection-start-column="55" selection-end-line="117" selection-end-column="55" />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
+            <element signature="e#1801#2388#1" expanded="false" />
+            <element signature="e#2932#4907#0" expanded="false" />
+            <element signature="e#4944#8041#0" expanded="false" />
+            <element signature="e#8558#14553#0" expanded="false" />
+            <element signature="e#9928#10996#0" expanded="false" />
+            <element signature="e#11092#12314#0" expanded="false" />
+            <element signature="e#12576#14170#0" expanded="false" />
+            <element signature="e#14289#14502#0" expanded="false" />
+            <element signature="e#16273#16846#0" expanded="false" />
+            <element signature="e#16911#17495#0" expanded="false" />
+            <element signature="e#17528#17706#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rimes/rimes_seq2seq_tf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1840">
+          <caret line="95" column="12" lean-forward="true" selection-start-line="95" selection-start-column="12" selection-end-line="95" selection-end-column="12" />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rimes/tf_seq2seq_bugfixing_2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1460">
+          <caret line="75" column="19" lean-forward="true" selection-start-line="0" selection-start-column="0" selection-end-line="105" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#23#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rimes/dataset_loader.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3680">
+          <caret line="187" column="8" lean-forward="false" selection-start-line="187" selection-start-column="8" selection-end-line="187" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/.local/lib/python2.7/site-packages/tensorflow/contrib/seq2seq/python/ops/decoder.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="5340">
+          <caret line="285" column="0" lean-forward="false" selection-start-line="285" selection-start-column="0" selection-end-line="285" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/.local/lib/python2.7/site-packages/tensorflow/python/ops/control_flow_ops.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="11540">
+          <caret line="577" column="0" lean-forward="false" selection-start-line="577" selection-start-column="0" selection-end-line="577" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rimes/tf_seq2seq_bugfixing.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="940">
+          <caret line="48" column="24" lean-forward="true" selection-start-line="48" selection-start-column="24" selection-end-line="48" selection-end-column="24" />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
+            <element signature="e#1801#2388#1" expanded="false" />
+            <element signature="e#2932#4907#0" expanded="false" />
+            <element signature="e#4944#8041#0" expanded="false" />
+            <element signature="e#8558#14553#0" expanded="false" />
+            <element signature="e#9928#10996#0" expanded="false" />
+            <element signature="e#11092#12314#0" expanded="false" />
+            <element signature="e#12576#14170#0" expanded="false" />
+            <element signature="e#14289#14502#0" expanded="false" />
+            <element signature="e#16273#16846#0" expanded="false" />
+            <element signature="e#16911#17495#0" expanded="false" />
+            <element signature="e#17528#17706#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rimes/rimes_seq2seq_tf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1320">
+          <caret line="69" column="0" lean-forward="true" selection-start-line="69" selection-start-column="0" selection-end-line="69" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/.local/lib/python2.7/site-packages/tensorflow/contrib/seq2seq/python/ops/decoder.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="5340">
+          <caret line="285" column="0" lean-forward="false" selection-start-line="285" selection-start-column="0" selection-end-line="285" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/.local/lib/python2.7/site-packages/tensorflow/python/ops/control_flow_ops.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="11540">
+          <caret line="577" column="0" lean-forward="false" selection-start-line="577" selection-start-column="0" selection-end-line="577" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
+      <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1760">
           <caret line="104" column="35" lean-forward="false" selection-start-line="104" selection-start-column="12" selection-end-line="104" selection-end-column="35" />
           <folding>
             <element signature="e#0#23#0" expanded="true" />
-            <element signature="e#1440#3415#0" expanded="false" />
-            <element signature="e#3452#6549#0" expanded="false" />
-            <element signature="e#7784#8667#0" expanded="false" />
-            <element signature="e#8763#9803#0" expanded="false" />
-            <element signature="e#9915#10278#0" expanded="false" />
+            <element signature="e#1801#2388#1" expanded="false" />
+            <element signature="e#2932#4907#0" expanded="false" />
+            <element signature="e#4944#8041#0" expanded="false" />
+            <element signature="e#8558#14553#0" expanded="false" />
+            <element signature="e#9928#10996#0" expanded="false" />
+            <element signature="e#11092#12314#0" expanded="false" />
+            <element signature="e#12576#14170#0" expanded="false" />
+            <element signature="e#14289#14502#0" expanded="false" />
+            <element signature="e#16273#16846#0" expanded="false" />
+            <element signature="e#16911#17495#0" expanded="false" />
+            <element signature="e#17528#17706#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -310,11 +530,17 @@
           <caret line="90" column="31" lean-forward="false" selection-start-line="90" selection-start-column="31" selection-end-line="90" selection-end-column="31" />
           <folding>
             <element signature="e#0#23#0" expanded="true" />
-            <element signature="e#1440#3415#0" expanded="false" />
-            <element signature="e#3452#6549#0" expanded="false" />
-            <element signature="e#7784#8667#0" expanded="false" />
-            <element signature="e#8763#9803#0" expanded="false" />
-            <element signature="e#9915#10278#0" expanded="false" />
+            <element signature="e#1801#2388#1" expanded="false" />
+            <element signature="e#2932#4907#0" expanded="false" />
+            <element signature="e#4944#8041#0" expanded="false" />
+            <element signature="e#8558#14553#0" expanded="false" />
+            <element signature="e#9928#10996#0" expanded="false" />
+            <element signature="e#11092#12314#0" expanded="false" />
+            <element signature="e#12576#14170#0" expanded="false" />
+            <element signature="e#14289#14502#0" expanded="false" />
+            <element signature="e#16273#16846#0" expanded="false" />
+            <element signature="e#16911#17495#0" expanded="false" />
+            <element signature="e#17528#17706#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -351,11 +577,17 @@
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
             <element signature="e#0#23#0" expanded="true" />
-            <element signature="e#1440#3415#0" expanded="false" />
-            <element signature="e#3452#6549#0" expanded="false" />
-            <element signature="e#7784#8667#0" expanded="false" />
-            <element signature="e#8763#9803#0" expanded="false" />
-            <element signature="e#9915#10278#0" expanded="false" />
+            <element signature="e#1801#2388#1" expanded="false" />
+            <element signature="e#2932#4907#0" expanded="false" />
+            <element signature="e#4944#8041#0" expanded="false" />
+            <element signature="e#8558#14553#0" expanded="false" />
+            <element signature="e#9928#10996#0" expanded="false" />
+            <element signature="e#11092#12314#0" expanded="false" />
+            <element signature="e#12576#14170#0" expanded="false" />
+            <element signature="e#14289#14502#0" expanded="false" />
+            <element signature="e#16273#16846#0" expanded="false" />
+            <element signature="e#16911#17495#0" expanded="false" />
+            <element signature="e#17528#17706#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -376,11 +608,17 @@
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
             <element signature="e#0#23#0" expanded="true" />
-            <element signature="e#1440#3415#0" expanded="false" />
-            <element signature="e#3452#6549#0" expanded="false" />
-            <element signature="e#7784#8667#0" expanded="false" />
-            <element signature="e#8763#9803#0" expanded="false" />
-            <element signature="e#9915#10278#0" expanded="false" />
+            <element signature="e#1801#2388#1" expanded="false" />
+            <element signature="e#2932#4907#0" expanded="false" />
+            <element signature="e#4944#8041#0" expanded="false" />
+            <element signature="e#8558#14553#0" expanded="false" />
+            <element signature="e#9928#10996#0" expanded="false" />
+            <element signature="e#11092#12314#0" expanded="false" />
+            <element signature="e#12576#14170#0" expanded="false" />
+            <element signature="e#14289#14502#0" expanded="false" />
+            <element signature="e#16273#16846#0" expanded="false" />
+            <element signature="e#16911#17495#0" expanded="false" />
+            <element signature="e#17528#17706#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -425,10 +663,46 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/rimes/dataset_loader.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3680">
+          <caret line="187" column="8" lean-forward="false" selection-start-line="187" selection-start-column="8" selection-end-line="187" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/rimes/rimes_seq2seq_tf.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1380">
-          <caret line="69" column="0" lean-forward="true" selection-start-line="69" selection-start-column="0" selection-end-line="69" selection-end-column="0" />
+        <state relative-caret-position="1840">
+          <caret line="95" column="12" lean-forward="false" selection-start-line="95" selection-start-column="12" selection-end-line="95" selection-end-column="12" />
+          <folding>
+            <element signature="e#0#23#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rimes/tf_seq2seq_bugfixing_2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1460">
+          <caret line="75" column="19" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="105" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#23#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer_tests.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="60">
+          <caret line="3" column="0" lean-forward="false" selection-start-line="3" selection-start-column="0" selection-end-line="3" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rimes/tf_seq2seq_bugfixing.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="540">
+          <caret line="48" column="24" lean-forward="false" selection-start-line="48" selection-start-column="24" selection-end-line="48" selection-end-column="24" />
           <folding>
             <element signature="e#0#23#0" expanded="true" />
           </folding>
@@ -437,15 +711,21 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-200">
-          <caret line="21" column="0" lean-forward="true" selection-start-line="21" selection-start-column="0" selection-end-line="21" selection-end-column="0" />
+        <state relative-caret-position="1226">
+          <caret line="334" column="0" lean-forward="true" selection-start-line="334" selection-start-column="0" selection-end-line="334" selection-end-column="0" />
           <folding>
             <element signature="e#0#23#0" expanded="true" />
-            <element signature="e#1440#3415#0" expanded="false" />
-            <element signature="e#3452#6549#0" expanded="false" />
-            <element signature="e#7784#8667#0" expanded="false" />
-            <element signature="e#8763#9803#0" expanded="false" />
-            <element signature="e#9915#10278#0" expanded="false" />
+            <element signature="e#1801#2388#1" expanded="false" />
+            <element signature="e#2932#4907#0" expanded="false" />
+            <element signature="e#4944#8041#0" expanded="false" />
+            <element signature="e#8558#14553#0" expanded="false" />
+            <element signature="e#9928#10996#0" expanded="false" />
+            <element signature="e#11092#12314#0" expanded="false" />
+            <element signature="e#12576#14170#0" expanded="false" />
+            <element signature="e#14289#14502#0" expanded="false" />
+            <element signature="e#16273#16846#0" expanded="false" />
+            <element signature="e#16911#17495#0" expanded="false" />
+            <element signature="e#17528#17706#0" expanded="false" />
           </folding>
         </state>
       </provider>

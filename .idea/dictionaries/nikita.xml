@@ -2,6 +2,7 @@
   <dictionary name="nikita">
     <words>
       <w>logits</w>
+      <w>probs</w>
     </words>
   </dictionary>
 </component>
