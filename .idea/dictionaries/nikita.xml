@@ -3,6 +3,7 @@
     <words>
       <w>logits</w>
       <w>probs</w>
+      <w>softmax</w>
       <w>transuder</w>
     </words>
   </dictionary>
