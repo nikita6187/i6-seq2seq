@@ -493,7 +493,13 @@ init = tf.global_variables_initializer()
 with tf.Session() as sess:
     sess.run(init)
 
-    # TODO: "may not be fed" error comes something from line 498 in build_full_transducer
+    # Uncomment the following 5 lines to see error, we get an error in line 510/511 for some reason though
+    """inp_max_blocks, inp_inputs_full_raw, inp_trans_list_out, out_outputs, enc_out = build_full_transducer()
+    print sess.run([enc_out, out_outputs], feed_dict={
+        inp_max_blocks: 3,
+        inp_inputs_full_raw: np.ones(shape=(3 * input_block_size, 1, input_dimensions)),
+        inp_trans_list_out: [1, 3, 2]
+    })"""
 
     # Build training op
     # inp_max_blocks, inp_inputs_full_raw, inp_trans_list_out, out_outputs, enc_out = build_full_transducer()
@@ -507,6 +513,7 @@ with tf.Session() as sess:
                               inp_trans_list_out=inp_trans_list_out, inp_targets=targets, out_train_op=train_op,
                               out_loss=loss)
     """
+
     print get_alignment(session=sess, inputs=np.ones(shape=(3 * input_block_size, 1, input_dimensions)),
                         input_block_size=input_block_size, targets=[1, 1, 1, 1], transducer_max_width=2)
 
