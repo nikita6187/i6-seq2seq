@@ -2,8 +2,10 @@ import tensorflow as tf
 from tensorflow.contrib.rnn import LSTMCell, LSTMStateTuple
 from tensorflow.python.layers import core as layers_core
 import numpy as np
-import helpers
 import copy
+
+# Current bug in line 369 in BuildFullTransducer, tensors are sometimes not evaluated, and sometimes only evaluated
+# when using the TF Print function (???), see: https://github.com/tensorflow/tensorflow/issues/15851
 
 # NOTE: Time major
 
@@ -364,7 +366,6 @@ def build_full_transducer():
 
         # TODO: Error is SOMETIMES gone when using tf.Print
         current_block = tf.Print(current_block, [model.encoder_inputs], message='Enc in: ')
-        #current_block = tf.Print(current_block, [model.encoder_outputs], message='Enc out: ')
 
         # Flow data from encoder to transducer
         model.encoder_raw_outputs = model.encoder_raw_outputs.assign(model.encoder_outputs)
@@ -495,16 +496,17 @@ with tf.Session() as sess:
     # TODO: "may not be fed" error comes something from line 498 in build_full_transducer
 
     # Build training op
-    inp_max_blocks, inp_inputs_full_raw, inp_trans_list_out, out_outputs, enc_out = build_full_transducer()
-    targets, train_op, loss = build_training_step(out_outputs)
+    # inp_max_blocks, inp_inputs_full_raw, inp_trans_list_out, out_outputs, enc_out = build_full_transducer()
+    # targets, train_op, loss = build_training_step(out_outputs)
 
     # Apply training step
+    """
     print apply_training_step(session=sess, inputs=np.ones(shape=(3 * input_block_size, 1, input_dimensions)),
                               input_block_size=input_block_size, targets=[1, 1, 1, 1], transducer_max_width=2,
                               inp_max_blocks=inp_max_blocks, inp_inputs_full_raw=inp_inputs_full_raw,
                               inp_trans_list_out=inp_trans_list_out, inp_targets=targets, out_train_op=train_op,
                               out_loss=loss)
-
+    """
     print get_alignment(session=sess, inputs=np.ones(shape=(3 * input_block_size, 1, input_dimensions)),
                         input_block_size=input_block_size, targets=[1, 1, 1, 1], transducer_max_width=2)
 
