@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d17a6bc1-5a44-454e-8396-d93488e20b4e" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change beforePath="$PROJECT_DIR$/neural-transducer/neural_transducer.py" afterPath="$PROJECT_DIR$/neural-transducer/neural_transducer.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -23,9 +22,10 @@
       <file leaf-file-name="neural_transducer.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-2780">
-              <caret line="3" column="18" lean-forward="false" selection-start-line="3" selection-start-column="18" selection-end-line="3" selection-end-column="18" />
+            <state relative-caret-position="120">
+              <caret line="6" column="25" lean-forward="false" selection-start-line="6" selection-start-column="25" selection-end-line="6" selection-end-column="25" />
               <folding>
+                <element signature="e#0#23#0" expanded="true" />
                 <element signature="e#826#3005#0" expanded="false" />
                 <element signature="e#2055#2642#1" expanded="false" />
                 <element signature="e#3645#5682#0" expanded="false" />
@@ -385,6 +385,7 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
+            <element signature="e#0#23#0" expanded="true" />
             <element signature="e#826#3005#0" expanded="false" />
             <element signature="e#2055#2642#1" expanded="false" />
             <element signature="e#3645#5682#0" expanded="false" />
@@ -452,6 +453,7 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
+            <element signature="e#0#23#0" expanded="true" />
             <element signature="e#826#3005#0" expanded="false" />
             <element signature="e#2055#2642#1" expanded="false" />
             <element signature="e#3645#5682#0" expanded="false" />
@@ -509,6 +511,7 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
+            <element signature="e#0#23#0" expanded="true" />
             <element signature="e#826#3005#0" expanded="false" />
             <element signature="e#2055#2642#1" expanded="false" />
             <element signature="e#3645#5682#0" expanded="false" />
@@ -566,6 +569,7 @@
         <state relative-caret-position="1700">
           <caret line="117" column="55" lean-forward="false" selection-start-line="117" selection-start-column="55" selection-end-line="117" selection-end-column="55" />
           <folding>
+            <element signature="e#0#23#0" expanded="true" />
             <element signature="e#826#3005#0" expanded="false" />
             <element signature="e#2055#2642#1" expanded="false" />
             <element signature="e#3645#5682#0" expanded="false" />
@@ -637,6 +641,7 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
+            <element signature="e#0#23#0" expanded="true" />
             <element signature="e#826#3005#0" expanded="false" />
             <element signature="e#2055#2642#1" expanded="false" />
             <element signature="e#3645#5682#0" expanded="false" />
@@ -686,6 +691,7 @@
         <state relative-caret-position="1760">
           <caret line="104" column="35" lean-forward="false" selection-start-line="104" selection-start-column="12" selection-end-line="104" selection-end-column="35" />
           <folding>
+            <element signature="e#0#23#0" expanded="true" />
             <element signature="e#826#3005#0" expanded="false" />
             <element signature="e#2055#2642#1" expanded="false" />
             <element signature="e#3645#5682#0" expanded="false" />
@@ -735,6 +741,7 @@
         <state relative-caret-position="1480">
           <caret line="90" column="31" lean-forward="false" selection-start-line="90" selection-start-column="31" selection-end-line="90" selection-end-column="31" />
           <folding>
+            <element signature="e#0#23#0" expanded="true" />
             <element signature="e#826#3005#0" expanded="false" />
             <element signature="e#2055#2642#1" expanded="false" />
             <element signature="e#3645#5682#0" expanded="false" />
@@ -784,6 +791,7 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
+            <element signature="e#0#23#0" expanded="true" />
             <element signature="e#826#3005#0" expanded="false" />
             <element signature="e#2055#2642#1" expanded="false" />
             <element signature="e#3645#5682#0" expanded="false" />
@@ -817,6 +825,7 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
+            <element signature="e#0#23#0" expanded="true" />
             <element signature="e#826#3005#0" expanded="false" />
             <element signature="e#2055#2642#1" expanded="false" />
             <element signature="e#3645#5682#0" expanded="false" />
@@ -921,9 +930,10 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-2780">
-          <caret line="3" column="18" lean-forward="false" selection-start-line="3" selection-start-column="18" selection-end-line="3" selection-end-column="18" />
+        <state relative-caret-position="120">
+          <caret line="6" column="25" lean-forward="false" selection-start-line="6" selection-start-column="25" selection-end-line="6" selection-end-column="25" />
           <folding>
+            <element signature="e#0#23#0" expanded="true" />
             <element signature="e#826#3005#0" expanded="false" />
             <element signature="e#2055#2642#1" expanded="false" />
             <element signature="e#3645#5682#0" expanded="false" />

@@ -4,7 +4,7 @@ from tensorflow.python.layers import core as layers_core
 import numpy as np
 import copy
 
-# Current bug in line 369 in BuildFullTransducer, tensors are sometimes not evaluated, and sometimes only evaluated
+# Current bug in line 368 in BuildFullTransducer, tensors are sometimes not evaluated, and sometimes only evaluated
 # when using the TF Print function (???), see: https://github.com/tensorflow/tensorflow/issues/15851
 
 # NOTE: Time major
