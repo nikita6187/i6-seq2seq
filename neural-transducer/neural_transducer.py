@@ -379,7 +379,7 @@ def build_full_transducer():
 
         return current_block + 1, outputs_int, model.encoder_hidden_state_new, model.transducer_hidden_state_new
 
-    _, outputs_final, _, _ = tf.while_loop(cond, body, init_state)
+    _, outputs_final, _, _ = tf.while_loop(cond, body, init_state, parallel_iterations=1)
 
     # Process outputs
     outputs = outputs_final.stack()  # Now the outputs are of shape [block, amount_of_trans_out, batch_size, vocab]
@@ -494,12 +494,12 @@ with tf.Session() as sess:
     sess.run(init)
 
     # Uncomment the following 5 lines to see error, we get an error in line 510/511 for some reason though
-    """inp_max_blocks, inp_inputs_full_raw, inp_trans_list_out, out_outputs, enc_out = build_full_transducer()
+    inp_max_blocks, inp_inputs_full_raw, inp_trans_list_out, out_outputs, enc_out = build_full_transducer()
     print sess.run([enc_out, out_outputs], feed_dict={
         inp_max_blocks: 3,
         inp_inputs_full_raw: np.ones(shape=(3 * input_block_size, 1, input_dimensions)),
         inp_trans_list_out: [1, 3, 2]
-    })"""
+    })
 
     # Build training op
     # inp_max_blocks, inp_inputs_full_raw, inp_trans_list_out, out_outputs, enc_out = build_full_transducer()
@@ -513,7 +513,8 @@ with tf.Session() as sess:
                               inp_trans_list_out=inp_trans_list_out, inp_targets=targets, out_train_op=train_op,
                               out_loss=loss)
     """
-
+    """
     print get_alignment(session=sess, inputs=np.ones(shape=(3 * input_block_size, 1, input_dimensions)),
                         input_block_size=input_block_size, targets=[1, 1, 1, 1], transducer_max_width=2)
+    """
 
