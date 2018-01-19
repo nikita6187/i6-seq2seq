@@ -67,102 +67,140 @@ class Alignment(object):
 embeddings = tf.Variable(tf.random_uniform([vocab_size, input_embedding_size], -1.0, 1.0), dtype=tf.float32)
 
 
+# TODO: add/redo documentation
+# TODO: add assertions for correct format for Neural Transducer
+
 class Model(object):
     def __init__(self):
-        self.encoder_inputs, self.encoder_inputs_length, self.encoder_hidden_state, \
-        self.encoder_outputs, self.encoder_hidden_state_new = self.build_encoder_model()
-        self.encoder_raw_outputs, self.trans_hidden_state, self.transducer_amount_outputs, \
-        self.transducer_hidden_state_new, self.logits, self.decoder_prediction = self.build_transducer_model()
+        self.max_blocks, self.inputs_full_raw, self.transducer_list_outputs, self.start_block, self.encoder_hidden_init,\
+            self.trans_hidden_init, self.logits, self.encoder_hidden_state_new, \
+            self.transducer_hidden_state_new = self.build_full_transducer()
 
-    def build_encoder_model(self):
-        encoder_inputs = tf.Variable(tf.zeros(shape=(input_block_size, batch_size, input_dimensions)),
-                                     dtype=tf.float32, name='encoder_inputs', trainable=False)
-        encoder_inputs_length = tf.Variable([tf.shape(encoder_inputs)[0]], dtype=tf.int32,
-                                            name='encoder_inputs_length', trainable=False)
-        encoder_hidden_state = tf.Variable(tf.zeros(shape=(2, 1, encoder_hidden_units)), dtype=tf.float32,
-                                           name='encoder_hidden_state')  # Save the state as one tensor
+    def build_full_transducer(self):
 
-        if inputs_embedded is True:
-            encoder_inputs_embedded = encoder_inputs
-        else:
-            encoder_inputs_embedded = tf.nn.embedding_lookup(embeddings, encoder_inputs)
+        # Inputs
+        max_blocks = tf.placeholder(dtype=tf.int32, name='max_blocks')  # total amount of blocks to go through
+        inputs_full_raw = tf.placeholder(shape=(None, batch_size, input_dimensions), dtype=tf.float32,
+                                         name='inputs_full_raw')  # shape [max_time, 1, input_dims]
+        transducer_list_outputs = tf.placeholder(shape=(None,), dtype=tf.int32,
+                                                 name='transducer_list_outputs')  # amount to output per block
+        start_block = tf.placeholder(dtype=tf.int32, name='transducer_start_block')  # where to start the input
 
-        # Build model
-        encoder_cell = tf.contrib.rnn.LSTMCell(encoder_hidden_units)
+        encoder_hidden_init = tf.placeholder(shape=(2, 1, encoder_hidden_units), dtype=tf.float32,
+                                             name='encoder_hidden_init')
+        trans_hidden_init = tf.placeholder(shape=(2, 1, transducer_hidden_units), dtype=tf.float32,
+                                           name='trans_hidden_init')
 
-        # Build previous state
-        encoder_hidden_c, encoder_hidden_h = tf.split(encoder_hidden_state, num_or_size_splits=2, axis=0)
-        encoder_hidden_c = tf.reshape(encoder_hidden_c, shape=[-1, encoder_hidden_units])
-        encoder_hidden_h = tf.reshape(encoder_hidden_h, shape=[-1, encoder_hidden_units])
-        encoder_hidden_state_t = LSTMStateTuple(encoder_hidden_c, encoder_hidden_h)
+        # Turn inputs into tensor which is easily readable
+        inputs_full = tf.reshape(inputs_full_raw, shape=[-1, input_block_size, batch_size, input_dimensions])
 
-        #   encoder_outputs: [max_time, batch_size, num_units]
-        encoder_outputs, encoder_hidden_state_new = tf.nn.dynamic_rnn(
-            encoder_cell, encoder_inputs_embedded,
-            sequence_length=encoder_inputs_length, time_major=True,
-            dtype=tf.float32, initial_state=encoder_hidden_state_t)
+        # Outputs
+        outputs_ta = tf.TensorArray(dtype=tf.float32, size=max_blocks)
 
-        # Modify output of encoder_hidden_state_new so that it can be fed back in again without problems.
-        encoder_hidden_state_new = tf.concat([encoder_hidden_state_new.c, encoder_hidden_state_new.h], axis=0)
-        encoder_hidden_state_new = tf.reshape(encoder_hidden_state_new, shape=[2, -1, encoder_hidden_units])
+        # Hidden states
+        # TODO: make these correct
+        # encoder_hidden_init = tf.ones(shape=(2, 1, encoder_hidden_units))
+        # trans_hidden_init = tf.ones(shape=(2, 1, transducer_hidden_units))
 
-        return encoder_inputs, encoder_inputs_length, encoder_hidden_state, encoder_outputs, encoder_hidden_state_new
+        init_state = (start_block, outputs_ta, encoder_hidden_init, trans_hidden_init)
 
-    def build_transducer_model(self):
-        encoder_raw_outputs = tf.Variable(tf.zeros(shape=(input_block_size, 1, encoder_hidden_units)),
-                                          dtype=tf.float32,
-                                          name='encoder_raw_outputs')
-        trans_hidden_state = tf.Variable(tf.zeros(shape=(2, 1, transducer_hidden_units)),
-                                         dtype=tf.float32,
-                                         name='trans_hidden_state')  # Save the state as one tensor
-        transducer_amount_outputs = tf.Variable(0, dtype=tf.int32, name='transducer_amount_outputs',
-                                                trainable=False)
+        def cond(current_block, outputs_int, encoder_hidden, trans_hidden):
+            return current_block < start_block + max_blocks
 
-        # Model building
-        helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
-            embedding=embeddings,
-            start_tokens=tf.tile([GO_SYMBOL], [batch_size]),
-            end_token=END_SYMBOL)
+        def body(current_block, outputs_int, encoder_hidden, trans_hidden):
 
-        attention_states = tf.transpose(encoder_raw_outputs,
-                                        [1, 0, 2])  # attention_states: [batch_size, max_time, num_units]
+            # --------------------- ENCODER -------------------------------------------------------------------------
 
-        attention_mechanism = tf.contrib.seq2seq.LuongAttention(
-            encoder_hidden_units, attention_states)
+            encoder_inputs = inputs_full[current_block - start_block]
+            encoder_inputs_length = [tf.shape(encoder_inputs)[0]]
+            encoder_hidden_state = encoder_hidden
 
-        decoder_cell = tf.contrib.seq2seq.AttentionWrapper(
-            tf.contrib.rnn.LSTMCell(transducer_hidden_units),
-            attention_mechanism,
-            attention_layer_size=transducer_hidden_units)
+            if inputs_embedded is True:
+                encoder_inputs_embedded = encoder_inputs
+            else:
+                encoder_inputs_embedded = tf.nn.embedding_lookup(embeddings, encoder_inputs)
 
-        projection_layer = layers_core.Dense(vocab_size, use_bias=False)
+            # Build model
+            encoder_cell = tf.contrib.rnn.LSTMCell(encoder_hidden_units)
 
-        # Build previous state
-        trans_hidden_c, trans_hidden_h = tf.split(trans_hidden_state, num_or_size_splits=2, axis=0)
-        trans_hidden_c = tf.reshape(trans_hidden_c, shape=[-1, transducer_hidden_units])
-        trans_hidden_h = tf.reshape(trans_hidden_h, shape=[-1, transducer_hidden_units])
-        trans_hidden_state_t = LSTMStateTuple(trans_hidden_c, trans_hidden_h)
+            # Build previous state
+            encoder_hidden_c, encoder_hidden_h = tf.split(encoder_hidden_state, num_or_size_splits=2, axis=0)
+            encoder_hidden_c = tf.reshape(encoder_hidden_c, shape=[-1, encoder_hidden_units])
+            encoder_hidden_h = tf.reshape(encoder_hidden_h, shape=[-1, encoder_hidden_units])
+            encoder_hidden_state_t = LSTMStateTuple(encoder_hidden_c, encoder_hidden_h)
 
-        decoder = tf.contrib.seq2seq.BasicDecoder(
-            decoder_cell, helper,
-            decoder_cell.zero_state(1, tf.float32).clone(cell_state=trans_hidden_state_t),
-            output_layer=projection_layer)
+            #   encoder_outputs: [max_time, batch_size, num_units]
+            encoder_outputs, encoder_hidden_state_new = tf.nn.dynamic_rnn(
+                encoder_cell, encoder_inputs_embedded,
+                sequence_length=encoder_inputs_length, time_major=True,
+                dtype=tf.float32, initial_state=encoder_hidden_state_t)
 
-        outputs, transducer_hidden_state_new, _ = tf.contrib.seq2seq.dynamic_decode(decoder,
-                                                                                    output_time_major=True,
-                                                                                    maximum_iterations=transducer_amount_outputs)
-        logits = outputs.rnn_output  # logits of shape [max_time,batch_size,vocab_size]
-        decoder_prediction = outputs.sample_id  # For debugging
+            # Modify output of encoder_hidden_state_new so that it can be fed back in again without problems.
+            encoder_hidden_state_new = tf.concat([encoder_hidden_state_new.c, encoder_hidden_state_new.h], axis=0)
+            encoder_hidden_state_new = tf.reshape(encoder_hidden_state_new, shape=[2, -1, encoder_hidden_units])
 
-        # Modify output of transducer_hidden_state_new so that it can be fed back in again without problems.
-        transducer_hidden_state_new = tf.concat(
-            [transducer_hidden_state_new[0].c, transducer_hidden_state_new[0].h],
-            axis=0)
-        transducer_hidden_state_new = tf.reshape(transducer_hidden_state_new,
-                                                 shape=[2, -1, transducer_hidden_units])
+            # --------------------- TRANSDUCER -----------------------------------------------------------------------
+            encoder_raw_outputs = encoder_outputs
+            trans_hidden_state = trans_hidden  # Save/load the state as one tensor
+            transducer_amount_outputs = transducer_list_outputs[current_block - start_block]
 
-        return encoder_raw_outputs, trans_hidden_state, transducer_amount_outputs, transducer_hidden_state_new, \
-               logits, decoder_prediction
+            # Model building
+            helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
+                embedding=embeddings,
+                start_tokens=tf.tile([GO_SYMBOL], [batch_size]),
+                end_token=END_SYMBOL)
+
+            attention_states = tf.transpose(encoder_raw_outputs,
+                                            [1, 0, 2])  # attention_states: [batch_size, max_time, num_units]
+
+            attention_mechanism = tf.contrib.seq2seq.LuongAttention(
+                encoder_hidden_units, attention_states)
+
+            decoder_cell = tf.contrib.seq2seq.AttentionWrapper(
+                tf.contrib.rnn.LSTMCell(transducer_hidden_units),
+                attention_mechanism,
+                attention_layer_size=transducer_hidden_units)
+
+            projection_layer = layers_core.Dense(vocab_size, use_bias=False)
+
+            # Build previous state
+            trans_hidden_c, trans_hidden_h = tf.split(trans_hidden_state, num_or_size_splits=2, axis=0)
+            trans_hidden_c = tf.reshape(trans_hidden_c, shape=[-1, transducer_hidden_units])
+            trans_hidden_h = tf.reshape(trans_hidden_h, shape=[-1, transducer_hidden_units])
+            trans_hidden_state_t = LSTMStateTuple(trans_hidden_c, trans_hidden_h)
+
+            decoder = tf.contrib.seq2seq.BasicDecoder(
+                decoder_cell, helper,
+                decoder_cell.zero_state(1, tf.float32).clone(cell_state=trans_hidden_state_t),
+                output_layer=projection_layer)
+
+            outputs, transducer_hidden_state_new, _ = tf.contrib.seq2seq.dynamic_decode(decoder,
+                                                                                        output_time_major=True,
+                                                                                        maximum_iterations=transducer_amount_outputs)
+            logits = outputs.rnn_output  # logits of shape [max_time,batch_size,vocab_size]
+            decoder_prediction = outputs.sample_id  # For debugging
+
+            # Modify output of transducer_hidden_state_new so that it can be fed back in again without problems.
+            transducer_hidden_state_new = tf.concat(
+                [transducer_hidden_state_new[0].c, transducer_hidden_state_new[0].h],
+                axis=0)
+            transducer_hidden_state_new = tf.reshape(transducer_hidden_state_new,
+                                                     shape=[2, -1, transducer_hidden_units])
+
+            # Note the outputs
+            outputs_int = outputs_int.write(current_block - start_block, logits)
+
+            return current_block + 1, outputs_int, encoder_hidden_state_new, transducer_hidden_state_new
+
+        _, outputs_final, encoder_hidden_state_new, transducer_hidden_state_new = \
+            tf.while_loop(cond, body, init_state, parallel_iterations=1)
+
+        # Process outputs
+        outputs = outputs_final.stack()  # Now the outputs are of shape [block, amount_of_trans_out, batch_size, vocab]
+        logits = tf.reshape(outputs, shape=(-1, 1, vocab_size))  # And now its [max_output_time, batch_size, vocab]
+
+        return max_blocks, inputs_full_raw, transducer_list_outputs, start_block, encoder_hidden_init, \
+               trans_hidden_init, logits, encoder_hidden_state_new, transducer_hidden_state_new
 
 
 def softmax(x, axis=None):
@@ -192,7 +230,7 @@ def get_alignment(session, inputs, targets, input_block_size, transducer_max_wid
     # TODO: Manage variables                        [p, d1]
     # TODO: block_index etc. to start at index 1    [p, d]
 
-    def run_new_block(session, block_inputs, previous_alignments, block_index, transducer_max_width, targets,
+    def run_new_block(session, full_inputs, previous_alignments, block_index, transducer_max_width, targets,
                       total_blocks,
                       last_encoder_state):
         """
@@ -209,33 +247,11 @@ def get_alignment(session, inputs, targets, input_block_size, transducer_max_wid
         last_encoder_state_new in shape of [2, 1, encoder_hidden_units]
         """
 
-        # TODO: Final testing
+        last_encoder_state_new = last_encoder_state  # fallback value
 
-        def run_encoder(session, encoder_state, inputs):
-            """
-            Runs the encoder on specified inputs. Returns the outputs and encoder state.
-            :param session: Current session.
-            :param encoder_state: Current Encoder state, shape [2, 1, encoder_hidden_units]
-            :param inputs: The truncated inputs for this block. Shape [block_time, 1, input_dimensions]
-            :return: Encoder ouputs [max_time, batch_size, encoder_hidden_units], Encoder state [2, 1, encoder_hidden_units]
-            """
+        # TODO: Test Restructure
 
-            # Inputs
-            enc_out, enc_state = session.run([model.encoder_outputs, model.encoder_hidden_state_new],
-                                             feed_dict={
-                                                 model.encoder_inputs: inputs,
-                                                 model.encoder_inputs_length: [inputs.shape[0]],
-                                                 model.encoder_hidden_state: encoder_state,
-
-                                             })
-            # print 'Encoder output' + str(enc_out)
-            """
-            enc_out = np.random.uniform(-1.0, 1.0, size=(input_block_size, 1, encoder_hidden_units))
-            enc_state = None
-            """
-            return enc_out, enc_state
-
-        def run_transducer(session, transducer_state, encoder_outputs, transducer_width):
+        def run_transducer(session, inputs_full, encoder_state, transducer_state, transducer_width):
             """
             Runs a transducer on one block of inputs for transducer_amount_outputs.
             :param session: Current session.
@@ -245,29 +261,20 @@ def get_alignment(session, inputs, targets, input_block_size, transducer_max_wid
             :return: Transducer logits [transducer_width, batch_size(1), vocab_size],
             Transducer state [2, 1, transducer_hidden_units]
             """
-
-            trans_out, trans_state = session.run([model.logits, model.transducer_hidden_state_new],
+            logits, trans_state, enc_state = session.run([model.logits, model.transducer_hidden_state_new,
+                                                             model.encoder_hidden_state_new],
                                                  feed_dict={
-                                                     model.encoder_raw_outputs: encoder_outputs,
-                                                     model.trans_hidden_state: transducer_state,
-                                                     model.transducer_amount_outputs: transducer_width
+                                                     model.inputs_full_raw: inputs_full,
+                                                     model.max_blocks: 1,
+                                                     model.transducer_list_outputs: [transducer_width],
+                                                     model.start_block: block_index,
+                                                     model.encoder_hidden_init: encoder_state,
+                                                     model.trans_hidden_init: transducer_state,
                                                  })
             # apply softmax on the outputs
-            trans_out = softmax(trans_out, axis=2)
+            trans_out = softmax(logits, axis=2)
 
-            """
-            print ''
-            print 'Is this right?: ' + str(np.transpose(trans_out, axes=[1, 0, 2]))
-            print 'Transducer output: ' + str(trans_out)
-            
-            trans_out = np.asarray([[[0.1, 0.7 + np.random.uniform(-0.15, 0.15), 0.2]]] * transducer_width)
-            trans_state = None
-            """
-            return trans_out, trans_state
-
-        # Run encoder and get inputs
-        block_encoder_outputs, last_encoder_state_new = run_encoder(session=session, encoder_state=last_encoder_state,
-                                                                    inputs=block_inputs)
+            return trans_out, trans_state, enc_state
 
         # Look into every existing alignment
         new_alignments = []
@@ -289,10 +296,13 @@ def get_alignment(session, inputs, targets, input_block_size, transducer_max_wid
                 # Create new alignment
                 new_alignment = copy.deepcopy(alignment)
                 new_alignment_width = new_alignment_index - new_alignment.alignment_position[0]
-                trans_out, trans_state = run_transducer(session=session,
-                                                        transducer_state=alignment.last_state_transducer,
-                                                        encoder_outputs=block_encoder_outputs,
-                                                        transducer_width=new_alignment_width + 1)  # +1 due to the last symbol being <e>
+                trans_out, trans_state, last_encoder_state_new = run_transducer(session=session,
+                                                                                inputs_full=full_inputs,
+                                                                                encoder_state=last_encoder_state,
+                                                                                transducer_state=alignment.last_state_transducer,
+                                                                                transducer_width=new_alignment_width + 1)
+                # +1 due to the last symbol being <e>, last_encoder_state_new being set every time again -> not relevant
+
                 new_alignment.insert_alignment(new_alignment_index, block_index, trans_out, targets,
                                                new_alignment_width, trans_state)
                 new_alignments.append(new_alignment)
@@ -313,9 +323,9 @@ def get_alignment(session, inputs, targets, input_block_size, transducer_max_wid
     last_encoder_state = np.zeros(shape=(2, 1, encoder_hidden_units))
 
     for block in range(current_block_index, amount_of_input_blocks + 1):
-        trunc_inputs = inputs[((block - 1) * input_block_size):block * input_block_size]
+        trunc_inputs = inputs[((block - 1) * input_block_size):block * input_block_size]  # Not needed anymore
 
-        current_alignments, last_encoder_state = run_new_block(session=session, block_inputs=trunc_inputs,
+        current_alignments, last_encoder_state = run_new_block(session=session, full_inputs=inputs,
                                                                previous_alignments=current_alignments,
                                                                block_index=block,
                                                                transducer_max_width=transducer_max_width,
@@ -331,64 +341,6 @@ def get_alignment(session, inputs, targets, input_block_size, transducer_max_wid
 
 # ----------------- Training --------------------------
 
-def build_full_transducer():
-    # Inputs
-    max_blocks = tf.placeholder(dtype=tf.int32, name='max_blocks')
-    inputs_full_raw = tf.placeholder(shape=(None, batch_size, input_dimensions), dtype=tf.float32,
-                                     name='inputs_full_raw')
-    transducer_list_outputs = tf.placeholder(shape=(None,), dtype=tf.int32,
-                                             name='transducer_list_outputs')  # amount to output per block
-
-    # Turn inputs into tensor which is easily readable
-    inputs_full = tf.reshape(inputs_full_raw, shape=[max_blocks, input_block_size, batch_size, input_dimensions])
-
-    # Outputs
-    outputs_ta = tf.TensorArray(dtype=tf.float32, size=max_blocks)
-
-    # Hidden states
-    # TODO: make these correct
-    encoder_hidden_init = tf.ones(shape=(2, 1, encoder_hidden_units))
-    trans_hidden_init = tf.ones(shape=(2, 1, transducer_hidden_units))
-
-    init_state = (0, outputs_ta, encoder_hidden_init, trans_hidden_init)
-
-    def cond(current_block, outputs_int, encoder_hidden, trans_hidden):
-        return current_block < max_blocks
-
-    def body(current_block, outputs_int, encoder_hidden, trans_hidden):
-        # Process encoder
-        # TODO: check if encoder_inputs_length is correct
-        model.encoder_inputs = model.encoder_inputs.assign(inputs_full[current_block])
-        model.encoder_inputs_length = model.encoder_inputs_length.assign([tf.shape(model.encoder_inputs)[0]])
-        model.encoder_hidden_state = model.encoder_hidden_state.assign(encoder_hidden)
-
-        current_block = tf.Print(current_block, [model.encoder_inputs_length], message='Enc in lengths: ')
-
-        # TODO: Error is SOMETIMES gone when using tf.Print
-        current_block = tf.Print(current_block, [model.encoder_inputs], message='Enc in: ')
-
-        # Flow data from encoder to transducer
-        model.encoder_raw_outputs = model.encoder_raw_outputs.assign(model.encoder_outputs)
-        model.trans_hidden_state = model.trans_hidden_state.assign(trans_hidden)
-        model.transducer_amount_outputs = model.transducer_amount_outputs.assign(transducer_list_outputs[current_block])
-
-        current_block = tf.Print(current_block, [model.encoder_raw_outputs], message='Trans in: ')
-
-        # Note the outputs
-        outputs_int = outputs_int.write(current_block, model.logits)
-
-        return current_block + 1, outputs_int, model.encoder_hidden_state_new, model.transducer_hidden_state_new
-
-    _, outputs_final, _, _ = tf.while_loop(cond, body, init_state, parallel_iterations=1)
-
-    # Process outputs
-    outputs = outputs_final.stack()  # Now the outputs are of shape [block, amount_of_trans_out, batch_size, vocab]
-    outputs = tf.reshape(outputs, shape=(-1, 1, vocab_size))  # And now its [amount_outputs, batch_size, vocab]
-
-    model.encoder_outputs = tf.Print(model.encoder_outputs, [model.encoder_outputs], message='Current block enc out: ')
-
-    return max_blocks, inputs_full_raw, transducer_list_outputs, outputs, model.encoder_outputs
-
 
 def build_training_step(transducer_outputs_logits):
     targets = tf.placeholder(shape=(None,), dtype=tf.int32, name='targets')
@@ -399,6 +351,8 @@ def build_training_step(transducer_outputs_logits):
     train_op = tf.train.AdamOptimizer().minimize(loss)
     return targets, train_op, loss
 
+
+# TODO: apply restructuring to apply_training_step
 
 def apply_training_step(session, inputs, targets, input_block_size, transducer_max_width,
                         inp_max_blocks, inp_inputs_full_raw, inp_targets, inp_trans_list_out, out_train_op, out_loss):
@@ -480,9 +434,10 @@ def test_alignment_class():
     print testyAlignment.alignment_locations
 
 
-def test_get_alignment():
-    testy_inputs = np.random.uniform(-1.0, 1.0, size=(10, 1, 5))
-    print get_alignment(None, inputs=testy_inputs, targets=testy_targets, input_block_size=2, transducer_max_width=2)
+def test_get_alignment(sess):
+    testy_inputs = np.random.uniform(-1.0, 1.0, size=(12, 1, input_dimensions))
+    print get_alignment(sess, inputs=testy_inputs, targets=testy_targets, input_block_size=input_block_size,
+                        transducer_max_width=2)
     # TODO: test more vigorously
 
 
@@ -493,13 +448,9 @@ init = tf.global_variables_initializer()
 with tf.Session() as sess:
     sess.run(init)
 
+    test_get_alignment(sess)
+
     # Uncomment the following 5 lines to see error, we get an error in line 510/511 for some reason though
-    inp_max_blocks, inp_inputs_full_raw, inp_trans_list_out, out_outputs, enc_out = build_full_transducer()
-    print sess.run([enc_out, out_outputs], feed_dict={
-        inp_max_blocks: 3,
-        inp_inputs_full_raw: np.ones(shape=(3 * input_block_size, 1, input_dimensions)),
-        inp_trans_list_out: [1, 3, 2]
-    })
 
     # Build training op
     # inp_max_blocks, inp_inputs_full_raw, inp_trans_list_out, out_outputs, enc_out = build_full_transducer()
