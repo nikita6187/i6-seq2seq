@@ -4,14 +4,11 @@ from tensorflow.python.layers import core as layers_core
 import numpy as np
 import copy
 
-# Current bug in line 368 in BuildFullTransducer, tensors are sometimes not evaluated, and sometimes only evaluated
-# when using the TF Print function (???), see: https://github.com/tensorflow/tensorflow/issues/15851
-
 # NOTE: Time major
 
 # Constants
 input_dimensions = 1
-vocab_size = 5
+vocab_size = 4
 input_embedding_size = 20
 encoder_hidden_units = 8
 inputs_embedded = True
@@ -28,7 +25,7 @@ log_prob_init_value = 0
 
 class Alignment(object):
     def __init__(self):
-        self.alignment_position = (1, 1)  # x = position in target (y~), y = block index, both start at 1
+        self.alignment_position = (0, 1)  # x = position in target (y~), y = block index, both start at 1
         self.log_prob = log_prob_init_value  # The sum log prob of this alignment over the target indices
         self.alignment_locations = []  # At which indices in the target output we need to insert <e>
         self.last_state_transducer = np.zeros(shape=(2, 1, transducer_hidden_units))  # Transducer state
@@ -68,13 +65,15 @@ embeddings = tf.Variable(tf.random_uniform([vocab_size, input_embedding_size], -
 
 
 # TODO: add/redo documentation
-# TODO: add assertions for correct format for Neural Transducer
+
 
 class Model(object):
     def __init__(self):
         self.max_blocks, self.inputs_full_raw, self.transducer_list_outputs, self.start_block, self.encoder_hidden_init,\
             self.trans_hidden_init, self.logits, self.encoder_hidden_state_new, \
             self.transducer_hidden_state_new = self.build_full_transducer()
+
+        self.targets, self.train_op, self.loss = self.build_training_step()
 
     def build_full_transducer(self):
 
@@ -196,11 +195,24 @@ class Model(object):
             tf.while_loop(cond, body, init_state, parallel_iterations=1)
 
         # Process outputs
-        outputs = outputs_final.stack()  # Now the outputs are of shape [block, amount_of_trans_out, batch_size, vocab]
+        outputs = outputs_final.concat()
         logits = tf.reshape(outputs, shape=(-1, 1, vocab_size))  # And now its [max_output_time, batch_size, vocab]
 
         return max_blocks, inputs_full_raw, transducer_list_outputs, start_block, encoder_hidden_init, \
                trans_hidden_init, logits, encoder_hidden_state_new, transducer_hidden_state_new
+
+    def build_training_step(self):
+        targets = tf.placeholder(shape=(None,), dtype=tf.int32, name='targets')
+        targets_one_hot = tf.one_hot(targets, depth=vocab_size, dtype=tf.float32)
+
+        targets_one_hot = tf.Print(targets_one_hot, [targets_one_hot], message='Targets: ', summarize=100)
+        targets_one_hot = tf.Print(targets_one_hot, [self.logits], message='Logits: ', summarize=100)
+
+        stepwise_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=targets_one_hot,
+                                                                         logits=self.logits)
+        loss = tf.reduce_mean(stepwise_cross_entropy)
+        train_op = tf.train.AdamOptimizer().minimize(loss)
+        return targets, train_op, loss
 
 
 def softmax(x, axis=None):
@@ -300,7 +312,7 @@ def get_alignment(session, inputs, targets, input_block_size, transducer_max_wid
                                                                                 inputs_full=full_inputs,
                                                                                 encoder_state=last_encoder_state,
                                                                                 transducer_state=alignment.last_state_transducer,
-                                                                                transducer_width=new_alignment_width + 1)
+                                                                                transducer_width=new_alignment_width)
                 # +1 due to the last symbol being <e>, last_encoder_state_new being set every time again -> not relevant
 
                 new_alignment.insert_alignment(new_alignment_index, block_index, trans_out, targets,
@@ -322,6 +334,13 @@ def get_alignment(session, inputs, targets, input_block_size, transducer_max_wid
     current_alignments = [Alignment()]
     last_encoder_state = np.zeros(shape=(2, 1, encoder_hidden_units))
 
+    # Do assertions to check whether everything was correctly set up.
+    assert inputs.shape[0] % input_block_size == 0, \
+        'Input shape not corresponding to input block size (add padding or see if batch first).'
+    assert inputs.shape[2] == input_dimensions, 'Input dimension [2] not corresponding to specified input dimension.'
+    assert inputs.shape[1] == 1, 'Batch size needs to be one.'
+    assert transducer_max_width * amount_of_input_blocks >= len(targets), 'transducer_max_width to small for targets'
+
     for block in range(current_block_index, amount_of_input_blocks + 1):
         trunc_inputs = inputs[((block - 1) * input_block_size):block * input_block_size]  # Not needed anymore
 
@@ -335,27 +354,12 @@ def get_alignment(session, inputs, targets, input_block_size, transducer_max_wid
     # Check if we've found an alignment, it should be one
     assert len(current_alignments) == 1
 
-    # Offset by one due to how indexing was done internally has to be compensated
-    return [x-1 for x in current_alignments[0].alignment_locations]
-
+    return current_alignments[0].alignment_locations
 
 # ----------------- Training --------------------------
 
 
-def build_training_step(transducer_outputs_logits):
-    targets = tf.placeholder(shape=(None,), dtype=tf.int32, name='targets')
-    targets_one_hot = tf.one_hot(targets, depth=vocab_size, dtype=tf.float32)
-    stepwise_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=targets_one_hot,
-                                                                     logits=transducer_outputs_logits)
-    loss = tf.reduce_mean(stepwise_cross_entropy)
-    train_op = tf.train.AdamOptimizer().minimize(loss)
-    return targets, train_op, loss
-
-
-# TODO: apply restructuring to apply_training_step
-
-def apply_training_step(session, inputs, targets, input_block_size, transducer_max_width,
-                        inp_max_blocks, inp_inputs_full_raw, inp_targets, inp_trans_list_out, out_train_op, out_loss):
+def apply_training_step(session, inputs, targets, input_block_size, transducer_max_width):
     """
     Applies a training step to the transducer model. This method can be called multiple times from e.g. a loop.
     :param session: The current session.
@@ -363,13 +367,7 @@ def apply_training_step(session, inputs, targets, input_block_size, transducer_m
     :param targets: The full targets. Shape: [time]. Each entry is an index.
     :param input_block_size: The block width for the inputs.
     :param transducer_max_width: The max width for the transducer.
-    :param inp_max_blocks: Ref to TF var that holds the amount of blocks in that the input will be processed.
-    :param inp_inputs_full_raw: Ref to TF var that holds the full inputs.
-    :param inp_targets: Ref to TF var that holds the targets.
-    :param inp_trans_list_out: Ref to TF var that holds the list of how long the transducer should run for each block.
-    :param out_train_op: Ref to TF var that holds the training operation.
-    :param out_loss: Ref to TF var that holds the training loss info.
-    :return:
+    :return: Loss of this training step.
     """
 
     # TODO: get_alignment and insert into targets                               [p]
@@ -379,22 +377,32 @@ def apply_training_step(session, inputs, targets, input_block_size, transducer_m
     # Get alignment and insert it into the targets
     alignment = get_alignment(session=session, inputs=inputs, targets=targets, input_block_size=input_block_size,
                               transducer_max_width=transducer_max_width)
-    for e in alignment:
-        targets.insert(e, E_SYMBOL)
-
     print alignment
+
+    offset = 0
+    for e in alignment:
+        targets.insert(e+offset, E_SYMBOL)
+        offset += 1
+
     # Calc length for each transducer block
     lengths = []
     alignment.insert(0, 0)  # This is so that the length calculation is done correctly
     for i in range(1, len(alignment)):
-        lengths.append(alignment[i] - alignment[i-1])
+        lengths.append(alignment[i] - alignment[i-1] + 1)
+
+    # Init values
+    encoder_hidden_init = np.zeros(shape=(2, 1, encoder_hidden_units))
+    trans_hidden_init = np.zeros(shape=(2, 1, transducer_hidden_units))
 
     # Run training step
-    _, loss = sess.run([out_train_op, out_loss], feed_dict={
-        inp_max_blocks: len(lengths),
-        inp_inputs_full_raw: inputs,
-        inp_targets: targets,
-        inp_trans_list_out: lengths
+    _, loss = sess.run([model.train_op, model.loss], feed_dict={
+        model.max_blocks: len(lengths),
+        model.inputs_full_raw: inputs,
+        model.transducer_list_outputs: lengths,
+        model.targets: targets,
+        model.start_block: 0,
+        model.encoder_hidden_init: encoder_hidden_init,
+        model.trans_hidden_init: trans_hidden_init
     })
 
     return loss
@@ -448,24 +456,9 @@ init = tf.global_variables_initializer()
 with tf.Session() as sess:
     sess.run(init)
 
-    test_get_alignment(sess)
-
-    # Uncomment the following 5 lines to see error, we get an error in line 510/511 for some reason though
-
-    # Build training op
-    # inp_max_blocks, inp_inputs_full_raw, inp_trans_list_out, out_outputs, enc_out = build_full_transducer()
-    # targets, train_op, loss = build_training_step(out_outputs)
+    # test_get_alignment(sess)
 
     # Apply training step
-    """
-    print apply_training_step(session=sess, inputs=np.ones(shape=(3 * input_block_size, 1, input_dimensions)),
-                              input_block_size=input_block_size, targets=[1, 1, 1, 1], transducer_max_width=2,
-                              inp_max_blocks=inp_max_blocks, inp_inputs_full_raw=inp_inputs_full_raw,
-                              inp_trans_list_out=inp_trans_list_out, inp_targets=targets, out_train_op=train_op,
-                              out_loss=loss)
-    """
-    """
-    print get_alignment(session=sess, inputs=np.ones(shape=(3 * input_block_size, 1, input_dimensions)),
-                        input_block_size=input_block_size, targets=[1, 1, 1, 1], transducer_max_width=2)
-    """
-
+    for i in range(0, 1000):
+        print apply_training_step(session=sess, inputs=np.ones(shape=(3 * input_block_size, 1, input_dimensions)),
+                                  input_block_size=input_block_size, targets=[1, 1, 1], transducer_max_width=2)
