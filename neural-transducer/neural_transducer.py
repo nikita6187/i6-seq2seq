@@ -15,13 +15,13 @@ input_embedding_size = 20
 encoder_hidden_units = 8
 inputs_embedded = True
 transducer_hidden_units = 8
-batch_size = 1
+batch_size = 1  # Cannot be increased, see paper
 GO_SYMBOL = vocab_size - 1  # TODO: Make these constants correct
 END_SYMBOL = vocab_size
 E_SYMBOL = vocab_size - 2
 input_block_size = 3
 log_prob_init_value = 0
-
+beam_width = 5  # For inference
 
 # ---------------- Helper classes -----------------------
 
@@ -69,7 +69,7 @@ class Model(object):
     def __init__(self):
         self.max_blocks, self.inputs_full_raw, self.transducer_list_outputs, self.start_block, self.encoder_hidden_init,\
             self.trans_hidden_init, self.logits, self.encoder_hidden_state_new, \
-            self.transducer_hidden_state_new = self.build_full_transducer()
+            self.transducer_hidden_state_new, self.beam_search_outputs = self.build_full_transducer()
 
         self.targets, self.train_op, self.loss = self.build_training_step()
 
@@ -86,6 +86,7 @@ class Model(object):
                                              name='encoder_hidden_init')
         trans_hidden_init = tf.placeholder(shape=(2, 1, transducer_hidden_units), dtype=tf.float32,
                                            name='trans_hidden_init')
+        inference = tf.placeholder(dtype=tf.int32, name='beam_width')  # Beam search inference, select 0 to disable
 
         # Turn inputs into tensor which is easily readable
         inputs_full = tf.reshape(inputs_full_raw, shape=[-1, input_block_size, batch_size, input_dimensions])
@@ -131,28 +132,12 @@ class Model(object):
             encoder_hidden_state_new = tf.reshape(encoder_hidden_state_new, shape=[2, -1, encoder_hidden_units])
 
             # --------------------- TRANSDUCER -----------------------------------------------------------------------
+            # ----- Pre processing ------
             encoder_raw_outputs = encoder_outputs
             trans_hidden_state = trans_hidden  # Save/load the state as one tensor
             transducer_amount_outputs = transducer_list_outputs[current_block - start_block]
-
-            # Model building
-            helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
-                embedding=embeddings,
-                start_tokens=tf.tile([GO_SYMBOL], [batch_size]),
-                end_token=END_SYMBOL)
-
             attention_states = tf.transpose(encoder_raw_outputs,
                                             [1, 0, 2])  # attention_states: [batch_size, max_time, num_units]
-
-            attention_mechanism = tf.contrib.seq2seq.LuongAttention(
-                encoder_hidden_units, attention_states)
-
-            decoder_cell = tf.contrib.seq2seq.AttentionWrapper(
-                tf.contrib.rnn.LSTMCell(transducer_hidden_units),
-                attention_mechanism,
-                attention_layer_size=transducer_hidden_units)
-
-            projection_layer = layers_core.Dense(vocab_size, use_bias=False)
 
             # Build previous state
             trans_hidden_c, trans_hidden_h = tf.split(trans_hidden_state, num_or_size_splits=2, axis=0)
@@ -160,26 +145,85 @@ class Model(object):
             trans_hidden_h = tf.reshape(trans_hidden_h, shape=[-1, transducer_hidden_units])
             trans_hidden_state_t = LSTMStateTuple(trans_hidden_c, trans_hidden_h)
 
-            decoder = tf.contrib.seq2seq.BasicDecoder(
-                decoder_cell, helper,
-                decoder_cell.zero_state(1, tf.float32).clone(cell_state=trans_hidden_state_t),
-                output_layer=projection_layer)
+            # ----- Core ----------------
+            cell = tf.contrib.rnn.LSTMCell(transducer_hidden_units)
+            projection_layer = layers_core.Dense(vocab_size, use_bias=False)
 
-            outputs, transducer_hidden_state_new, _ = tf.contrib.seq2seq.dynamic_decode(decoder,
+            attention_states = tf.cond(inference > 0,
+                                       lambda: tf.contrib.seq2seq.tile_batch(attention_states, multiplier=beam_width),
+                                       lambda: attention_states)
+            attention_mechanism = tf.contrib.seq2seq.LuongAttention(num_units=encoder_hidden_units,
+                                                                    memory=attention_states)
+
+            decoder_cell = tf.contrib.seq2seq.AttentionWrapper(cell,
+                                                               attention_mechanism,
+                                                               attention_layer_size=transducer_hidden_units)
+
+            # ----- Training/Inference --
+            def training_decoder():
+                decoder_init_state_train = decoder_cell.zero_state(1, tf.float32).clone(cell_state=trans_hidden_state_t)
+                helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
+                    embedding=embeddings,
+                    start_tokens=tf.tile([GO_SYMBOL], [batch_size]),
+                    end_token=END_SYMBOL)
+                return tf.contrib.seq2seq.BasicDecoder(decoder_cell,
+                                                       helper, decoder_init_state_train,
+                                                       output_layer=projection_layer)
+
+            def inference_decoder():
+
+                initial_state = tf.nn.rnn_cell.LSTMStateTuple(
+                    tf.contrib.seq2seq.tile_batch(trans_hidden_c, multiplier=beam_width),
+                    tf.contrib.seq2seq.tile_batch(trans_hidden_h, multiplier=beam_width))
+
+                decoder_init_state_inf = decoder_cell.zero_state(dtype=tf.float32, batch_size=1*beam_width).\
+                    clone(cell_state=initial_state)
+
+                return tf.contrib.seq2seq.BeamSearchDecoder(decoder_cell, embeddings,
+                                                            start_tokens=tf.tile([GO_SYMBOL], [batch_size]),
+                                                            end_token=E_SYMBOL, initial_state=decoder_init_state_inf,
+                                                            beam_width=beam_width, output_layer=projection_layer)
+
+            # Build both decoders for future use
+            inference_decoder = inference_decoder()
+            training_decoder = training_decoder()
+            train_outputs, train_transducer_hidden_state_new, _ = tf.contrib.seq2seq.dynamic_decode(training_decoder,
                                                                                         output_time_major=True,
                                                                                         maximum_iterations=transducer_amount_outputs)
-            logits = outputs.rnn_output  # logits of shape [max_time,batch_size,vocab_size]
-            decoder_prediction = outputs.sample_id  # For debugging
 
-            # Modify output of transducer_hidden_state_new so that it can be fed back in again without problems.
-            transducer_hidden_state_new = tf.concat(
-                [transducer_hidden_state_new[0].c, transducer_hidden_state_new[0].h],
-                axis=0)
-            transducer_hidden_state_new = tf.reshape(transducer_hidden_state_new,
-                                                     shape=[2, -1, transducer_hidden_units])
+            inf_outputs, inf_transducer_hidden_state_new, inf_seq_len = tf.contrib.seq2seq.dynamic_decode(inference_decoder,
+                                                                                        output_time_major=True,
+                                                                                        maximum_iterations=transducer_amount_outputs)
+
+            # ----- Post Processing -----
+            def train_post():
+                decoder_prediction = train_outputs.sample_id  # For debugging
+
+                # Modify output of transducer_hidden_state_new so that it can be fed back in again without problems.
+                transducer_hidden_state_new = tf.concat(
+                    [train_transducer_hidden_state_new[0].c, train_transducer_hidden_state_new[0].h],
+                    axis=0)
+                transducer_hidden_state_new = tf.reshape(transducer_hidden_state_new,
+                                                         shape=[2, -1, transducer_hidden_units])
+                return transducer_hidden_state_new
+
+            def inf_post():
+                # NOTE: for inference the body function in the loop can only be executed once! This is due to the beam
+                # search approach for inference
+                transducer_hidden_state_new = inf_transducer_hidden_state_new
+                return transducer_hidden_state_new
+
+            #  if in training, logits of shape [max_time,batch_size,vocab_size],
+            # if in inference the the shape is [max_time, batch_size, vocab_size, beam_width]
+            logits = tf.cond(inference > 0,
+                             lambda: inf_outputs.beam_search_decoder_output.scores,
+                             lambda: train_outputs.rnn_output)
 
             # Note the outputs
             outputs_int = outputs_int.write(current_block - start_block, logits)
+
+            # Process the new transducer state
+            transducer_hidden_state_new = tf.cond(inference > 0, inf_post, train_post)
 
             return current_block + 1, outputs_int, encoder_hidden_state_new, transducer_hidden_state_new
 
@@ -190,8 +234,11 @@ class Model(object):
         outputs = outputs_final.concat()
         logits = tf.reshape(outputs, shape=(-1, 1, vocab_size))  # And now its [max_output_time, batch_size, vocab]
 
+        # TODO: process beam search
+        beam_search_outputs = outputs
+
         return max_blocks, inputs_full_raw, transducer_list_outputs, start_block, encoder_hidden_init, \
-               trans_hidden_init, logits, encoder_hidden_state_new, transducer_hidden_state_new
+               trans_hidden_init, logits, encoder_hidden_state_new, transducer_hidden_state_new, beam_search_outputs
 
     def build_training_step(self):
         targets = tf.placeholder(shape=(None,), dtype=tf.int32, name='targets')
@@ -296,7 +343,7 @@ def get_alignment(session, inputs, targets, input_block_size, transducer_max_wid
                                                                                 encoder_state=last_encoder_state,
                                                                                 transducer_state=alignment.last_state_transducer,
                                                                                 transducer_width=new_alignment_width)
-                # +1 due to the last symbol being <e>, last_encoder_state_new being set every time again -> not relevant
+                # last_encoder_state_new being set every time again -> not relevant
 
                 new_alignment.insert_alignment(new_alignment_index, block_index, trans_out, targets,
                                                new_alignment_width, trans_state)
@@ -348,7 +395,7 @@ def apply_training_step(session, inputs, targets, input_block_size, transducer_m
     :param inputs: The full inputs. Shape: [max_time, 1, input_dimensions]
     :param targets: The full targets. Shape: [time]. Each entry is an index.
     :param input_block_size: The block width for the inputs.
-    :param transducer_max_width: The max width for the transducer.
+    :param transducer_max_width: The max width for the transducer. Not including the output symbol <e>
     :return: Loss of this training step.
     """
 
@@ -368,6 +415,8 @@ def apply_training_step(session, inputs, targets, input_block_size, transducer_m
     for i in range(1, len(alignment)):
         lengths.append(alignment[i] - alignment[i-1] + 1)
 
+    print lengths
+
     # Init values
     encoder_hidden_init = np.zeros(shape=(2, 1, encoder_hidden_units))
     trans_hidden_init = np.zeros(shape=(2, 1, transducer_hidden_units))
@@ -385,6 +434,11 @@ def apply_training_step(session, inputs, targets, input_block_size, transducer_m
 
     return loss
 
+# ----------------- Inference --------------------------
+
+# TODO: change model to allow optional usage of beam search decoder
+# TODO: add beam search with score based on log softmax addition
+# TODO: select best one a the end
 
 # ---------------------- Testing -----------------------------
 
@@ -436,6 +490,6 @@ with tf.Session() as sess:
     # test_get_alignment(sess)
 
     # Apply training step
-    for i in range(0, 1000):
-        print apply_training_step(session=sess, inputs=np.ones(shape=(3 * input_block_size, 1, input_dimensions)),
-                                  input_block_size=input_block_size, targets=[1, 1, 1], transducer_max_width=2)
+    for i in range(0, 1):
+        print apply_training_step(session=sess, inputs=np.ones(shape=(5 * input_block_size, 1, input_dimensions)),
+                                  input_block_size=input_block_size, targets=[1, 1, 1, 1, 1, 1, 1], transducer_max_width=2)

@@ -46,10 +46,10 @@ encoder_outputs, encoder_state = tf.nn.dynamic_rnn(
 
 decoder_inputs_embedded = tf.Print(decoder_inputs_embedded, [tf.shape(encoder_state)], 'Encoder state shape')
 
-#helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
-#            embedding=embeddings,
-#            start_tokens=tf.tile([vocab_size-2], [batch_size]),
-#            end_token=vocab_size-1)
+helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
+            embedding=embeddings,
+            start_tokens=tf.tile([vocab_size-2], [batch_size]),
+            end_token=vocab_size-1)
 
 # ---- Decoder -----
 #helper = tf.contrib.seq2seq.TrainingHelper(
@@ -59,6 +59,7 @@ attention_states = tf.transpose(encoder_outputs, [1, 0, 2])  # attention_states:
 attention_mechanism = tf.contrib.seq2seq.LuongAttention(
     encoder_hidden_units, attention_states,
     memory_sequence_length=encoder_inputs_length)
+
 decoder_cell = tf.contrib.seq2seq.AttentionWrapper(
     tf.contrib.rnn.LSTMCell(decoder_hidden_units),
     attention_mechanism,
