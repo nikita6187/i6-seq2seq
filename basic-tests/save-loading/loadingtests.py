@@ -7,14 +7,14 @@ dir = os.path.dirname(os.path.realpath(__file__))
 
 
 with tf.variable_scope('old_scope'):
-    x1 = tf.get_variable(name='x', shape=(), initializer=tf.zeros_initializer)
-    y1 = tf.get_variable(name='y', shape=(), initializer=tf.zeros_initializer)
+    x1 = tf.get_variable(name='x1', shape=(), initializer=tf.zeros_initializer)
+    y1 = tf.get_variable(name='y1', shape=(), initializer=tf.zeros_initializer)
 
 with tf.variable_scope('new_scope'):
-    x2 = tf.get_variable(name='x', shape=(), initializer=tf.ones_initializer)
-    y2 = tf.get_variable(name='y', shape=(), initializer=tf.ones_initializer)
+    x2 = tf.get_variable(name='x2', shape=(), initializer=tf.ones_initializer)
+    y2 = tf.get_variable(name='y2', shape=(), initializer=tf.ones_initializer)
 
-saver = tf.train.Saver(var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='old_scope'))
+saver = tf.train.Saver(var_list={'old_scope/x': x1, 'old_scope/y': y1})
 
 init = tf.global_variables_initializer()
 
