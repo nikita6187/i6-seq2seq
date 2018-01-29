@@ -17,11 +17,11 @@ inputs_embedded = True
 transducer_hidden_units = 8
 batch_size = 1  # Cannot be increased, see paper
 GO_SYMBOL = vocab_size - 1  # TODO: Make these constants correct
-END_SYMBOL = vocab_size
 E_SYMBOL = vocab_size - 2
 input_block_size = 3
 log_prob_init_value = 0
 beam_width = 5  # For inference
+
 
 # ---------------- Helper classes -----------------------
 
@@ -36,9 +36,12 @@ class Alignment(object):
         def get_prob_at_timestep(timestep):
             return np.log(transducer_outputs[timestep][0][targets[start_index + timestep]])
 
+        # TODO: FIND BUG!
         start_index = self.alignment_position[0] - transducer_amount_outputs  # The current position of this alignment
         prob = log_prob_init_value
         for i in range(0, transducer_amount_outputs):
+            print i
+            print transducer_outputs.shape
             prob += get_prob_at_timestep(i)
         return prob
 
@@ -77,123 +80,124 @@ class Model(object):
         self.targets, self.train_op, self.loss = self.build_training_step()
 
     def build_full_transducer(self):
-        # Inputs
-        max_blocks = tf.placeholder(dtype=tf.int32, name='max_blocks')  # total amount of blocks to go through
-        inputs_full_raw = tf.placeholder(shape=(None, batch_size, input_dimensions), dtype=tf.float32,
-                                         name='inputs_full_raw')  # shape [max_time, 1, input_dims]
-        transducer_list_outputs = tf.placeholder(shape=(None,), dtype=tf.int32,
-                                                 name='transducer_list_outputs')  # amount to output per block
-        start_block = tf.placeholder(dtype=tf.int32, name='transducer_start_block')  # where to start the input
+        with tf.variable_scope('training_transducer'):
+            # Inputs
+            max_blocks = tf.placeholder(dtype=tf.int32, name='max_blocks')  # total amount of blocks to go through
+            inputs_full_raw = tf.placeholder(shape=(None, batch_size, input_dimensions), dtype=tf.float32,
+                                             name='inputs_full_raw')  # shape [max_time, 1, input_dims]
+            transducer_list_outputs = tf.placeholder(shape=(None,), dtype=tf.int32,
+                                                     name='transducer_list_outputs')  # amount to output per block
+            start_block = tf.placeholder(dtype=tf.int32, name='transducer_start_block')  # where to start the input
 
-        encoder_hidden_init = tf.placeholder(shape=(2, 1, encoder_hidden_units), dtype=tf.float32,
-                                             name='encoder_hidden_init')
-        trans_hidden_init = tf.placeholder(shape=(2, 1, transducer_hidden_units), dtype=tf.float32,
-                                           name='trans_hidden_init')
+            encoder_hidden_init = tf.placeholder(shape=(2, 1, encoder_hidden_units), dtype=tf.float32,
+                                                 name='encoder_hidden_init')
+            trans_hidden_init = tf.placeholder(shape=(2, 1, transducer_hidden_units), dtype=tf.float32,
+                                               name='trans_hidden_init')
 
-        # Turn inputs into tensor which is easily readable
-        inputs_full = tf.reshape(inputs_full_raw, shape=[-1, input_block_size, batch_size, input_dimensions])
+            # Turn inputs into tensor which is easily readable
+            inputs_full = tf.reshape(inputs_full_raw, shape=[-1, input_block_size, batch_size, input_dimensions])
 
-        # Outputs
-        outputs_ta = tf.TensorArray(dtype=tf.float32, size=max_blocks)
+            # Outputs
+            outputs_ta = tf.TensorArray(dtype=tf.float32, size=max_blocks)
 
-        init_state = (start_block, outputs_ta, encoder_hidden_init, trans_hidden_init)
+            init_state = (start_block, outputs_ta, encoder_hidden_init, trans_hidden_init)
 
-        def cond(current_block, outputs_int, encoder_hidden, trans_hidden):
-            return current_block < start_block + max_blocks
+            def cond(current_block, outputs_int, encoder_hidden, trans_hidden):
+                return current_block < start_block + max_blocks
 
-        def body(current_block, outputs_int, encoder_hidden, trans_hidden):
+            def body(current_block, outputs_int, encoder_hidden, trans_hidden):
 
-            # --------------------- ENCODER -------------------------------------------------------------------------
+                # --------------------- ENCODER ----------------------------------------------------------------------
 
-            encoder_inputs = inputs_full[current_block - start_block]
-            encoder_inputs_length = [tf.shape(encoder_inputs)[0]]
-            encoder_hidden_state = encoder_hidden
+                encoder_inputs = inputs_full[current_block - start_block]
+                encoder_inputs_length = [tf.shape(encoder_inputs)[0]]
+                encoder_hidden_state = encoder_hidden
 
-            if inputs_embedded is True:
-                encoder_inputs_embedded = encoder_inputs
-            else:
-                encoder_inputs_embedded = tf.nn.embedding_lookup(embeddings, encoder_inputs)
+                if inputs_embedded is True:
+                    encoder_inputs_embedded = encoder_inputs
+                else:
+                    encoder_inputs_embedded = tf.nn.embedding_lookup(embeddings, encoder_inputs)
 
-            # Build model
-            encoder_cell = tf.contrib.rnn.LSTMCell(encoder_hidden_units, name='encoder_cell')
+                # Build model
+                encoder_cell = tf.contrib.rnn.LSTMCell(encoder_hidden_units)  # , name='encoder_cell'
 
-            # Build previous state
-            encoder_hidden_c, encoder_hidden_h = tf.split(encoder_hidden_state, num_or_size_splits=2, axis=0)
-            encoder_hidden_c = tf.reshape(encoder_hidden_c, shape=[-1, encoder_hidden_units])
-            encoder_hidden_h = tf.reshape(encoder_hidden_h, shape=[-1, encoder_hidden_units])
-            encoder_hidden_state_t = LSTMStateTuple(encoder_hidden_c, encoder_hidden_h)
+                # Build previous state
+                encoder_hidden_c, encoder_hidden_h = tf.split(encoder_hidden_state, num_or_size_splits=2, axis=0)
+                encoder_hidden_c = tf.reshape(encoder_hidden_c, shape=[-1, encoder_hidden_units])
+                encoder_hidden_h = tf.reshape(encoder_hidden_h, shape=[-1, encoder_hidden_units])
+                encoder_hidden_state_t = LSTMStateTuple(encoder_hidden_c, encoder_hidden_h)
 
-            #   encoder_outputs: [max_time, batch_size, num_units]
-            encoder_outputs, encoder_hidden_state_new = tf.nn.dynamic_rnn(
-                encoder_cell, encoder_inputs_embedded,
-                sequence_length=encoder_inputs_length, time_major=True,
-                dtype=tf.float32, initial_state=encoder_hidden_state_t)
+                #   encoder_outputs: [max_time, batch_size, num_units]
+                encoder_outputs, encoder_hidden_state_new = tf.nn.dynamic_rnn(
+                    encoder_cell, encoder_inputs_embedded,
+                    sequence_length=encoder_inputs_length, time_major=True,
+                    dtype=tf.float32, initial_state=encoder_hidden_state_t)
 
-            # Modify output of encoder_hidden_state_new so that it can be fed back in again without problems.
-            encoder_hidden_state_new = tf.concat([encoder_hidden_state_new.c, encoder_hidden_state_new.h], axis=0)
-            encoder_hidden_state_new = tf.reshape(encoder_hidden_state_new, shape=[2, -1, encoder_hidden_units])
+                # Modify output of encoder_hidden_state_new so that it can be fed back in again without problems.
+                encoder_hidden_state_new = tf.concat([encoder_hidden_state_new.c, encoder_hidden_state_new.h], axis=0)
+                encoder_hidden_state_new = tf.reshape(encoder_hidden_state_new, shape=[2, -1, encoder_hidden_units])
 
-            # --------------------- TRANSDUCER -----------------------------------------------------------------------
-            encoder_raw_outputs = encoder_outputs
-            trans_hidden_state = trans_hidden  # Save/load the state as one tensor
-            transducer_amount_outputs = transducer_list_outputs[current_block - start_block]
+                # --------------------- TRANSDUCER --------------------------------------------------------------------
+                encoder_raw_outputs = encoder_outputs
+                trans_hidden_state = trans_hidden  # Save/load the state as one tensor
+                transducer_amount_outputs = transducer_list_outputs[current_block - start_block]
 
-            # Model building
-            helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
-                embedding=embeddings,
-                start_tokens=tf.tile([GO_SYMBOL], [batch_size]),
-                end_token=END_SYMBOL)
+                # Model building
+                helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
+                    embedding=embeddings,
+                    start_tokens=tf.tile([GO_SYMBOL], [batch_size]),
+                    end_token=E_SYMBOL)
 
-            attention_states = tf.transpose(encoder_raw_outputs,
-                                            [1, 0, 2])  # attention_states: [batch_size, max_time, num_units]
+                attention_states = tf.transpose(encoder_raw_outputs,
+                                                [1, 0, 2])  # attention_states: [batch_size, max_time, num_units]
 
-            attention_mechanism = tf.contrib.seq2seq.LuongAttention(
-                encoder_hidden_units, attention_states)
+                attention_mechanism = tf.contrib.seq2seq.LuongAttention(
+                    encoder_hidden_units, attention_states)
 
-            transducer_cell = tf.contrib.rnn.LSTMCell(transducer_hidden_units, name='transducer_cell')
+                transducer_cell = tf.contrib.rnn.LSTMCell(transducer_hidden_units)  # , name='transducer_cell'
 
-            decoder_cell = tf.contrib.seq2seq.AttentionWrapper(
-                transducer_cell,
-                attention_mechanism,
-                attention_layer_size=transducer_hidden_units)
+                decoder_cell = tf.contrib.seq2seq.AttentionWrapper(
+                    transducer_cell,
+                    attention_mechanism,
+                    attention_layer_size=transducer_hidden_units)
 
-            projection_layer = layers_core.Dense(vocab_size, use_bias=False)
+                projection_layer = layers_core.Dense(vocab_size, use_bias=False)
 
-            # Build previous state
-            trans_hidden_c, trans_hidden_h = tf.split(trans_hidden_state, num_or_size_splits=2, axis=0)
-            trans_hidden_c = tf.reshape(trans_hidden_c, shape=[-1, transducer_hidden_units])
-            trans_hidden_h = tf.reshape(trans_hidden_h, shape=[-1, transducer_hidden_units])
-            trans_hidden_state_t = LSTMStateTuple(trans_hidden_c, trans_hidden_h)
+                # Build previous state
+                trans_hidden_c, trans_hidden_h = tf.split(trans_hidden_state, num_or_size_splits=2, axis=0)
+                trans_hidden_c = tf.reshape(trans_hidden_c, shape=[-1, transducer_hidden_units])
+                trans_hidden_h = tf.reshape(trans_hidden_h, shape=[-1, transducer_hidden_units])
+                trans_hidden_state_t = LSTMStateTuple(trans_hidden_c, trans_hidden_h)
 
-            decoder = tf.contrib.seq2seq.BasicDecoder(
-                decoder_cell, helper,
-                decoder_cell.zero_state(1, tf.float32).clone(cell_state=trans_hidden_state_t),
-                output_layer=projection_layer)
+                decoder = tf.contrib.seq2seq.BasicDecoder(
+                    decoder_cell, helper,
+                    decoder_cell.zero_state(1, tf.float32).clone(cell_state=trans_hidden_state_t),
+                    output_layer=projection_layer)
 
-            outputs, transducer_hidden_state_new, _ = tf.contrib.seq2seq.dynamic_decode(decoder,
-                                                                                        output_time_major=True,
-                                                                                        maximum_iterations=transducer_amount_outputs)
-            logits = outputs.rnn_output  # logits of shape [max_time,batch_size,vocab_size]
-            decoder_prediction = outputs.sample_id  # For debugging
+                outputs, transducer_hidden_state_new, _ = tf.contrib.seq2seq.dynamic_decode(decoder,
+                                                                                            output_time_major=True,
+                                                                                            maximum_iterations=transducer_amount_outputs)
+                logits = outputs.rnn_output  # logits of shape [max_time,batch_size,vocab_size]
+                decoder_prediction = outputs.sample_id  # For debugging
 
-            # Modify output of transducer_hidden_state_new so that it can be fed back in again without problems.
-            transducer_hidden_state_new = tf.concat(
-                [transducer_hidden_state_new[0].c, transducer_hidden_state_new[0].h],
-                axis=0)
-            transducer_hidden_state_new = tf.reshape(transducer_hidden_state_new,
-                                                     shape=[2, -1, transducer_hidden_units])
+                # Modify output of transducer_hidden_state_new so that it can be fed back in again without problems.
+                transducer_hidden_state_new = tf.concat(
+                    [transducer_hidden_state_new[0].c, transducer_hidden_state_new[0].h],
+                    axis=0)
+                transducer_hidden_state_new = tf.reshape(transducer_hidden_state_new,
+                                                         shape=[2, -1, transducer_hidden_units])
 
-            # Note the outputs
-            outputs_int = outputs_int.write(current_block - start_block, logits)
+                # Note the outputs
+                outputs_int = outputs_int.write(current_block - start_block, logits)
 
-            return current_block + 1, outputs_int, encoder_hidden_state_new, transducer_hidden_state_new
+                return current_block + 1, outputs_int, encoder_hidden_state_new, transducer_hidden_state_new
 
-        _, outputs_final, encoder_hidden_state_new, transducer_hidden_state_new = \
-            tf.while_loop(cond, body, init_state, parallel_iterations=1)
+            _, outputs_final, encoder_hidden_state_new, transducer_hidden_state_new = \
+                tf.while_loop(cond, body, init_state, parallel_iterations=1)
 
-        # Process outputs
-        outputs = outputs_final.concat()
-        logits = tf.reshape(outputs, shape=(-1, 1, vocab_size))  # And now its [max_output_time, batch_size, vocab]
+            # Process outputs
+            outputs = outputs_final.concat()
+            logits = tf.reshape(outputs, shape=(-1, 1, vocab_size))  # And now its [max_output_time, batch_size, vocab]
 
         return max_blocks, inputs_full_raw, transducer_list_outputs, start_block, encoder_hidden_init, \
                trans_hidden_init, logits, encoder_hidden_state_new, transducer_hidden_state_new
