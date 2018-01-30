@@ -24,6 +24,7 @@ log_prob_init_value = 0
 beam_width = 5  # For inference
 dir = os.path.dirname(os.path.realpath(__file__))
 
+
 # ---------------- Helper classes -----------------------
 
 class Alignment(object):
@@ -63,9 +64,6 @@ class Alignment(object):
 
 
 # ----------------- Model -------------------------------
-embeddings = tf.Variable(tf.random_uniform([vocab_size,input_embedding_size], -1.0, 1.0),
-                         dtype=tf.float32,
-                         name='embedding')
 
 
 class Model(object):
@@ -79,6 +77,11 @@ class Model(object):
 
     def build_full_transducer(self):
         with tf.variable_scope('transducer_training'):
+
+            embeddings = tf.Variable(tf.random_uniform([vocab_size, input_embedding_size], -1.0, 1.0),
+                                     dtype=tf.float32,
+                                     name='embedding')
+
             # Inputs
             max_blocks = tf.placeholder(dtype=tf.int32, name='max_blocks')  # total amount of blocks to go through
             inputs_full_raw = tf.placeholder(shape=(None, batch_size, input_dimensions), dtype=tf.float32,
@@ -504,11 +507,10 @@ def save_model_for_inference(session, path_name):
 
 # ----------------- Inference --------------------------
 
-# TODO: save model from training
 # TODO: load in previously built model
-# TODO: change model to allow optional usage of beam search decoder
+# TODO: change model to allow optional usage of beam search decoder [p]
 # TODO: add beam search with score based on log softmax addition
-# TODO: select best one a the end
+# TODO: select best one at the end
 
 class InferenceManager(object):
 
@@ -525,7 +527,6 @@ class InferenceManager(object):
 
     def run_inference(self, session, model_path):
         self.inference_loader.restore(sess=session, save_path=model_path)
-
 
 
 # ---------------------- Testing -----------------------------
@@ -572,7 +573,7 @@ def test_get_alignment(sess):
 
 init = tf.global_variables_initializer()
 
-"""
+
 with tf.Session() as sess:
     sess.run(init)
 
@@ -592,3 +593,4 @@ inference = InferenceManager()
 with tf.Session() as sess2:
     inference.run_inference(sess2, dir + '/model_save/model_test1')
 
+"""
