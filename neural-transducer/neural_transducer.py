@@ -3,6 +3,7 @@ from tensorflow.contrib.rnn import LSTMCell, LSTMStateTuple
 from tensorflow.python.layers import core as layers_core
 import numpy as np
 import copy
+import os
 
 # Implementation of the "A Neural Transducer" paper, Navdeep Jaitly et. al (2015): https://arxiv.org/abs/1511.04868
 
@@ -21,7 +22,7 @@ E_SYMBOL = vocab_size - 2
 input_block_size = 3
 log_prob_init_value = 0
 beam_width = 5  # For inference
-
+dir = os.path.dirname(os.path.realpath(__file__))
 
 # ---------------- Helper classes -----------------------
 
@@ -69,14 +70,15 @@ embeddings = tf.Variable(tf.random_uniform([vocab_size,input_embedding_size], -1
 
 class Model(object):
     def __init__(self):
+        self.var_list = []
         self.max_blocks, self.inputs_full_raw, self.transducer_list_outputs, self.start_block, self.encoder_hidden_init,\
             self.trans_hidden_init, self.logits, self.encoder_hidden_state_new, \
-            self.transducer_hidden_state_new, self.encoder_cell, self.transducer_cell = self.build_full_transducer()
+            self.transducer_hidden_state_new, self.train_saver = self.build_full_transducer()
 
         self.targets, self.train_op, self.loss = self.build_training_step()
 
     def build_full_transducer(self):
-        with tf.variable_scope('training_transducer'):
+        with tf.variable_scope('transducer_training'):
             # Inputs
             max_blocks = tf.placeholder(dtype=tf.int32, name='max_blocks')  # total amount of blocks to go through
             inputs_full_raw = tf.placeholder(shape=(None, batch_size, input_dimensions), dtype=tf.float32,
@@ -195,9 +197,15 @@ class Model(object):
             outputs = outputs_final.concat()
             logits = tf.reshape(outputs, shape=(-1, 1, vocab_size))  # And now its [max_output_time, batch_size, vocab]
 
+        for v in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='transducer_training'):
+            print v.name
+        print tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='transducer_training')
+
+        self.var_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='transducer_training')
+        train_saver = tf.train.Saver(var_list=self.var_list)
+
         return max_blocks, inputs_full_raw, transducer_list_outputs, start_block, encoder_hidden_init,\
-            trans_hidden_init, logits, encoder_hidden_state_new, transducer_hidden_state_new, encoder_cell, \
-            transducer_cell
+            trans_hidden_init, logits, encoder_hidden_state_new, transducer_hidden_state_new, train_saver
 
     def build_training_step(self):
         targets = tf.placeholder(shape=(None,), dtype=tf.int32, name='targets')
@@ -213,26 +221,24 @@ class Model(object):
         return targets, train_op, loss
 
     def build_inference_transducer(self):
-        with tf.variable_scope('inference_transducer'):
-            inputs_full_raw = tf.placeholder(shape=(batch_size, input_dimensions), dtype=tf.float32,
-                                             name='inputs_full_raw')  # shape [1, input_dims], inputs for this block!
-            transducer_list_outputs = tf.placeholder(shape=(), dtype=tf.int32,
-                                                     name='transducer_list_outputs')  # amount to max output
+        with tf.variable_scope('transducer_inference'):
+            # shape [input_block_size, 1, input_dims], inputs for this block!
+            inputs_full_raw = tf.placeholder(shape=(input_block_size, batch_size, input_dimensions), dtype=tf.float32,
+                                             name='inputs_full_raw')
+
+            trans_max_outputs = tf.placeholder(shape=(), dtype=tf.int32, name='transducer_list_outputs')
 
             encoder_hidden_init = tf.placeholder(shape=(2, 1, encoder_hidden_units), dtype=tf.float32,
                                                  name='encoder_hidden_init')
             trans_hidden_init = tf.placeholder(shape=(2, 1, transducer_hidden_units), dtype=tf.float32,
                                                name='trans_hidden_init')
 
-            # Turn inputs into tensor which is easily readable
-            inputs_full = tf.reshape(inputs_full_raw, shape=[-1, input_block_size, batch_size, input_dimensions])
-
             # Initiate cells, NOTE: if there is a future error, put these back inside the body function
             encoder_cell = tf.contrib.rnn.LSTMCell(num_units=encoder_hidden_units)
             transducer_cell = tf.contrib.rnn.LSTMCell(transducer_hidden_units)
 
             # --------------------- ENCODER ----------------------------------------------------------------------
-            encoder_inputs = inputs_full
+            encoder_inputs = inputs_full_raw
             encoder_inputs_length = [tf.shape(encoder_inputs)[0]]
             encoder_hidden_state = encoder_hidden_init
 
@@ -260,16 +266,12 @@ class Model(object):
             # --------------------- TRANSDUCER --------------------------------------------------------------------
             encoder_raw_outputs = encoder_outputs
             trans_hidden_state = trans_hidden_init  # Save/load the state as one tensor
-            transducer_amount_outputs = transducer_list_outputs
+            transducer_amount_outputs = trans_max_outputs
 
             # Model building
-            helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
-                embedding=embeddings,
-                start_tokens=tf.tile([GO_SYMBOL], [batch_size]),
-                end_token=vocab_size)  # vocab size, so that it doesn't prematurely end the decoding
-
             attention_states = tf.transpose(encoder_raw_outputs,
                                             [1, 0, 2])  # attention_states: [batch_size, max_time, num_units]
+            attention_states = tf.contrib.seq2seq.tile_batch(attention_states, multiplier=beam_width)
 
             attention_mechanism = tf.contrib.seq2seq.LuongAttention(
                 encoder_hidden_units, attention_states)
@@ -285,28 +287,34 @@ class Model(object):
             trans_hidden_c, trans_hidden_h = tf.split(trans_hidden_state, num_or_size_splits=2, axis=0)
             trans_hidden_c = tf.reshape(trans_hidden_c, shape=[-1, transducer_hidden_units])
             trans_hidden_h = tf.reshape(trans_hidden_h, shape=[-1, transducer_hidden_units])
-            trans_hidden_state_t = LSTMStateTuple(trans_hidden_c, trans_hidden_h)
+            initial_state = tf.nn.rnn_cell.LSTMStateTuple(
+                tf.contrib.seq2seq.tile_batch(trans_hidden_c, multiplier=beam_width),
+                tf.contrib.seq2seq.tile_batch(trans_hidden_h, multiplier=beam_width))
 
-            decoder = tf.contrib.seq2seq.BasicDecoder(
-                decoder_cell, helper,
-                decoder_cell.zero_state(1, tf.float32).clone(cell_state=trans_hidden_state_t),
-                output_layer=projection_layer)
+            decoder_init_state_inf = decoder_cell.zero_state(dtype=tf.float32, batch_size=1 * beam_width). \
+                clone(cell_state=initial_state)
 
-            # TODO: make this all beam search
-            outputs, transducer_hidden_state_new, _ = tf.contrib.seq2seq.dynamic_decode(decoder,
-                                                                                        output_time_major=True,
-                                                                                        maximum_iterations=transducer_amount_outputs)
-            logits = outputs.rnn_output  # logits of shape [max_time,batch_size,vocab_size]
-            decoder_prediction = outputs.sample_id  # For debugging
+            inference_decoder = tf.contrib.seq2seq.BeamSearchDecoder(decoder_cell, embeddings,
+                                                                     start_tokens=tf.tile([GO_SYMBOL], [batch_size]),
+                                                                     end_token=E_SYMBOL,
+                                                                     initial_state=decoder_init_state_inf,
+                                                                     beam_width=beam_width,
+                                                                     output_layer=projection_layer)
 
-            # Modify output of transducer_hidden_state_new so that it can be fed back in again without problems.
-            transducer_hidden_state_new = tf.concat(
-                [transducer_hidden_state_new[0].c, transducer_hidden_state_new[0].h],
-                axis=0)
-            transducer_hidden_state_new = tf.reshape(transducer_hidden_state_new,
-                                                     shape=[2, -1, transducer_hidden_units])
-        # TODO: load in previous models for encoder/transducer cell
-        return encoder_hidden_state_new, transducer_hidden_state_new, logits
+            outputs, transducer_hidden_state_new, seq_len = tf.contrib.seq2seq.dynamic_decode(
+                inference_decoder,
+                output_time_major=True,
+                maximum_iterations=transducer_amount_outputs)
+
+            logits = outputs.beam_search_decoder_output.scores  # score of shape all beams
+            decoder_prediction = outputs.predicted_ids  # For debugging
+
+        # TODO: create dictionary that maps transducer_training scope to transducer_inference scope
+        inference_loader = tf.train.Saver(var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
+                                                                     scope='transducer_inference'))
+        return inputs_full_raw, trans_max_outputs, encoder_hidden_init, trans_hidden_init, encoder_hidden_state_new, \
+            transducer_hidden_state_new, logits, decoder_prediction, inference_loader
+
 
 def softmax(x, axis=None):
     e_x = np.exp(x - np.max(x, axis=axis, keepdims=True))
@@ -488,11 +496,37 @@ def apply_training_step(session, inputs, targets, input_block_size, transducer_m
 
     return loss
 
+
+def save_model_for_inference(session, path_name):
+    model.train_saver.save(session, path_name)
+    print 'Model saved to ' + str(path_name)
+
+
 # ----------------- Inference --------------------------
 
+# TODO: save model from training
+# TODO: load in previously built model
 # TODO: change model to allow optional usage of beam search decoder
 # TODO: add beam search with score based on log softmax addition
 # TODO: select best one a the end
+
+class InferenceManager(object):
+
+    def __init__(self):
+        self.inputs_full_raw, self.trans_max_outputs, self.encoder_hidden_init, self.trans_hidden_init, \
+            self.encoder_hidden_state_new, self.transducer_hidden_state_new, self.logits, \
+            self.step_prediction, self.inference_loader = self.build_inference()
+
+    def build_inference(self):
+        inputs_full_raw, trans_max_outputs, encoder_hidden_init, trans_hidden_init, encoder_hidden_state_new, \
+            transducer_hidden_state_new, logits, prediction, inference_loader = model.build_inference_transducer()
+        return inputs_full_raw, trans_max_outputs, encoder_hidden_init, trans_hidden_init, encoder_hidden_state_new, \
+            transducer_hidden_state_new, logits, prediction, inference_loader
+
+    def run_inference(self, session, model_path):
+        self.inference_loader.restore(sess=session, save_path=model_path)
+
+
 
 # ---------------------- Testing -----------------------------
 
@@ -538,6 +572,7 @@ def test_get_alignment(sess):
 
 init = tf.global_variables_initializer()
 
+"""
 with tf.Session() as sess:
     sess.run(init)
 
@@ -548,3 +583,12 @@ with tf.Session() as sess:
         print apply_training_step(session=sess, inputs=np.ones(shape=(5 * input_block_size, 1, input_dimensions)),
                                   input_block_size=input_block_size, targets=[1, 2, 1, 2, 1, 2],
                                   transducer_max_width=2)
+
+    save_model_for_inference(sess, dir + '/model_save/model_test1')
+"""
+
+inference = InferenceManager()
+
+with tf.Session() as sess2:
+    inference.run_inference(sess2, dir + '/model_save/model_test1')
+
