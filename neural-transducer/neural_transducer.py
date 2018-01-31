@@ -81,7 +81,6 @@ class Model(object):
             embeddings = tf.Variable(tf.random_uniform([vocab_size, input_embedding_size], -1.0, 1.0),
                                      dtype=tf.float32,
                                      name='embedding')
-
             # Inputs
             max_blocks = tf.placeholder(dtype=tf.int32, name='max_blocks')  # total amount of blocks to go through
             inputs_full_raw = tf.placeholder(shape=(None, batch_size, input_dimensions), dtype=tf.float32,
@@ -223,8 +222,18 @@ class Model(object):
         train_op = tf.train.AdamOptimizer().minimize(loss)
         return targets, train_op, loss
 
+    def __create_loading_dic(self, list_vars, old_name, new_name):
+        dic = {}
+        for var in list_vars:
+            dic[var.name] = var.name.replace(old_name, new_name)
+        return dic
+
     def build_inference_transducer(self):
         with tf.variable_scope('transducer_inference'):
+            embeddings = tf.Variable(tf.random_uniform([vocab_size, input_embedding_size], -1.0, 1.0),
+                                     dtype=tf.float32,
+                                     name='embedding')
+
             # shape [input_block_size, 1, input_dims], inputs for this block!
             inputs_full_raw = tf.placeholder(shape=(input_block_size, batch_size, input_dimensions), dtype=tf.float32,
                                              name='inputs_full_raw')
@@ -312,9 +321,18 @@ class Model(object):
             logits = outputs.beam_search_decoder_output.scores  # score of shape all beams
             decoder_prediction = outputs.predicted_ids  # For debugging
 
+        # TODO: solve loading
         # TODO: create dictionary that maps transducer_training scope to transducer_inference scope
-        inference_loader = tf.train.Saver(var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES,
-                                                                     scope='transducer_inference'))
+        # dic = self.__create_loading_dic(self.var_list, 'transducer_training', 'transducer_inference')
+        dic = {
+            'transducer_training/embedding': embeddings,
+            'transducer_training/rnn/lstm_cell': encoder_cell,
+            'transducer_training/memory_layer': attention_mechanism,
+            'transducer_training/decoder/attention_wrapper': decoder_cell,
+            'transducer_training/decoder/dense': projection_layer
+        }
+
+        inference_loader = tf.train.Saver(var_list=dic)
         return inputs_full_raw, trans_max_outputs, encoder_hidden_init, trans_hidden_init, encoder_hidden_state_new, \
             transducer_hidden_state_new, logits, decoder_prediction, inference_loader
 
@@ -573,7 +591,7 @@ def test_get_alignment(sess):
 
 init = tf.global_variables_initializer()
 
-
+"""
 with tf.Session() as sess:
     sess.run(init)
 
@@ -593,4 +611,3 @@ inference = InferenceManager()
 with tf.Session() as sess2:
     inference.run_inference(sess2, dir + '/model_save/model_test1')
 
-"""

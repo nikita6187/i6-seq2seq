@@ -11,10 +11,13 @@ with tf.variable_scope('old_scope'):
     y1 = tf.get_variable(name='y1', shape=(), initializer=tf.zeros_initializer)
 
 with tf.variable_scope('new_scope'):
-    x2 = tf.get_variable(name='x2', shape=(), initializer=tf.ones_initializer)
-    y2 = tf.get_variable(name='y2', shape=(), initializer=tf.ones_initializer)
+    x2 = tf.get_variable(name='x1', shape=(), initializer=tf.ones_initializer)
+    y2 = tf.get_variable(name='y1', shape=(), initializer=tf.ones_initializer)
 
-saver = tf.train.Saver(var_list={'old_scope/x': x1, 'old_scope/y': y1})
+for v in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='old_scope'):
+    print v.name
+
+saver = tf.train.Saver(tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='old_scope'))
 
 init = tf.global_variables_initializer()
 
@@ -23,7 +26,7 @@ with tf.Session() as sess:
     saver.save(sess, dir + '/data_1.ckpt')
 
 
-loader = tf.train.Saver(var_list={'old_scope/x': x2, 'old_scope/y': y2})
+loader = tf.train.Saver(var_list={'old_scope/x1': 'new_scope/x1', 'old_scope/y1': 'new_scope/y1'})
 
 with tf.Session() as sess2:
     loader.restore(sess2, dir + '/data_1.ckpt')
