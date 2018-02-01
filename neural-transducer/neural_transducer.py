@@ -94,6 +94,10 @@ class Model(object):
             trans_hidden_init = tf.placeholder(shape=(2, 1, transducer_hidden_units), dtype=tf.float32,
                                                name='trans_hidden_init')
 
+            # Temporary constants, maybe changed during inference
+            end_symbol = tf.get_variable(name='end_symbol', initializer=tf.constant_initializer(vocab_size),
+                                         shape=(), dtype=tf.int32)
+
             # Turn inputs into tensor which is easily readable
             inputs_full = tf.reshape(inputs_full_raw, shape=[-1, input_block_size, batch_size, input_dimensions])
 
@@ -147,8 +151,8 @@ class Model(object):
                 # Model building
                 helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
                     embedding=embeddings,
-                    start_tokens=tf.tile([GO_SYMBOL], [batch_size]),
-                    end_token=vocab_size)  # vocab size, so that it doesn't prematurely end the decoding
+                    start_tokens=tf.tile([GO_SYMBOL], [batch_size]),  # TODO: check if this looks good
+                    end_token=end_symbol)  # vocab size, so that it doesn't prematurely end the decoding
 
                 attention_states = tf.transpose(encoder_raw_outputs,
                                                 [1, 0, 2])  # attention_states: [batch_size, max_time, num_units]
@@ -199,12 +203,18 @@ class Model(object):
             outputs = outputs_final.concat()
             logits = tf.reshape(outputs, shape=(-1, 1, vocab_size))  # And now its [max_output_time, batch_size, vocab]
 
+            # For loading the model later on
+            logits = tf.identity(logits, name='logits')
+            encoder_hidden_state_new = tf.identity(encoder_hidden_state_new, name='encoder_hidden_state_new')
+            transducer_hidden_state_new = tf.identity(encoder_hidden_state_new, name='transducer_hidden_state_new')
+
         for v in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='transducer_training'):
             print v.name
         print tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='transducer_training')
 
-        self.var_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='transducer_training')
-        train_saver = tf.train.Saver(var_list=self.var_list)
+        #self.var_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='transducer_training')
+        #train_saver = tf.train.Saver(var_list=self.var_list)
+        train_saver = tf.train.Saver()  # For now save everything
 
         return max_blocks, inputs_full_raw, transducer_list_outputs, start_block, encoder_hidden_init,\
             trans_hidden_init, logits, encoder_hidden_state_new, transducer_hidden_state_new, train_saver
@@ -228,7 +238,7 @@ class Model(object):
             dic[var.name] = var.name.replace(old_name, new_name)
         return dic
 
-    def build_inference_transducer(self):
+    def build_beamsearch_inference_transducer(self):
         with tf.variable_scope('transducer_inference'):
             embeddings = tf.Variable(tf.random_uniform([vocab_size, input_embedding_size], -1.0, 1.0),
                                      dtype=tf.float32,
@@ -245,9 +255,9 @@ class Model(object):
             trans_hidden_init = tf.placeholder(shape=(2, 1, transducer_hidden_units), dtype=tf.float32,
                                                name='trans_hidden_init')
 
-            # Initiate cells, NOTE: if there is a future error, put these back inside the body function
+            # Initiate cells
             encoder_cell = tf.contrib.rnn.LSTMCell(num_units=encoder_hidden_units)
-            transducer_cell = tf.contrib.rnn.LSTMCell(transducer_hidden_units)
+            transducer_cell = tf.contrib.rnn.LSTMCell(num_units=transducer_hidden_units)
 
             # --------------------- ENCODER ----------------------------------------------------------------------
             encoder_inputs = inputs_full_raw
@@ -529,23 +539,92 @@ def save_model_for_inference(session, path_name):
 # TODO: change model to allow optional usage of beam search decoder [p]
 # TODO: add beam search with score based on log softmax addition
 # TODO: select best one at the end
+# TODO: documentation
 
 class InferenceManager(object):
 
-    def __init__(self):
-        self.inputs_full_raw, self.trans_max_outputs, self.encoder_hidden_init, self.trans_hidden_init, \
-            self.encoder_hidden_state_new, self.transducer_hidden_state_new, self.logits, \
-            self.step_prediction, self.inference_loader = self.build_inference()
+    # session is only needed for greedy inference, path points to model without any special ending
+    def __init__(self, beam_search, path, session, transducer_width):
+        self.transducer_width = transducer_width
+        self.beam_search = beam_search
+        if beam_search is True:
+            self.inputs_full_raw, self.trans_max_outputs, self.encoder_hidden_init, self.trans_hidden_init, \
+                self.encoder_hidden_state_new, self.transducer_hidden_state_new, self.logits, \
+                self.step_prediction, self.inference_beam_loader = self.build_beam_inference()
+        else:
+            self.max_blocks, self.inputs_full_raw, self.transducer_list_outputs, self.start_block, self.encoder_hidden_init, \
+                self.trans_hidden_init, self.logits, self.encoder_hidden_state_new, \
+                self.transducer_hidden_state_new = self.build_greedy_inference(path=path, session=session)
 
-    def build_inference(self):
+    def build_beam_inference(self):
         inputs_full_raw, trans_max_outputs, encoder_hidden_init, trans_hidden_init, encoder_hidden_state_new, \
-            transducer_hidden_state_new, logits, prediction, inference_loader = model.build_inference_transducer()
+            transducer_hidden_state_new, logits, prediction, inference_loader = model.build_beamsearch_inference_transducer()
         return inputs_full_raw, trans_max_outputs, encoder_hidden_init, trans_hidden_init, encoder_hidden_state_new, \
             transducer_hidden_state_new, logits, prediction, inference_loader
 
-    def run_inference(self, session, model_path):
-        self.inference_loader.restore(sess=session, save_path=model_path)
+    def build_greedy_inference(self, path, session):
+        # Restore graph
+        saver = tf.train.import_meta_graph(path + '.meta')
+        saver.restore(session, path)
+        # Setup constants
+        graph = tf.get_default_graph()
+        end_symbol = graph.get_tensor_by_name(name='transducer_training/end_symbol:0')
+        end_symbol = tf.assign(end_symbol, value=E_SYMBOL)
+        session.run(end_symbol)
+        # TODO: refactor this code
+        # Get inputs
+        max_blocks = graph.get_tensor_by_name(name='transducer_training/max_blocks:0')
+        inputs_full_raw = graph.get_tensor_by_name(name='transducer_training/inputs_full_raw:0')
+        transducer_list_outputs = graph.get_tensor_by_name(name='transducer_training/transducer_list_outputs:0')
+        start_block = graph.get_tensor_by_name(name='transducer_training/transducer_start_block:0')
+        encoder_hidden_init = graph.get_tensor_by_name(name='transducer_training/encoder_hidden_init:0')
+        trans_hidden_init = graph.get_tensor_by_name(name='transducer_training/trans_hidden_init:0')
+        # Get return ops
+        logits = graph.get_operation_by_name(name='transducer_training/logits')
+        encoder_hidden_state_new = graph.get_operation_by_name(name='transducer_training/encoder_hidden_state_new')
+        transducer_hidden_state_new = graph.get_operation_by_name(name='transducer_training/transducer_hidden_state_new')
 
+        return max_blocks, inputs_full_raw, transducer_list_outputs, start_block, encoder_hidden_init, \
+            trans_hidden_init, logits, encoder_hidden_state_new, transducer_hidden_state_new
+
+    def run_inference(self, session, model_path, full_inputs):
+
+        def run_greedy_transducer_block(session, full_inputs, current_block, encoder_init_state, transducer_init_state):
+            logits, encoder_new_state, transducer_new_state = session.run([self.logits, self.encoder_hidden_state_new,
+                             self.transducer_hidden_state_new], feed_dict={
+                    self.inputs_full_raw: full_inputs,
+                    self.max_blocks: 1,
+                    self.transducer_list_outputs: [self.transducer_width],
+                    self.start_block: current_block,
+                    self.encoder_hidden_init: encoder_init_state,
+                    self.trans_hidden_init: transducer_init_state
+                })
+            return logits, encoder_new_state, transducer_new_state
+
+        if self.beam_search is True:
+            self.inference_beam_loader.restore(sess=session, save_path=model_path)
+
+        # Meta parameters
+        amount_of_input_blocks = int(np.ceil(full_inputs.shape[0] / input_block_size))
+        # Init encoder/decoder states
+        last_encoder_state = np.zeros(shape=(2, batch_size, encoder_hidden_units))
+        last_transducer_state = np.zeros(shape=(2, batch_size, transducer_hidden_units))
+        logits = []
+
+        for current_input_block in range(0, amount_of_input_blocks):
+            if self.beam_search is False:
+                new_logits, last_encoder_state, last_transducer_state = \
+                    run_greedy_transducer_block(session=session,
+                                                full_inputs=full_inputs,
+                                                current_block=current_input_block,
+                                                encoder_init_state=last_encoder_state,
+                                                transducer_init_state=last_transducer_state)
+                logits.append(new_logits)
+
+        # Post process logits into one np array
+        logit_arr = np.concatenate(logits, axis=0)  # Is now of shape [max_time, batch_size, vocab_size] (THEORITCALLY)
+
+        return logit_arr
 
 # ---------------------- Testing -----------------------------
 
@@ -606,8 +685,10 @@ with tf.Session() as sess:
     save_model_for_inference(sess, dir + '/model_save/model_test1')
 """
 
-inference = InferenceManager()
 
 with tf.Session() as sess2:
-    inference.run_inference(sess2, dir + '/model_save/model_test1')
+    inference = InferenceManager(session=sess2, beam_search=False, path=dir+'/model_save/model_test1',
+                                 transducer_width=2)
+    inference.run_inference(sess2, dir + '/model_save/model_test1',
+                            full_inputs=np.ones(shape=(5 * input_block_size, 1, input_dimensions)))
 
