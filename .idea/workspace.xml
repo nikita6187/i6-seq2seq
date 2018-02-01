@@ -30,16 +30,14 @@
       <file leaf-file-name="neural_transducer.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="462">
-              <caret line="596" column="65" selection-start-line="596" selection-start-column="65" selection-end-line="596" selection-end-column="65" />
+            <state relative-caret-position="307">
+              <caret line="609" column="36" selection-start-line="609" selection-start-column="36" selection-end-line="609" selection-end-column="36" />
               <folding>
                 <element signature="e#0#23#0" expanded="true" />
                 <element signature="e#827#2933#0" expanded="false" />
                 <element signature="e#1980#2930#0" expanded="false" />
                 <element signature="e#1980#2567#1" expanded="false" />
                 <element signature="e#5742#5789#0" expanded="false" />
-                <element signature="e#5888#10833#0" expanded="false" />
-                <element signature="e#12225#12931#0" expanded="false" />
                 <element signature="e#13008#13130#0" expanded="false" />
                 <element signature="e#13193#19568#0" expanded="false" />
                 <element signature="e#19602#19710#0" expanded="false" />
@@ -47,21 +45,10 @@
                 <element signature="e#21595#22201#1" expanded="false" />
                 <element signature="e#27550#29270#0" expanded="false" />
                 <element signature="e#30711#31137#0" expanded="false" />
-                <element signature="e#35053#35635#0" expanded="false" />
-                <element signature="e#35697#36281#0" expanded="false" />
-                <element signature="e#36318#36550#0" expanded="false" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="loadingtests.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/basic-tests/save-loading/loadingtests.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="234">
-              <caret line="13" column="28" selection-start-line="13" selection-start-column="28" selection-end-line="13" selection-end-column="28" />
-              <folding>
-                <element signature="e#0#23#0" expanded="true" />
+                <element signature="e#32952#33725#0" expanded="false" />
+                <element signature="e#35152#35734#0" expanded="false" />
+                <element signature="e#35796#36380#0" expanded="false" />
+                <element signature="e#36417#36649#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -171,8 +158,8 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scratches" />
       <pane id="Scope" />
+      <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -603,8 +590,6 @@
             <element signature="e#1980#2930#0" expanded="false" />
             <element signature="e#1980#2567#1" expanded="false" />
             <element signature="e#5742#5789#0" expanded="false" />
-            <element signature="e#5888#10833#0" expanded="false" />
-            <element signature="e#12225#12931#0" expanded="false" />
             <element signature="e#13008#13130#0" expanded="false" />
             <element signature="e#13193#19568#0" expanded="false" />
             <element signature="e#19602#19710#0" expanded="false" />
@@ -612,9 +597,10 @@
             <element signature="e#21595#22201#1" expanded="false" />
             <element signature="e#27550#29270#0" expanded="false" />
             <element signature="e#30711#31137#0" expanded="false" />
-            <element signature="e#35053#35635#0" expanded="false" />
-            <element signature="e#35697#36281#0" expanded="false" />
-            <element signature="e#36318#36550#0" expanded="false" />
+            <element signature="e#32952#33725#0" expanded="false" />
+            <element signature="e#35152#35734#0" expanded="false" />
+            <element signature="e#35796#36380#0" expanded="false" />
+            <element signature="e#36417#36649#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -638,8 +624,6 @@
             <element signature="e#1980#2930#0" expanded="false" />
             <element signature="e#1980#2567#1" expanded="false" />
             <element signature="e#5742#5789#0" expanded="false" />
-            <element signature="e#5888#10833#0" expanded="false" />
-            <element signature="e#12225#12931#0" expanded="false" />
             <element signature="e#13008#13130#0" expanded="false" />
             <element signature="e#13193#19568#0" expanded="false" />
             <element signature="e#19602#19710#0" expanded="false" />
@@ -647,9 +631,10 @@
             <element signature="e#21595#22201#1" expanded="false" />
             <element signature="e#27550#29270#0" expanded="false" />
             <element signature="e#30711#31137#0" expanded="false" />
-            <element signature="e#35053#35635#0" expanded="false" />
-            <element signature="e#35697#36281#0" expanded="false" />
-            <element signature="e#36318#36550#0" expanded="false" />
+            <element signature="e#32952#33725#0" expanded="false" />
+            <element signature="e#35152#35734#0" expanded="false" />
+            <element signature="e#35796#36380#0" expanded="false" />
+            <element signature="e#36417#36649#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -673,8 +658,6 @@
             <element signature="e#1980#2930#0" expanded="false" />
             <element signature="e#1980#2567#1" expanded="false" />
             <element signature="e#5742#5789#0" expanded="false" />
-            <element signature="e#5888#10833#0" expanded="false" />
-            <element signature="e#12225#12931#0" expanded="false" />
             <element signature="e#13008#13130#0" expanded="false" />
             <element signature="e#13193#19568#0" expanded="false" />
             <element signature="e#19602#19710#0" expanded="false" />
@@ -682,9 +665,10 @@
             <element signature="e#21595#22201#1" expanded="false" />
             <element signature="e#27550#29270#0" expanded="false" />
             <element signature="e#30711#31137#0" expanded="false" />
-            <element signature="e#35053#35635#0" expanded="false" />
-            <element signature="e#35697#36281#0" expanded="false" />
-            <element signature="e#36318#36550#0" expanded="false" />
+            <element signature="e#32952#33725#0" expanded="false" />
+            <element signature="e#35152#35734#0" expanded="false" />
+            <element signature="e#35796#36380#0" expanded="false" />
+            <element signature="e#36417#36649#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -708,8 +692,6 @@
             <element signature="e#1980#2930#0" expanded="false" />
             <element signature="e#1980#2567#1" expanded="false" />
             <element signature="e#5742#5789#0" expanded="false" />
-            <element signature="e#5888#10833#0" expanded="false" />
-            <element signature="e#12225#12931#0" expanded="false" />
             <element signature="e#13008#13130#0" expanded="false" />
             <element signature="e#13193#19568#0" expanded="false" />
             <element signature="e#19602#19710#0" expanded="false" />
@@ -717,9 +699,10 @@
             <element signature="e#21595#22201#1" expanded="false" />
             <element signature="e#27550#29270#0" expanded="false" />
             <element signature="e#30711#31137#0" expanded="false" />
-            <element signature="e#35053#35635#0" expanded="false" />
-            <element signature="e#35697#36281#0" expanded="false" />
-            <element signature="e#36318#36550#0" expanded="false" />
+            <element signature="e#32952#33725#0" expanded="false" />
+            <element signature="e#35152#35734#0" expanded="false" />
+            <element signature="e#35796#36380#0" expanded="false" />
+            <element signature="e#36417#36649#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -741,8 +724,6 @@
             <element signature="e#1980#2930#0" expanded="false" />
             <element signature="e#1980#2567#1" expanded="false" />
             <element signature="e#5742#5789#0" expanded="false" />
-            <element signature="e#5888#10833#0" expanded="false" />
-            <element signature="e#12225#12931#0" expanded="false" />
             <element signature="e#13008#13130#0" expanded="false" />
             <element signature="e#13193#19568#0" expanded="false" />
             <element signature="e#19602#19710#0" expanded="false" />
@@ -750,9 +731,10 @@
             <element signature="e#21595#22201#1" expanded="false" />
             <element signature="e#27550#29270#0" expanded="false" />
             <element signature="e#30711#31137#0" expanded="false" />
-            <element signature="e#35053#35635#0" expanded="false" />
-            <element signature="e#35697#36281#0" expanded="false" />
-            <element signature="e#36318#36550#0" expanded="false" />
+            <element signature="e#32952#33725#0" expanded="false" />
+            <element signature="e#35152#35734#0" expanded="false" />
+            <element signature="e#35796#36380#0" expanded="false" />
+            <element signature="e#36417#36649#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -869,10 +851,10 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/basic-tests/save-loading/loadingtests.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="234">
+        <state relative-caret-position="198">
           <caret line="13" column="28" selection-start-line="13" selection-start-column="28" selection-end-line="13" selection-end-column="28" />
           <folding>
-            <element signature="e#0#23#0" expanded="true" />
+            <element signature="e#0#23#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -881,22 +863,19 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="270">
           <caret line="51" column="35" selection-start-line="51" selection-start-column="35" selection-end-line="51" selection-end-column="35" />
-          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="462">
-          <caret line="596" column="65" selection-start-line="596" selection-start-column="65" selection-end-line="596" selection-end-column="65" />
+        <state relative-caret-position="307">
+          <caret line="609" column="36" selection-start-line="609" selection-start-column="36" selection-end-line="609" selection-end-column="36" />
           <folding>
             <element signature="e#0#23#0" expanded="true" />
             <element signature="e#827#2933#0" expanded="false" />
             <element signature="e#1980#2930#0" expanded="false" />
             <element signature="e#1980#2567#1" expanded="false" />
             <element signature="e#5742#5789#0" expanded="false" />
-            <element signature="e#5888#10833#0" expanded="false" />
-            <element signature="e#12225#12931#0" expanded="false" />
             <element signature="e#13008#13130#0" expanded="false" />
             <element signature="e#13193#19568#0" expanded="false" />
             <element signature="e#19602#19710#0" expanded="false" />
@@ -904,9 +883,10 @@
             <element signature="e#21595#22201#1" expanded="false" />
             <element signature="e#27550#29270#0" expanded="false" />
             <element signature="e#30711#31137#0" expanded="false" />
-            <element signature="e#35053#35635#0" expanded="false" />
-            <element signature="e#35697#36281#0" expanded="false" />
-            <element signature="e#36318#36550#0" expanded="false" />
+            <element signature="e#32952#33725#0" expanded="false" />
+            <element signature="e#35152#35734#0" expanded="false" />
+            <element signature="e#35796#36380#0" expanded="false" />
+            <element signature="e#36417#36649#0" expanded="false" />
           </folding>
         </state>
       </provider>

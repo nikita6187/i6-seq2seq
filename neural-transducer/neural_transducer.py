@@ -571,7 +571,6 @@ class InferenceManager(object):
         end_symbol = graph.get_tensor_by_name(name='transducer_training/end_symbol:0')
         end_symbol = tf.assign(end_symbol, value=E_SYMBOL)
         session.run(end_symbol)
-        # TODO: refactor this code
         # Get inputs
         max_blocks = graph.get_tensor_by_name(name='transducer_training/max_blocks:0')
         inputs_full_raw = graph.get_tensor_by_name(name='transducer_training/inputs_full_raw:0')
@@ -580,9 +579,9 @@ class InferenceManager(object):
         encoder_hidden_init = graph.get_tensor_by_name(name='transducer_training/encoder_hidden_init:0')
         trans_hidden_init = graph.get_tensor_by_name(name='transducer_training/trans_hidden_init:0')
         # Get return ops
-        logits = graph.get_operation_by_name(name='transducer_training/logits')
-        encoder_hidden_state_new = graph.get_operation_by_name(name='transducer_training/encoder_hidden_state_new')
-        transducer_hidden_state_new = graph.get_operation_by_name(name='transducer_training/transducer_hidden_state_new')
+        logits = graph.get_operation_by_name(name='transducer_training/logits').outputs[0]
+        encoder_hidden_state_new = graph.get_operation_by_name(name='transducer_training/encoder_hidden_state_new').outputs[0]
+        transducer_hidden_state_new = graph.get_operation_by_name(name='transducer_training/transducer_hidden_state_new').outputs[0]
 
         return max_blocks, inputs_full_raw, transducer_list_outputs, start_block, encoder_hidden_init, \
             trans_hidden_init, logits, encoder_hidden_state_new, transducer_hidden_state_new
@@ -594,12 +593,18 @@ class InferenceManager(object):
                 session.run([self.logits, self.encoder_hidden_state_new,
                              self.transducer_hidden_state_new], feed_dict={
                     self.inputs_full_raw: full_inputs,
-                    self.max_blocks: 1,  # TODO: look if this is right
+                    self.max_blocks: 1,
                     self.transducer_list_outputs: [self.transducer_width],
                     self.start_block: current_block,
                     self.encoder_hidden_init: encoder_init_state,
                     self.trans_hidden_init: transducer_init_state
                 })
+
+            print 'New info:'
+            print logits
+            print encoder_new_state
+            print transducer_new_state
+
             return logits, encoder_new_state, transducer_new_state
 
         if self.beam_search is True:
@@ -671,20 +676,19 @@ def test_get_alignment(sess):
 
 init = tf.global_variables_initializer()
 
-"""
+
 with tf.Session() as sess:
     sess.run(init)
 
     # test_get_alignment(sess)
 
     # Apply training step
-    for i in range(0, 100):
+    for i in range(0, 2):
         print apply_training_step(session=sess, inputs=np.ones(shape=(5 * input_block_size, 1, input_dimensions)),
                                   input_block_size=input_block_size, targets=[1, 2, 1, 2, 1, 2],
                                   transducer_max_width=2)
 
     save_model_for_inference(sess, dir + '/model_save/model_test1')
-"""
 
 
 with tf.Session() as sess2:
