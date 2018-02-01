@@ -590,10 +590,11 @@ class InferenceManager(object):
     def run_inference(self, session, model_path, full_inputs):
 
         def run_greedy_transducer_block(session, full_inputs, current_block, encoder_init_state, transducer_init_state):
-            logits, encoder_new_state, transducer_new_state = session.run([self.logits, self.encoder_hidden_state_new,
+            logits, encoder_new_state, transducer_new_state = \
+                session.run([self.logits, self.encoder_hidden_state_new,
                              self.transducer_hidden_state_new], feed_dict={
                     self.inputs_full_raw: full_inputs,
-                    self.max_blocks: 1,
+                    self.max_blocks: 1,  # TODO: look if this is right
                     self.transducer_list_outputs: [self.transducer_width],
                     self.start_block: current_block,
                     self.encoder_hidden_init: encoder_init_state,
