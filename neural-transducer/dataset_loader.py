@@ -130,7 +130,7 @@ def sparse_tuple_from(sequences, dtype=np.int32):
 
 
 class BatchManager:
-    def __init__(self, inputs, inputs_lengths, targets, targets_lengths):
+    def __init__(self, inputs, inputs_lengths, targets, targets_lengths, pad):
         #np.random.seed(1)
         self.inputs = inputs
         self.targets = targets
@@ -140,6 +140,7 @@ class BatchManager:
         self.lookup = []
         self.init_integer_encoding()
         self.new_epoch()
+        self.pad = pad
 
     def init_integer_encoding(self):
         # Go over all outputs and create lookup dictionary
@@ -149,6 +150,8 @@ class BatchManager:
                     self.lookup.append(self.targets[target][letter].lower())
 
     def lookup_letter(self, letter):
+        if letter is self.pad:
+            return self.get_size_vocab() + 1
         return self.lookup.index(letter.lower())
 
     def get_size_vocab(self):
@@ -200,14 +203,15 @@ class BatchManager:
             targets_batch = np.zeros_like(targets_batch_raw, dtype=np.int32)
             for target in range(0, targets_batch.shape[0]):
                 for char in range(0, targets_batch[target].shape[0]):
-                    print char
-                    print target_lengths[target]
                     if char <= target_lengths[target]:
                         targets_batch[target][char] = self.lookup_letter(targets_batch_raw[target][char])
                     else:
                         targets_batch[target][char] = self.lookup_letter(self.pad)
         else:
             targets_batch = targets_batch_raw
+
+        targets_batch = np.reshape(targets_batch, (-1))
+        targets_batch = targets_batch[0:target_lengths[0]+1]
 
         self._current_pos += batch_size
 

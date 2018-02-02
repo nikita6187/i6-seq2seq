@@ -234,10 +234,6 @@ class Model(object):
             encoder_hidden_state_new = tf.identity(encoder_hidden_state_new, name='encoder_hidden_state_new')
             transducer_hidden_state_new = tf.identity(encoder_hidden_state_new, name='transducer_hidden_state_new')
 
-        for v in tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='transducer_training'):
-            print v.name
-        print tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='transducer_training')
-
         #self.var_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='transducer_training')
         #train_saver = tf.train.Saver(var_list=self.var_list)
         train_saver = tf.train.Saver()  # For now save everything
@@ -498,8 +494,7 @@ class Model(object):
                                                                    targets=targets, total_blocks=amount_of_input_blocks,
                                                                    last_encoder_state=last_encoder_state)
 
-        # Check if we've found an alignment, it should be one
-        assert len(current_alignments) == 1
+        # Select first alignment if we have multiple with the same log prob (happens with ~1% probability in training)
 
         return current_alignments[0].alignment_locations
 
@@ -520,6 +515,8 @@ class Model(object):
         # Get alignment and insert it into the targets
         alignment = self.get_alignment(session=session, inputs=inputs, targets=targets,
                                        input_block_size=input_block_size, transducer_max_width=transducer_max_width)
+
+        print 'Alignment: ' + str(alignment)
 
         offset = 0
         for e in alignment:
@@ -618,6 +615,8 @@ class InferenceManager(object):
                     self.encoder_hidden_init: encoder_init_state,
                     self.trans_hidden_init: transducer_init_state
                 })
+            # TODO test softmax the logits
+            logits = softmax(logits, axis=2)
             return logits, encoder_new_state, transducer_new_state
 
         if self.beam_search is True:
