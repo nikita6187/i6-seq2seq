@@ -35,5 +35,5 @@ with tf.Session() as sess2:
     inference.run_inference(sess2, dir + '/model_save/model_test1',
                             full_inputs=np.ones(shape=(5 * constants_manager.input_block_size,
                                                        1,
-                                                       constants_manager.input_dimensions)))
+                                                       constants_manager.input_dimensions)), clean_e=False)
 

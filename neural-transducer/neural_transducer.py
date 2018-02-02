@@ -101,8 +101,12 @@ class Model(object):
                                      name='embedding')
             # Inputs
             max_blocks = tf.placeholder(dtype=tf.int32, name='max_blocks')  # total amount of blocks to go through
+            if self.cons_manager.inputs_embedded is True:
+                input_type = tf.float32
+            else:
+                input_type = tf.int32
             inputs_full_raw = tf.placeholder(shape=(None, self.cons_manager.batch_size,
-                                                    self.cons_manager.input_dimensions), dtype=tf.float32,
+                                                    self.cons_manager.input_dimensions), dtype=input_type,
                                              name='inputs_full_raw')  # shape [max_time, 1, input_dims]
             transducer_list_outputs = tf.placeholder(shape=(None,), dtype=tf.int32,
                                                      name='transducer_list_outputs')  # amount to output per block
@@ -119,7 +123,13 @@ class Model(object):
                                          shape=(), dtype=tf.int32)
 
             # Turn inputs into tensor which is easily readable
+            # TODO: see if inputs are being processed correctly
+            """
             inputs_full = tf.reshape(inputs_full_raw, shape=[-1, self.cons_manager.input_block_size,
+                                                             self.cons_manager.batch_size,
+                                                             self.cons_manager.input_dimensions])
+                                                             """
+            inputs_full = tf.reshape(inputs_full_raw, shape=[-1,
                                                              self.cons_manager.batch_size,
                                                              self.cons_manager.input_dimensions])
 
@@ -138,13 +148,14 @@ class Model(object):
             def body(current_block, outputs_int, encoder_hidden, trans_hidden):
 
                 # --------------------- ENCODER ----------------------------------------------------------------------
-                encoder_inputs = inputs_full[current_block - start_block]
+                encoder_inputs = inputs_full[(current_block - start_block)*self.cons_manager.input_block_size:(current_block - start_block + 1)*self.cons_manager.input_block_size]
                 encoder_inputs_length = [tf.shape(encoder_inputs)[0]]
                 encoder_hidden_state = encoder_hidden
 
                 if self.cons_manager.inputs_embedded is True:
                     encoder_inputs_embedded = encoder_inputs
                 else:
+                    encoder_inputs = tf.reshape(encoder_inputs, shape=[-1, 1])
                     encoder_inputs_embedded = tf.nn.embedding_lookup(embeddings, encoder_inputs)
 
                 # Build model
@@ -602,7 +613,7 @@ class InferenceManager(object):
         return max_blocks, inputs_full_raw, transducer_list_outputs, start_block, encoder_hidden_init, \
             trans_hidden_init, logits, encoder_hidden_state_new, transducer_hidden_state_new
 
-    def run_inference(self, session, model_path, full_inputs):
+    def run_inference(self, session, model_path, full_inputs, clean_e):
 
         def run_greedy_transducer_block(session, full_inputs, current_block, encoder_init_state, transducer_init_state):
             logits, encoder_new_state, transducer_new_state = \
@@ -651,9 +662,8 @@ class InferenceManager(object):
             def lookup(i):
                 return self.cons_manager.vocab_ids[i]
             predicted_chars = map(lookup, predict_id)
-            #predict_id = [i for i in predict_id if i != self.cons_manager.E_SYMBOL]
-
-            print 'Predicted ids: ' + str(predicted_chars)
+            if clean_e is True:
+                predict_id = [i for i in predict_id if i != self.cons_manager.E_SYMBOL]
 
         return predict_id, predicted_chars
 
