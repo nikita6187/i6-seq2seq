@@ -249,8 +249,8 @@ class Model(object):
         targets = tf.placeholder(shape=(None,), dtype=tf.int32, name='targets')
         targets_one_hot = tf.one_hot(targets, depth=self.cons_manager.vocab_size, dtype=tf.float32)
 
-        targets_one_hot = tf.Print(targets_one_hot, [targets_one_hot], message='Targets: ', summarize=100)
-        targets_one_hot = tf.Print(targets_one_hot, [self.logits], message='Logits: ', summarize=100)
+        #targets_one_hot = tf.Print(targets_one_hot, [targets_one_hot], message='Targets: ', summarize=100)
+        #targets_one_hot = tf.Print(targets_one_hot, [self.logits], message='Logits: ', summarize=100)
 
         stepwise_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=targets_one_hot,
                                                                          logits=self.logits)
@@ -477,7 +477,7 @@ class Model(object):
         # Manage variables
         amount_of_input_blocks = int(np.ceil(inputs.shape[0] / input_block_size))
         current_block_index = 1
-        current_alignments = [Alignment(cons_manager=constants_manager)]
+        current_alignments = [Alignment(cons_manager=self.cons_manager)]
         last_encoder_state = np.zeros(shape=(2, 1, self.cons_manager.encoder_hidden_units))
 
         # Do assertions to check whether everything was correctly set up.
@@ -503,7 +503,8 @@ class Model(object):
 
         return current_alignments[0].alignment_locations
 
-    def apply_training_step(self, session, inputs, targets, input_block_size, transducer_max_width):
+    def apply_training_step(self, session, inputs, targets, input_block_size, transducer_max_width,
+                            training_steps_per_alignment):
         """
         Applies a training step to the transducer model. This method can be called multiple times from e.g. a loop.
         :param session: The current session.
@@ -511,7 +512,9 @@ class Model(object):
         :param targets: The full targets. Shape: [time]. Each entry is an index.
         :param input_block_size: The block width for the inputs.
         :param transducer_max_width: The max width for the transducer. Not including the output symbol <e>
-        :return: Loss of this training step.
+        :param training_steps_per_alignment: The amount of times to repeat the training step whilst caching the same
+        alignment.
+        :return: Avergae loss of this training step.
         """
 
         # Get alignment and insert it into the targets
@@ -529,22 +532,26 @@ class Model(object):
         for i in range(1, len(alignment)):
             lengths.append(alignment[i] - alignment[i - 1] + 1)
 
-        # Init values
-        encoder_hidden_init = np.zeros(shape=(2, 1, self.cons_manager.encoder_hidden_units))
-        trans_hidden_init = np.zeros(shape=(2, 1, self.cons_manager.transducer_hidden_units))
+        total_loss = 0
 
-        # Run training step
-        _, loss = session.run([self.train_op, self.loss], feed_dict={
-            self.max_blocks: len(lengths),
-            self.inputs_full_raw: inputs,
-            self.transducer_list_outputs: lengths,
-            self.targets: targets,
-            self.start_block: 0,
-            self.encoder_hidden_init: encoder_hidden_init,
-            self.trans_hidden_init: trans_hidden_init
-        })
+        for i in range(0, training_steps_per_alignment):
+            # Init values
+            encoder_hidden_init = np.zeros(shape=(2, 1, self.cons_manager.encoder_hidden_units))
+            trans_hidden_init = np.zeros(shape=(2, 1, self.cons_manager.transducer_hidden_units))
 
-        return loss
+            # Run training step
+            _, loss = session.run([self.train_op, self.loss], feed_dict={
+                self.max_blocks: len(lengths),
+                self.inputs_full_raw: inputs,
+                self.transducer_list_outputs: lengths,
+                self.targets: targets,
+                self.start_block: 0,
+                self.encoder_hidden_init: encoder_hidden_init,
+                self.trans_hidden_init: trans_hidden_init
+            })
+            total_loss += loss
+
+        return total_loss/training_steps_per_alignment
 
     def save_model_for_inference(self, session, path_name):
         self.train_saver.save(session, path_name)
@@ -651,37 +658,4 @@ class InferenceManager(object):
 
         return predict_id, predicted_chars
 
-
-# ---------------------- Management -----------------------------
-
-
-dir = os.path.dirname(os.path.realpath(__file__))
-constants_manager = ConstantsManager(input_dimensions=20, input_embedding_size=20, inputs_embedded=True,
-                                     encoder_hidden_units=8, transducer_hidden_units=8, vocab_ids=['0', '1', '2'],
-                                     input_block_size=3, beam_width=5)
-model = Model(cons_manager=constants_manager)
-init = tf.global_variables_initializer()
-
-with tf.Session() as sess:
-    sess.run(init)
-
-    # Apply training step
-    for i in range(0, 10):
-        print model.apply_training_step(session=sess,
-                                        inputs=np.ones(shape=(5 * constants_manager.input_block_size,
-                                                              1,
-                                                              constants_manager.input_dimensions)),
-                                        input_block_size=constants_manager.input_block_size, targets=[1, 2, 1, 2, 1, 2],
-                                        transducer_max_width=2)
-
-    model.save_model_for_inference(sess, dir + '/model_save/model_test1')
-
-
-with tf.Session() as sess2:
-    inference = InferenceManager(session=sess2, beam_search=False, path=dir+'/model_save/model_test1',
-                                 transducer_width=2, model=model, cons_manager=constants_manager)
-    inference.run_inference(sess2, dir + '/model_save/model_test1',
-                            full_inputs=np.ones(shape=(5 * constants_manager.input_block_size,
-                                                       1,
-                                                       constants_manager.input_dimensions)))
 
