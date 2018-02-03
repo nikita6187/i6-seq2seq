@@ -13,6 +13,14 @@ import os
 # TODO: beam search
 # TODO: documentation
 
+# TODO: testing
+# - Input correct
+# - Attention correct
+# - Encoder state correct
+# - Transducer state correct
+
+# TODO: alignment always only processes the first input!
+
 
 # ---------------- Constants Manager ----------------------------
 class ConstantsManager(object):
@@ -122,14 +130,9 @@ class Model(object):
                                          initializer=tf.constant_initializer(self.cons_manager.vocab_size),
                                          shape=(), dtype=tf.int32)
 
-            # Turn inputs into tensor which is easily readable
-            # TODO: see if inputs are being processed correctly
-            """
+            # Turn inputs into tensor which is easily readable#
+
             inputs_full = tf.reshape(inputs_full_raw, shape=[-1, self.cons_manager.input_block_size,
-                                                             self.cons_manager.batch_size,
-                                                             self.cons_manager.input_dimensions])
-                                                             """
-            inputs_full = tf.reshape(inputs_full_raw, shape=[-1,
                                                              self.cons_manager.batch_size,
                                                              self.cons_manager.input_dimensions])
 
@@ -148,14 +151,16 @@ class Model(object):
             def body(current_block, outputs_int, encoder_hidden, trans_hidden):
 
                 # --------------------- ENCODER ----------------------------------------------------------------------
-                encoder_inputs = inputs_full[(current_block - start_block)*self.cons_manager.input_block_size:(current_block - start_block + 1)*self.cons_manager.input_block_size]
+                encoder_inputs = inputs_full[current_block]
                 encoder_inputs_length = [tf.shape(encoder_inputs)[0]]
                 encoder_hidden_state = encoder_hidden
+
+                #encoder_inputs = tf.Print(encoder_inputs, [encoder_inputs], message='Enc in: ', summarize=100)
 
                 if self.cons_manager.inputs_embedded is True:
                     encoder_inputs_embedded = encoder_inputs
                 else:
-                    encoder_inputs = tf.reshape(encoder_inputs, shape=[-1, 1])
+                    encoder_inputs = tf.reshape(encoder_inputs, shape=[-1, self.cons_manager.batch_size])
                     encoder_inputs_embedded = tf.nn.embedding_lookup(embeddings, encoder_inputs)
 
                 # Build model
@@ -256,8 +261,8 @@ class Model(object):
         targets = tf.placeholder(shape=(None,), dtype=tf.int32, name='targets')
         targets_one_hot = tf.one_hot(targets, depth=self.cons_manager.vocab_size, dtype=tf.float32)
 
-        #targets_one_hot = tf.Print(targets_one_hot, [targets_one_hot], message='Targets: ', summarize=100)
-        #targets_one_hot = tf.Print(targets_one_hot, [self.logits], message='Logits: ', summarize=100)
+        # targets_one_hot = tf.Print(targets_one_hot, [targets], message='Targets: ', summarize=10)
+        # targets_one_hot = tf.Print(targets_one_hot, [tf.argmax(self.logits, axis=2)], message='Argmax: ', summarize=10)
 
         stepwise_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=targets_one_hot,
                                                                          logits=self.logits)
@@ -432,7 +437,7 @@ class Model(object):
                                                                  model.inputs_full_raw: inputs_full,
                                                                  model.max_blocks: 1,
                                                                  model.transducer_list_outputs: [transducer_width],
-                                                                 model.start_block: block_index,
+                                                                 model.start_block: block_index - 1,
                                                                  model.encoder_hidden_init: encoder_state,
                                                                  model.trans_hidden_init: transducer_state,
                                                              })
@@ -520,15 +525,15 @@ class Model(object):
         :param transducer_max_width: The max width for the transducer. Not including the output symbol <e>
         :param training_steps_per_alignment: The amount of times to repeat the training step whilst caching the same
         alignment.
-        :return: Avergae loss of this training step.
+        :return: Average loss of this training step.
         """
-
         # Get alignment and insert it into the targets
         alignment = self.get_alignment(session=session, inputs=inputs, targets=targets,
                                        input_block_size=input_block_size, transducer_max_width=transducer_max_width)
 
         print 'Alignment: ' + str(alignment)
 
+        # Modify targets so that it has the appropriate alignment
         offset = 0
         for e in alignment:
             targets.insert(e + offset, self.cons_manager.E_SYMBOL)

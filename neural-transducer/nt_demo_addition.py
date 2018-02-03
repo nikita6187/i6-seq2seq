@@ -46,7 +46,7 @@ with tf.Session() as sess:
     sess.run(init)
 
     avg_loss = 0
-    avg_over = 10
+    avg_over = 30
 
     # Apply training step
     for i in range(0, 500000):
@@ -55,7 +55,7 @@ with tf.Session() as sess:
 
         temp_loss = model.apply_training_step(session=sess, inputs=new_in, input_block_size=constants_manager.input_block_size,
                                         targets=new_targets, transducer_max_width=transducer_width,
-                                        training_steps_per_alignment=100)
+                                        training_steps_per_alignment=10)
         avg_loss += temp_loss
         if i % avg_over == 0:
             avg_loss /= avg_over#
@@ -69,7 +69,7 @@ with tf.Session() as sess:
 
 
 # -- Inference --
-
+"""
 with tf.Session() as sess2:
 
     inference = InferenceManager(session=sess2, beam_search=False, path=model_save,
@@ -82,3 +82,4 @@ with tf.Session() as sess2:
         print 'New inference test: '
         print inference.run_inference(sess2, model_save, i, clean_e=False)[1]
         print str(map(lookup, t))
+"""
