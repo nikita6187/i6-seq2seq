@@ -13,13 +13,6 @@ import os
 # TODO: beam search
 # TODO: documentation
 
-# TODO: testing
-# - Input correct
-# - Attention correct
-# - Encoder state correct
-# - Transducer state correct
-
-# TODO: set encoder state as the start state for transducer [p], now test
 
 # ---------------- Constants Manager ----------------------------
 class ConstantsManager(object):
@@ -156,8 +149,6 @@ class Model(object):
                 encoder_inputs_length = [tf.shape(encoder_inputs)[0]]
                 encoder_hidden_state = encoder_hidden
 
-                #encoder_inputs = tf.Print(encoder_inputs, [encoder_inputs], message='Enc in: ', summarize=100)
-
                 if self.cons_manager.inputs_embedded is True:
                     encoder_inputs_embedded = encoder_inputs
                 else:
@@ -185,7 +176,7 @@ class Model(object):
 
                 # --------------------- TRANSDUCER --------------------------------------------------------------------
                 encoder_raw_outputs = encoder_outputs
-                # Save/load the state as one tensor, use encoder state if this is the first block
+                # Save/load the state as one tensor, use encoder state as init if this is the first block
                 trans_hidden_state = tf.cond(current_block > 0, lambda: trans_hidden, lambda: encoder_hidden_state_new)
                 transducer_amount_outputs = transducer_list_outputs[current_block - start_block]
 
@@ -233,6 +224,7 @@ class Model(object):
                 transducer_hidden_state_new = tf.reshape(transducer_hidden_state_new,
                                                          shape=[2, -1, self.cons_manager.transducer_hidden_units])
 
+
                 # Note the outputs
                 outputs_int = outputs_int.write(current_block - start_block, logits)
 
@@ -250,7 +242,7 @@ class Model(object):
             # For loading the model later on
             logits = tf.identity(logits, name='logits')
             encoder_hidden_state_new = tf.identity(encoder_hidden_state_new, name='encoder_hidden_state_new')
-            transducer_hidden_state_new = tf.identity(encoder_hidden_state_new, name='transducer_hidden_state_new')
+            transducer_hidden_state_new = tf.identity(transducer_hidden_state_new, name='transducer_hidden_state_new')
 
         #self.var_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='transducer_training')
         #train_saver = tf.train.Saver(var_list=self.var_list)
@@ -263,8 +255,8 @@ class Model(object):
         targets = tf.placeholder(shape=(None,), dtype=tf.int32, name='targets')
         targets_one_hot = tf.one_hot(targets, depth=self.cons_manager.vocab_size, dtype=tf.float32)
 
-        #targets_one_hot = tf.Print(targets_one_hot, [targets], message='Targets: ', summarize=10)
-        #targets_one_hot = tf.Print(targets_one_hot, [tf.argmax(self.logits, axis=2)], message='Argmax: ', summarize=10)
+        targets_one_hot = tf.Print(targets_one_hot, [targets], message='Targets: ', summarize=10)
+        targets_one_hot = tf.Print(targets_one_hot, [tf.argmax(self.logits, axis=2)], message='Argmax: ', summarize=10)
 
         stepwise_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=targets_one_hot,
                                                                          logits=self.logits)
