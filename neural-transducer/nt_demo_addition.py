@@ -80,6 +80,7 @@ with tf.Session() as sess2:
         i, t = get_feed_dic()
 
         print 'New inference test: '
+        print np.reshape(i, shape=(-1)).tolist()
         print inference.run_inference(sess2, model_save, i, clean_e=False)[1]
         print str(map(lookup, t))
 """

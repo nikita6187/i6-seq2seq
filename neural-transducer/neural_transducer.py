@@ -19,13 +19,14 @@ import os
 # - Encoder state correct
 # - Transducer state correct
 
-# TODO: alignment always only processes the first input!
-
+# TODO: set encoder state as the start state for transducer [p], now test
 
 # ---------------- Constants Manager ----------------------------
 class ConstantsManager(object):
     def __init__(self, input_dimensions, input_embedding_size, inputs_embedded, encoder_hidden_units,
                  transducer_hidden_units, vocab_ids, input_block_size, beam_width):
+        assert transducer_hidden_units == encoder_hidden_units, 'Encoder and transducer have to have the same amount' \
+                                                                'of hidden units'
         self.input_dimensions = input_dimensions
         self.vocab_ids = vocab_ids
         self.E_SYMBOL = len(self.vocab_ids)
@@ -184,7 +185,8 @@ class Model(object):
 
                 # --------------------- TRANSDUCER --------------------------------------------------------------------
                 encoder_raw_outputs = encoder_outputs
-                trans_hidden_state = trans_hidden  # Save/load the state as one tensor
+                # Save/load the state as one tensor, use encoder state if this is the first block
+                trans_hidden_state = tf.cond(current_block > 0, lambda: trans_hidden, lambda: encoder_hidden_state_new)
                 transducer_amount_outputs = transducer_list_outputs[current_block - start_block]
 
                 # Model building
@@ -261,8 +263,8 @@ class Model(object):
         targets = tf.placeholder(shape=(None,), dtype=tf.int32, name='targets')
         targets_one_hot = tf.one_hot(targets, depth=self.cons_manager.vocab_size, dtype=tf.float32)
 
-        # targets_one_hot = tf.Print(targets_one_hot, [targets], message='Targets: ', summarize=10)
-        # targets_one_hot = tf.Print(targets_one_hot, [tf.argmax(self.logits, axis=2)], message='Argmax: ', summarize=10)
+        #targets_one_hot = tf.Print(targets_one_hot, [targets], message='Targets: ', summarize=10)
+        #targets_one_hot = tf.Print(targets_one_hot, [tf.argmax(self.logits, axis=2)], message='Argmax: ', summarize=10)
 
         stepwise_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=targets_one_hot,
                                                                          logits=self.logits)

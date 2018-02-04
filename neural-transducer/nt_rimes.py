@@ -30,7 +30,7 @@ def get_feed_dic():
     inputs = np.transpose(inputs, axes=[1, 0, 2])
     return inputs, targets.tolist()
 
-"""
+
 with tf.Session() as sess:
     sess.run(init)
 
@@ -54,10 +54,10 @@ with tf.Session() as sess:
 
     # Save for inference later
     model.save_model_for_inference(sess, model_save)
-"""
+
 
 # -- Inference --
-
+"""
 with tf.Session() as sess2:
 
     inference = InferenceManager(session=sess2, beam_search=False, path=model_save,
@@ -72,3 +72,4 @@ with tf.Session() as sess2:
         print 'New inference test: '
         print inference.run_inference(sess2, model_save, i, clean_e=False)[1]
         print str(map(lookup, t))
+"""
