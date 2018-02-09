@@ -15,7 +15,7 @@ transducer_width = 8
 
 constants_manager = ConstantsManager(input_dimensions=1, input_embedding_size=11, inputs_embedded=False,
                                      encoder_hidden_units=100, transducer_hidden_units=100, vocab_ids=vocab_ids,
-                                     input_block_size=1, beam_width=5)
+                                     input_block_size=1, beam_width=5, encoder_hidden_layers=1)
 model = Model(cons_manager=constants_manager)
 init = tf.global_variables_initializer()
 
@@ -62,7 +62,6 @@ with tf.Session() as sess:
             print 'Step: ' + str(i)
             print 'Loss: ' + str(avg_loss)
             avg_loss = 0
-
 
     # Save for inference later
     model.save_model_for_inference(sess, model_save)
