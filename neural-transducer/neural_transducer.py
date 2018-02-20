@@ -120,7 +120,8 @@ class Model(object):
                                                         self.cons_manager.batch_size,
                                                         self.cons_manager.encoder_hidden_units), dtype=tf.float32,
                                                  name='encoder_hidden_init')
-            trans_hidden_init = tf.placeholder(shape=(2, 1, self.cons_manager.transducer_hidden_units), dtype=tf.float32,
+            trans_hidden_init = tf.placeholder(shape=(2, self.cons_manager.batch_size,
+                                                      self.cons_manager.transducer_hidden_units), dtype=tf.float32,
                                                name='trans_hidden_init')
 
             # Temporary constants, maybe changed during inference
@@ -128,20 +129,17 @@ class Model(object):
                                          initializer=tf.constant_initializer(self.cons_manager.vocab_size),
                                          shape=(), dtype=tf.int32)
 
-            # Turn inputs into tensor which is easily readable#
-
+            # Turn inputs into tensor which is easily readable
             inputs_full = tf.reshape(inputs_full_raw, shape=[-1, self.cons_manager.input_block_size,
                                                              self.cons_manager.batch_size,
                                                              self.cons_manager.input_dimensions])
-
 
             # Outputs
             outputs_ta = tf.TensorArray(dtype=tf.float32, size=max_blocks)
 
             init_state = (start_block, outputs_ta, encoder_hidden_init, trans_hidden_init)
 
-            # Initiate cells, NOTE: if there is a future error, put these back inside the body function
-            #encoder_cell = tf.contrib.rnn.LSTMCell(num_units=self.cons_manager.encoder_hidden_units)
+            # Initiate cells
             cell = []
             for i in range(self.cons_manager.encoder_hidden_layers):
                 cell.append(tf.contrib.rnn.LSTMCell(self.cons_manager.encoder_hidden_units, state_is_tuple=True))
@@ -178,8 +176,6 @@ class Model(object):
                     sequence_length=encoder_inputs_length, time_major=True,
                     dtype=tf.float32, initial_state=encoder_hidden_state)
 
-                print encoder_hidden_state_new
-
                 # Modify output of encoder_hidden_state_new so that it can be fed back in again without problems.
                 encoder_hidden_state_new = tf.concat(
                     [tf.concat([ehs.c, ehs.h], axis=0) for ehs in encoder_hidden_state_new],
@@ -189,13 +185,13 @@ class Model(object):
                                                              2,
                                                              self.cons_manager.batch_size,
                                                              self.cons_manager.encoder_hidden_units])
-                print encoder_hidden_state_new.shape
+                encoder_hidden_state_new = tf.Print(encoder_hidden_state_new, [encoder_hidden_state_new], message='Enc Pos:')
                 # --------------------- TRANSDUCER --------------------------------------------------------------------
                 encoder_raw_outputs = encoder_outputs
                 # Save/load the state as one tensor, use top encoder layer state as init if this is the first block
                 trans_hidden_state = tf.cond(current_block > 0,
                                              lambda: trans_hidden,
-                                             lambda: encoder_hidden_state_new[0])
+                                             lambda: encoder_hidden_state_new[-1])  # TODO: see if index is '0' or '-1'
                 transducer_amount_outputs = transducer_list_outputs[current_block - start_block]
 
                 # Model building
@@ -257,14 +253,11 @@ class Model(object):
                 outputs,
                 shape=(-1, 1, self.cons_manager.vocab_size))  # And now its [max_output_time, batch_size, vocab]
 
-            print encoder_hidden_state_new.shape
             # For loading the model later on
             logits = tf.identity(logits, name='logits')
             encoder_hidden_state_new = tf.identity(encoder_hidden_state_new, name='encoder_hidden_state_new')
             transducer_hidden_state_new = tf.identity(transducer_hidden_state_new, name='transducer_hidden_state_new')
 
-        #self.var_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='transducer_training')
-        #train_saver = tf.train.Saver(var_list=self.var_list)
         train_saver = tf.train.Saver()  # For now save everything
 
         return max_blocks, inputs_full_raw, transducer_list_outputs, start_block, encoder_hidden_init,\
@@ -274,13 +267,11 @@ class Model(object):
         targets = tf.placeholder(shape=(None,), dtype=tf.int32, name='targets')
         targets_one_hot = tf.one_hot(targets, depth=self.cons_manager.vocab_size, dtype=tf.float32, name='targets_one_hot')
 
-        targets_one_hot = tf.Print(targets_one_hot, [targets], message='Targets: ', summarize=10)
-        targets_one_hot = tf.Print(targets_one_hot, [tf.argmax(self.logits, axis=2)], message='Argmax: ', summarize=10)
+        #targets_one_hot = tf.Print(targets_one_hot, [targets], message='Targets: ', summarize=10)
+        #targets_one_hot = tf.Print(targets_one_hot, [tf.argmax(self.logits, axis=2)], message='Argmax: ', summarize=10)
 
-        #stepwise_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=targets_one_hot,
-        #                                                                 logits=self.logits)
         self.logits = tf.identity(self.logits, name='training_logits')
-        stepwise_cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(labels=targets_one_hot, logits=self.logits)
+        stepwise_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=targets_one_hot, logits=self.logits)
 
         loss = tf.reduce_mean(stepwise_cross_entropy)
         train_op = tf.train.AdamOptimizer().minimize(loss)
@@ -447,7 +438,6 @@ class Model(object):
                 :return: transducer outputs [max_output_time, 1, vocab], transducer_state [2, 1, transducer_hidden_units],
                 encoder_state [2, 1, encoder_hidden_units]
                 """
-                print 'Encoder state: ' + str(encoder_state.shape)
                 logits, trans_state, enc_state = session.run([model.logits, model.transducer_hidden_state_new,
                                                               model.encoder_hidden_state_new],
                                                              feed_dict={
@@ -566,7 +556,8 @@ class Model(object):
 
         for i in range(0, training_steps_per_alignment):
             # Init values
-            encoder_hidden_init = np.zeros(shape=(2, 1, self.cons_manager.encoder_hidden_units))
+            encoder_hidden_init = np.zeros(shape=(self.cons_manager.encoder_hidden_layers, 2, 1,
+                                                  self.cons_manager.encoder_hidden_units))
             trans_hidden_init = np.zeros(shape=(2, 1, self.cons_manager.transducer_hidden_units))
 
             # Run training step
