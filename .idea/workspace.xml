@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="BookmarkManager">
-    <bookmark url="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py" line="594" />
+    <bookmark url="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py" line="623" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d17a6bc1-5a44-454e-8396-d93488e20b4e" name="Default" comment="">
@@ -34,29 +34,23 @@
       <file leaf-file-name="neural_transducer.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-450">
-              <caret line="222" column="104" selection-start-line="222" selection-start-column="104" selection-end-line="222" selection-end-column="104" />
+            <state relative-caret-position="162">
+              <caret line="14" column="24" selection-start-line="14" selection-start-column="24" selection-end-line="14" selection-end-column="24" />
               <folding>
-                <element signature="e#529#1717#0" expanded="false" />
-                <element signature="e#1813#4015#0" expanded="false" />
-                <element signature="e#2440#2900#0" expanded="false" />
-                <element signature="e#3065#4015#0" expanded="false" />
-                <element signature="e#3065#3652#1" expanded="false" />
-                <element signature="e#4049#4157#0" expanded="false" />
-                <element signature="e#4295#4812#0" expanded="false" />
-                <element signature="e#9084#9131#0" expanded="false" />
-                <element signature="e#17829#18587#0" expanded="false" />
-                <element signature="e#18664#18786#0" expanded="false" />
-                <element signature="e#18891#27560#0" expanded="false" />
-                <element signature="e#27729#30320#0" expanded="false" />
-                <element signature="e#30390#30480#0" expanded="false" />
-                <element signature="e#30520#36541#0" expanded="false" />
-                <element signature="e#30714#31528#0" expanded="false" />
-                <element signature="e#31574#32005#0" expanded="false" />
-                <element signature="e#32068#33639#0" expanded="false" />
-                <element signature="e#33722#36541#0" expanded="false" />
-                <element signature="e#33847#34620#0" expanded="false" />
-                <element signature="e#35362#35886#0" expanded="false" />
+                <element signature="e#1851#4053#0" expanded="false" />
+                <element signature="e#3103#3690#1" expanded="false" />
+                <element signature="e#4087#4195#0" expanded="false" />
+                <element signature="e#9956#10003#0" expanded="false" />
+                <element signature="e#18942#19700#0" expanded="false" />
+                <element signature="e#19777#19899#0" expanded="false" />
+                <element signature="e#20004#28957#0" expanded="false" />
+                <element signature="e#32243#32333#0" expanded="false" />
+                <element signature="e#32567#33381#0" expanded="false" />
+                <element signature="e#33427#33858#0" expanded="false" />
+                <element signature="e#33921#35492#0" expanded="false" />
+                <element signature="e#35575#38394#0" expanded="false" />
+                <element signature="e#35700#36473#0" expanded="false" />
+                <element signature="e#37215#37739#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -65,22 +59,10 @@
       <file leaf-file-name="nt_demo_addition.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/neural-transducer/nt_demo_addition.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="270">
-              <caret line="16" column="88" selection-start-line="16" selection-start-column="88" selection-end-line="16" selection-end-column="88" />
+            <state relative-caret-position="-390">
+              <caret line="17" column="94" selection-start-line="17" selection-start-column="94" selection-end-line="17" selection-end-column="94" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="seq2seq_bilstm.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/seq2seq/seq2seq-bilstm/seq2seq_bilstm.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="234">
-              <caret line="28" column="20" selection-start-line="28" selection-start-column="2" selection-end-line="28" selection-end-column="20" />
-              <folding>
-                <element signature="e#0#23#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -217,38 +199,6 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="i6-seq2seq" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="i6-seq2seq" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="i6-seq2seq" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="seq2seq" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="seq2seq-bilstm" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="i6-seq2seq" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="i6-seq2seq" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="seq2seq" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -561,7 +511,7 @@
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32925585" sideWeight="0.5018868" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.86646277" sideWeight="0.49811321" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.34556574" sideWeight="0.49811321" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.24905661" sideWeight="0.505295" order="2" side_tool="true" content_ui="tabs" />
@@ -595,7 +545,7 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="113" />
+      <option name="time" value="114" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -612,26 +562,20 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <element signature="e#529#1717#0" expanded="false" />
-            <element signature="e#1813#4015#0" expanded="false" />
-            <element signature="e#2440#2900#0" expanded="false" />
-            <element signature="e#3065#4015#0" expanded="false" />
-            <element signature="e#3065#3652#1" expanded="false" />
-            <element signature="e#4049#4157#0" expanded="false" />
-            <element signature="e#4295#4812#0" expanded="false" />
-            <element signature="e#9084#9131#0" expanded="false" />
-            <element signature="e#17829#18587#0" expanded="false" />
-            <element signature="e#18664#18786#0" expanded="false" />
-            <element signature="e#18891#27560#0" expanded="false" />
-            <element signature="e#27729#30320#0" expanded="false" />
-            <element signature="e#30390#30480#0" expanded="false" />
-            <element signature="e#30520#36541#0" expanded="false" />
-            <element signature="e#30714#31528#0" expanded="false" />
-            <element signature="e#31574#32005#0" expanded="false" />
-            <element signature="e#32068#33639#0" expanded="false" />
-            <element signature="e#33722#36541#0" expanded="false" />
-            <element signature="e#33847#34620#0" expanded="false" />
-            <element signature="e#35362#35886#0" expanded="false" />
+            <element signature="e#1851#4053#0" expanded="false" />
+            <element signature="e#3103#3690#1" expanded="false" />
+            <element signature="e#4087#4195#0" expanded="false" />
+            <element signature="e#9956#10003#0" expanded="false" />
+            <element signature="e#18942#19700#0" expanded="false" />
+            <element signature="e#19777#19899#0" expanded="false" />
+            <element signature="e#20004#28957#0" expanded="false" />
+            <element signature="e#32243#32333#0" expanded="false" />
+            <element signature="e#32567#33381#0" expanded="false" />
+            <element signature="e#33427#33858#0" expanded="false" />
+            <element signature="e#33921#35492#0" expanded="false" />
+            <element signature="e#35575#38394#0" expanded="false" />
+            <element signature="e#35700#36473#0" expanded="false" />
+            <element signature="e#37215#37739#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -780,24 +724,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/rimes/rimes_seq2seq_tf.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="270">
-          <caret line="72" column="93" selection-start-line="72" selection-start-column="93" selection-end-line="72" selection-end-column="93" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file:///usr/local/lib/python2.7/dist-packages/tensorflow/python/util/nest.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="389">
           <caret line="278" column="24" selection-start-line="278" selection-start-column="24" selection-end-line="278" selection-end-column="24" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///usr/local/lib/python2.7/dist-packages/tensorflow/python/client/session.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="317">
-          <caret line="1058" column="41" selection-start-line="1058" selection-start-column="23" selection-end-line="1058" selection-end-column="41" />
         </state>
       </provider>
     </entry>
@@ -827,7 +757,7 @@
         <state relative-caret-position="342">
           <caret line="19" column="42" selection-start-line="19" selection-start-column="42" selection-end-line="19" selection-end-column="42" />
           <folding>
-            <element signature="e#0#23#0" expanded="true" />
+            <element signature="e#0#23#0" expanded="false" />
             <element signature="e#1614#2048#0" expanded="false" />
             <element signature="e#2095#11650#0" expanded="false" />
             <element signature="e#2155#11372#0" expanded="false" />
@@ -886,10 +816,26 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/rimes/rimes_seq2seq_tf.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="54">
+          <caret line="54" column="43" selection-start-line="54" selection-start-column="29" selection-end-line="54" selection-end-column="43" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:///usr/local/lib/python2.7/dist-packages/tensorflow/python/client/session.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="167">
+          <caret line="1335" column="0" selection-start-line="1335" selection-start-column="0" selection-end-line="1335" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/neural-transducer/nt_demo_addition.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="270">
-          <caret line="16" column="88" selection-start-line="16" selection-start-column="88" selection-end-line="16" selection-end-column="88" />
+        <state relative-caret-position="-390">
+          <caret line="17" column="94" selection-start-line="17" selection-start-column="94" selection-end-line="17" selection-end-column="94" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
           </folding>
@@ -898,29 +844,23 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-450">
-          <caret line="222" column="104" selection-start-line="222" selection-start-column="104" selection-end-line="222" selection-end-column="104" />
+        <state relative-caret-position="162">
+          <caret line="14" column="24" selection-start-line="14" selection-start-column="24" selection-end-line="14" selection-end-column="24" />
           <folding>
-            <element signature="e#529#1717#0" expanded="false" />
-            <element signature="e#1813#4015#0" expanded="false" />
-            <element signature="e#2440#2900#0" expanded="false" />
-            <element signature="e#3065#4015#0" expanded="false" />
-            <element signature="e#3065#3652#1" expanded="false" />
-            <element signature="e#4049#4157#0" expanded="false" />
-            <element signature="e#4295#4812#0" expanded="false" />
-            <element signature="e#9084#9131#0" expanded="false" />
-            <element signature="e#17829#18587#0" expanded="false" />
-            <element signature="e#18664#18786#0" expanded="false" />
-            <element signature="e#18891#27560#0" expanded="false" />
-            <element signature="e#27729#30320#0" expanded="false" />
-            <element signature="e#30390#30480#0" expanded="false" />
-            <element signature="e#30520#36541#0" expanded="false" />
-            <element signature="e#30714#31528#0" expanded="false" />
-            <element signature="e#31574#32005#0" expanded="false" />
-            <element signature="e#32068#33639#0" expanded="false" />
-            <element signature="e#33722#36541#0" expanded="false" />
-            <element signature="e#33847#34620#0" expanded="false" />
-            <element signature="e#35362#35886#0" expanded="false" />
+            <element signature="e#1851#4053#0" expanded="false" />
+            <element signature="e#3103#3690#1" expanded="false" />
+            <element signature="e#4087#4195#0" expanded="false" />
+            <element signature="e#9956#10003#0" expanded="false" />
+            <element signature="e#18942#19700#0" expanded="false" />
+            <element signature="e#19777#19899#0" expanded="false" />
+            <element signature="e#20004#28957#0" expanded="false" />
+            <element signature="e#32243#32333#0" expanded="false" />
+            <element signature="e#32567#33381#0" expanded="false" />
+            <element signature="e#33427#33858#0" expanded="false" />
+            <element signature="e#33921#35492#0" expanded="false" />
+            <element signature="e#35575#38394#0" expanded="false" />
+            <element signature="e#35700#36473#0" expanded="false" />
+            <element signature="e#37215#37739#0" expanded="false" />
           </folding>
         </state>
       </provider>

@@ -9,9 +9,10 @@ import os
 
 # NOTE: Time major
 
-# TODO: teacher forcing
+# TODO: teacher forcing         [p]
 # TODO: variable batch size
 # TODO: distributed alignment
+# TODO: inference update
 
 # TODO: documentation
 
@@ -20,6 +21,7 @@ import os
 class ConstantsManager(object):
     def __init__(self, input_dimensions, input_embedding_size, inputs_embedded, encoder_hidden_units,
                  transducer_hidden_units, vocab_ids, input_block_size, beam_width, encoder_hidden_layers):
+
         assert transducer_hidden_units == 2 * encoder_hidden_units, 'Transducer has to have 2 times the amount ' \
                                                                     'of the encoder of units'
         self.input_dimensions = input_dimensions
@@ -91,9 +93,11 @@ class Model(object):
     def __init__(self, cons_manager):
         self.var_list = []
         self.cons_manager = cons_manager
+
         self.max_blocks, self.inputs_full_raw, self.transducer_list_outputs, self.start_block, \
             self.encoder_hidden_init_fw, self.encoder_hidden_init_bw,\
-            self.trans_hidden_init, self.logits, self.encoder_hidden_state_new_fw, self.encoder_hidden_state_new_bw, \
+            self.trans_hidden_init, self.teacher_forcing_targets, self.inference_mode, self.logits, \
+            self.encoder_hidden_state_new_fw, self.encoder_hidden_state_new_bw, \
             self.transducer_hidden_state_new, self.train_saver = self.build_full_transducer()
 
         self.targets, self.train_op, self.loss = self.build_training_step()
@@ -132,13 +136,20 @@ class Model(object):
             trans_hidden_init = tf.placeholder(shape=(2, self.cons_manager.batch_size,
                                                       self.cons_manager.transducer_hidden_units), dtype=tf.float32,
                                                name='trans_hidden_init')
+            teacher_forcing_targets = tf.placeholder(shape=(None, self.cons_manager.batch_size), dtype=tf.int32,
+                                                     name='teacher_forcing_targets')  # Only has to contain data if in training
+            inference_mode = tf.placeholder(shape=(),
+                                            dtype=tf.float32, name='inference_mode')  # Set 1.0 for inference, <1.0 for training
 
             # Temporary constants, maybe changed during inference
             end_symbol = tf.get_variable(name='end_symbol',
                                          initializer=tf.constant_initializer(self.cons_manager.vocab_size),
                                          shape=(), dtype=tf.int32)
 
-            inputs_full_raw = tf.Print(inputs_full_raw, [inputs_full_raw], message='New Phase!')
+            # Process teacher forcing targets
+            #teacher_forcing_targets = tf.transpose(teacher_forcing_targets)  # Due to batch major
+            teacher_forcing_targets_emb = tf.nn.embedding_lookup(embeddings, teacher_forcing_targets)
+            #teacher_forcing_targets_emb = tf.Print(teacher_forcing_targets_emb, [tf.shape(teacher_forcing_targets_emb)], message='Teacher Forcing: ')
 
             # Turn inputs into tensor which is easily readable
             inputs_full = tf.reshape(inputs_full_raw, shape=[-1, self.cons_manager.input_block_size,
@@ -148,7 +159,8 @@ class Model(object):
             # Outputs
             outputs_ta = tf.TensorArray(dtype=tf.float32, size=max_blocks)
 
-            init_state = (start_block, outputs_ta, encoder_hidden_init_fw, encoder_hidden_init_bw, trans_hidden_init)
+            init_state = (start_block, outputs_ta, encoder_hidden_init_fw, encoder_hidden_init_bw, trans_hidden_init,
+                          0)
 
             # Initiate cells
             cell = []
@@ -162,10 +174,10 @@ class Model(object):
 
             transducer_cell = tf.contrib.rnn.LSTMCell(self.cons_manager.transducer_hidden_units)
 
-            def cond(current_block, outputs_int, encoder_hidden_fw, encoder_hidden_bw, trans_hidden):
+            def cond(current_block, outputs_int, encoder_hidden_fw, encoder_hidden_bw, trans_hidden, total_output):
                 return current_block < start_block + max_blocks
 
-            def body(current_block, outputs_int, encoder_hidden_fw, encoder_hidden_bw, trans_hidden):
+            def body(current_block, outputs_int, encoder_hidden_fw, encoder_hidden_bw, trans_hidden, total_output):
 
                 # --------------------- ENCODER ----------------------------------------------------------------------
                 encoder_inputs = inputs_full[current_block]
@@ -176,6 +188,7 @@ class Model(object):
                 else:
                     encoder_inputs = tf.reshape(encoder_inputs, shape=[-1, self.cons_manager.batch_size])
                     encoder_inputs_embedded = tf.nn.embedding_lookup(embeddings, encoder_inputs)
+                    # TODO: see if encoder_inputs_embedded is time major
 
                 # Build model
                 # Process encoder state
@@ -231,11 +244,13 @@ class Model(object):
                 transducer_amount_outputs = transducer_list_outputs[current_block - start_block]
 
                 # Model building
-                helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
+                helper = tf.contrib.seq2seq.ScheduledEmbeddingTrainingHelper(
+                    inputs=teacher_forcing_targets_emb[total_output:total_output + transducer_amount_outputs],  # Get the current target inputs
+                    sequence_length=tf.convert_to_tensor([transducer_amount_outputs]),
                     embedding=embeddings,
-                    start_tokens=tf.tile([self.cons_manager.GO_SYMBOL],
-                                         [self.cons_manager.batch_size]),  # TODO: check if this looks good
-                    end_token=end_symbol)  # vocab size, so that it doesn't prematurely end the decoding
+                    sampling_probability=inference_mode,
+                    time_major=True
+                )
 
                 attention_states = tf.transpose(encoder_raw_outputs,
                                                 [1, 0, 2])  # attention_states: [batch_size, max_time, num_units]
@@ -278,10 +293,10 @@ class Model(object):
                 outputs_int = outputs_int.write(current_block - start_block, logits)
 
                 return current_block + 1, outputs_int, encoder_hidden_state_new_fw, encoder_hidden_state_new_bw, \
-                    transducer_hidden_state_new
+                    transducer_hidden_state_new, total_output + transducer_amount_outputs
 
-            _, outputs_final, encoder_hidden_state_new_fw, encoder_hidden_state_new_bw, transducer_hidden_state_new = \
-                tf.while_loop(cond, body, init_state, parallel_iterations=1)
+            _, outputs_final, encoder_hidden_state_new_fw, encoder_hidden_state_new_bw, \
+                transducer_hidden_state_new, _ = tf.while_loop(cond, body, init_state, parallel_iterations=1)
 
             # Process outputs
             outputs = outputs_final.concat()
@@ -298,8 +313,8 @@ class Model(object):
         train_saver = tf.train.Saver()  # For now save everything
 
         return max_blocks, inputs_full_raw, transducer_list_outputs, start_block, encoder_hidden_init_fw, \
-            encoder_hidden_init_bw, trans_hidden_init, logits, encoder_hidden_state_new_fw, \
-            encoder_hidden_state_new_bw, transducer_hidden_state_new, train_saver
+            encoder_hidden_init_bw, trans_hidden_init, teacher_forcing_targets, inference_mode, \
+            logits, encoder_hidden_state_new_fw, encoder_hidden_state_new_bw, transducer_hidden_state_new, train_saver
 
     def build_training_step(self):
         targets = tf.placeholder(shape=(None,), dtype=tf.int32, name='targets')
@@ -363,6 +378,8 @@ class Model(object):
                 :return: transducer outputs [max_output_time, 1, vocab], transducer_state [2, 1, transducer_hidden_units],
                 encoder_state [2, 1, encoder_hidden_units]
                 """
+                teacher_targets_empty = np.zeros([transducer_width, 1])
+
                 logits, trans_state, enc_state_fw, enc_state_bw = session.run([model.logits, model.transducer_hidden_state_new,
                                                               model.encoder_hidden_state_new_fw, model.encoder_hidden_state_new_bw],
                                                              feed_dict={
@@ -373,6 +390,8 @@ class Model(object):
                                                                  model.encoder_hidden_init_fw: encoder_state[0],
                                                                  model.encoder_hidden_init_bw: encoder_state[1],
                                                                  model.trans_hidden_init: transducer_state,
+                                                                 model.inference_mode: 1.0,
+                                                                 model.teacher_forcing_targets: teacher_targets_empty,
                                                              })
                 # apply softmax on the outputs
                 trans_out = softmax(logits, axis=2)
@@ -461,17 +480,25 @@ class Model(object):
         alignment.
         :return: Average loss of this training step.
         """
+
         # Get alignment and insert it into the targets
         alignment = self.get_alignment(session=session, inputs=inputs, targets=targets,
                                        input_block_size=input_block_size, transducer_max_width=transducer_max_width)
 
         print 'Alignment: ' + str(alignment)
 
+        # Modify targets for teacher forcing
+        teacher_forcing_targets = list(targets)
+
         # Modify targets so that it has the appropriate alignment
         offset = 0
         for e in alignment:
+            teacher_forcing_targets.insert(e + offset, self.cons_manager.GO_SYMBOL)
             targets.insert(e + offset, self.cons_manager.E_SYMBOL)
             offset += 1
+
+        teacher_forcing_targets.insert(0, self.cons_manager.GO_SYMBOL)
+        teacher_forcing_targets.pop(len(teacher_forcing_targets) - 1)
 
         # Calc length for each transducer block
         lengths = []
@@ -496,7 +523,9 @@ class Model(object):
                 self.start_block: 0,
                 self.encoder_hidden_init_fw: encoder_hidden_init[0],
                 self.encoder_hidden_init_bw: encoder_hidden_init[1],
-                self.trans_hidden_init: trans_hidden_init
+                self.trans_hidden_init: trans_hidden_init,
+                self.inference_mode: 0.0,
+                self.teacher_forcing_targets: np.reshape(teacher_forcing_targets, (-1, 1)),
             })
             total_loss += loss
 
