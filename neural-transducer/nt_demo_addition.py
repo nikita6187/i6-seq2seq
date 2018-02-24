@@ -14,7 +14,7 @@ vocab_ids = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'SPACE']
 transducer_width = 8
 
 constants_manager = ConstantsManager(input_dimensions=1, input_embedding_size=11, inputs_embedded=False,
-                                     encoder_hidden_units=100, transducer_hidden_units=100, vocab_ids=vocab_ids,
+                                     encoder_hidden_units=100, transducer_hidden_units=200, vocab_ids=vocab_ids,
                                      input_block_size=1, beam_width=5, encoder_hidden_layers=3)
 model = Model(cons_manager=constants_manager)
 init = tf.global_variables_initializer()
