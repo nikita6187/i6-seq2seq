@@ -9,7 +9,6 @@ import os
 
 # NOTE: Time major
 
-# TODO: check whether bi-directional encoder is working correctly
 # TODO: teacher forcing
 # TODO: variable batch size
 # TODO: distributed alignment
@@ -138,6 +137,8 @@ class Model(object):
             end_symbol = tf.get_variable(name='end_symbol',
                                          initializer=tf.constant_initializer(self.cons_manager.vocab_size),
                                          shape=(), dtype=tf.int32)
+
+            inputs_full_raw = tf.Print(inputs_full_raw, [inputs_full_raw], message='New Phase!')
 
             # Turn inputs into tensor which is easily readable
             inputs_full = tf.reshape(inputs_full_raw, shape=[-1, self.cons_manager.input_block_size,
@@ -319,121 +320,6 @@ class Model(object):
         for var in list_vars:
             dic[var.name] = var.name.replace(old_name, new_name)
         return dic
-
-    def build_beamsearch_inference_transducer(self):
-        with tf.variable_scope('transducer_inference'):
-            embeddings = tf.Variable(tf.random_uniform([self.cons_manager.vocab_size,
-                                                        self.cons_manager.input_embedding_size], -1.0, 1.0),
-                                     dtype=tf.float32,
-                                     name='embedding')
-
-            # shape [input_block_size, 1, input_dims], inputs for this block!
-            inputs_full_raw = tf.placeholder(shape=(self.cons_manager.input_block_size,
-                                                    self.cons_manager.batch_size,
-                                                    self.cons_manager.input_dimensions), dtype=tf.float32,
-                                             name='inputs_full_raw')
-
-            trans_max_outputs = tf.placeholder(shape=(), dtype=tf.int32, name='transducer_list_outputs')
-
-            encoder_hidden_init = tf.placeholder(shape=(2, 1, self.cons_manager.encoder_hidden_units), dtype=tf.float32,
-                                                 name='encoder_hidden_init')
-            trans_hidden_init = tf.placeholder(shape=(2, 1, self.cons_manager.transducer_hidden_units), dtype=tf.float32,
-                                               name='trans_hidden_init')
-
-            # Initiate cells
-            encoder_cell = tf.contrib.rnn.LSTMCell(num_units=self.cons_manager.encoder_hidden_units)
-            transducer_cell = tf.contrib.rnn.LSTMCell(num_units=self.cons_manager.transducer_hidden_units)
-
-            # --------------------- ENCODER ----------------------------------------------------------------------
-            encoder_inputs = inputs_full_raw
-            encoder_inputs_length = [tf.shape(encoder_inputs)[0]]
-            encoder_hidden_state = encoder_hidden_init
-
-            if self.cons_manager.inputs_embedded is True:
-                encoder_inputs_embedded = encoder_inputs
-            else:
-                encoder_inputs_embedded = tf.nn.embedding_lookup(embeddings, encoder_inputs)
-
-            # Build previous state
-            encoder_hidden_c, encoder_hidden_h = tf.split(encoder_hidden_state, num_or_size_splits=2, axis=0)
-            encoder_hidden_c = tf.reshape(encoder_hidden_c, shape=[-1, self.cons_manager.encoder_hidden_units])
-            encoder_hidden_h = tf.reshape(encoder_hidden_h, shape=[-1, self.cons_manager.encoder_hidden_units])
-            encoder_hidden_state_t = LSTMStateTuple(encoder_hidden_c, encoder_hidden_h)
-
-            #   encoder_outputs: [max_time, batch_size, num_units]
-            encoder_outputs, encoder_hidden_state_new = tf.nn.dynamic_rnn(
-                encoder_cell, encoder_inputs_embedded,
-                sequence_length=encoder_inputs_length, time_major=True,
-                dtype=tf.float32, initial_state=encoder_hidden_state_t)
-
-            # Modify output of encoder_hidden_state_new so that it can be fed back in again without problems.
-            encoder_hidden_state_new = tf.concat([encoder_hidden_state_new.c, encoder_hidden_state_new.h], axis=0)
-            encoder_hidden_state_new = tf.reshape(encoder_hidden_state_new,
-                                                  shape=[2, -1, self.cons_manager.encoder_hidden_units])
-
-            # --------------------- TRANSDUCER --------------------------------------------------------------------
-            encoder_raw_outputs = encoder_outputs
-            trans_hidden_state = trans_hidden_init  # Save/load the state as one tensor
-            transducer_amount_outputs = trans_max_outputs
-
-            # Model building
-            attention_states = tf.transpose(encoder_raw_outputs,
-                                            [1, 0, 2])  # attention_states: [batch_size, max_time, num_units]
-            attention_states = tf.contrib.seq2seq.tile_batch(attention_states,
-                                                             multiplier=self.cons_manager.beam_width)
-
-            attention_mechanism = tf.contrib.seq2seq.LuongAttention(
-                self.cons_manager.encoder_hidden_units, attention_states)
-
-            decoder_cell = tf.contrib.seq2seq.AttentionWrapper(
-                transducer_cell,
-                attention_mechanism,
-                attention_layer_size=self.cons_manager.transducer_hidden_units)
-
-            projection_layer = layers_core.Dense(self.cons_manager.vocab_size, use_bias=False)
-
-            # Build previous state
-            trans_hidden_c, trans_hidden_h = tf.split(trans_hidden_state, num_or_size_splits=2, axis=0)
-            trans_hidden_c = tf.reshape(trans_hidden_c, shape=[-1, self.cons_manager.transducer_hidden_units])
-            trans_hidden_h = tf.reshape(trans_hidden_h, shape=[-1, self.cons_manager.transducer_hidden_units])
-            initial_state = tf.nn.rnn_cell.LSTMStateTuple(
-                tf.contrib.seq2seq.tile_batch(trans_hidden_c, multiplier=self.cons_manager.beam_width),
-                tf.contrib.seq2seq.tile_batch(trans_hidden_h, multiplier=self.cons_manager.beam_width))
-
-            decoder_init_state_inf = decoder_cell.zero_state(dtype=tf.float32,
-                                                             batch_size=1 * self.cons_manager.beam_width).\
-                clone(cell_state=initial_state)
-
-            inference_decoder = tf.contrib.seq2seq.BeamSearchDecoder(decoder_cell, embeddings,
-                                                                     start_tokens=tf.tile([self.cons_manager.GO_SYMBOL],
-                                                                                          [self.cons_manager.batch_size]),
-                                                                     end_token=self.cons_manager.E_SYMBOL,
-                                                                     initial_state=decoder_init_state_inf,
-                                                                     beam_width=self.cons_manager.beam_width,
-                                                                     output_layer=projection_layer)
-
-            outputs, transducer_hidden_state_new, seq_len = tf.contrib.seq2seq.dynamic_decode(
-                inference_decoder,
-                output_time_major=True,
-                maximum_iterations=transducer_amount_outputs)
-
-            logits = outputs.beam_search_decoder_output.scores  # score of shape all beams
-            decoder_prediction = outputs.predicted_ids  # For debugging
-
-        # TODO: solve loading
-        # TODO: create dictionary that maps transducer_training scope to transducer_inference scope
-        # dic = self.__create_loading_dic(self.var_list, 'transducer_training', 'transducer_inference')
-        dic = {
-            'transducer_training/embedding': embeddings,
-            'transducer_training/rnn/lstm_cell': encoder_cell,
-            'transducer_training/memory_layer': attention_mechanism,
-            'transducer_training/decoder/attention_wrapper': decoder_cell,
-            'transducer_training/decoder/dense': projection_layer
-        }
-
-        inference_loader = tf.train.Saver(var_list=dic)
-        return inputs_full_raw, trans_max_outputs, encoder_hidden_init, trans_hidden_init, encoder_hidden_state_new, \
-            transducer_hidden_state_new, logits, decoder_prediction, inference_loader
 
     def get_alignment(self, session, inputs, targets, input_block_size, transducer_max_width):
         """
