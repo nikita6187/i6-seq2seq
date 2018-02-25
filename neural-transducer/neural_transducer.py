@@ -490,6 +490,7 @@ class Model(object):
         :param session: The current session.
         :param inputs: The full inputs. Shape: [max_time, batch_size, input_dimensions]
         :param targets: The full targets. Shape: [batch_size, time]. Each entry is an index. Use lists.
+        All targets have to have the same length
         :param input_block_size: The block width for the inputs.
         :param transducer_max_width: The max width for the transducer. Not including the output symbol <e>
         :param training_steps_per_alignment: The amount of times to repeat the training step whilst caching the same
@@ -534,9 +535,11 @@ class Model(object):
                 lengths_temp.append(alignment[i] - alignment[i - 1] + 1)
 
         # TODO: another post processing round to make all lengths the same, as well as targets and teacher forcing
-        
+        # TODO: See if we need that ^
 
         # TODO: make calculation for lengths for full batch_size
+
+        # TODO: process targets back to time major
 
         total_loss = 0
 

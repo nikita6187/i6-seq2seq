@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="BookmarkManager">
-    <bookmark url="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py" line="655" />
+    <bookmark url="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py" line="658" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d17a6bc1-5a44-454e-8396-d93488e20b4e" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/neural-transducer/logs" afterPath="$PROJECT_DIR$/neural-transducer/logs" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/neural-transducer/neural_transducer.py" afterPath="$PROJECT_DIR$/neural-transducer/neural_transducer.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -34,8 +33,8 @@
       <file leaf-file-name="neural_transducer.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="604">
-              <caret line="536" column="8" selection-start-line="536" selection-start-column="8" selection-end-line="536" selection-end-column="8" />
+            <state relative-caret-position="568">
+              <caret line="537" column="37" selection-start-line="537" selection-start-column="37" selection-end-line="537" selection-end-column="37" />
               <folding>
                 <element signature="e#1934#4136#0" expanded="false" />
                 <element signature="e#3186#3773#1" expanded="false" />
@@ -44,13 +43,13 @@
                 <element signature="e#20503#20625#0" expanded="false" />
                 <element signature="e#20730#29683#0" expanded="false" />
                 <element signature="e#22572#24979#0" expanded="false" />
-                <element signature="e#33707#33797#0" expanded="false" />
-                <element signature="e#34031#34845#0" expanded="false" />
-                <element signature="e#34891#35322#0" expanded="false" />
-                <element signature="e#35385#36956#0" expanded="false" />
-                <element signature="e#37039#39858#0" expanded="false" />
-                <element signature="e#37164#37937#0" expanded="false" />
-                <element signature="e#38679#39203#0" expanded="false" />
+                <element signature="e#33837#33927#0" expanded="false" />
+                <element signature="e#34161#34975#0" expanded="false" />
+                <element signature="e#35021#35452#0" expanded="false" />
+                <element signature="e#35515#37086#0" expanded="false" />
+                <element signature="e#37169#39988#0" expanded="false" />
+                <element signature="e#37294#38067#0" expanded="false" />
+                <element signature="e#38809#39333#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -569,13 +568,13 @@
             <element signature="e#20503#20625#0" expanded="false" />
             <element signature="e#20730#29683#0" expanded="false" />
             <element signature="e#22572#24979#0" expanded="false" />
-            <element signature="e#33707#33797#0" expanded="false" />
-            <element signature="e#34031#34845#0" expanded="false" />
-            <element signature="e#34891#35322#0" expanded="false" />
-            <element signature="e#35385#36956#0" expanded="false" />
-            <element signature="e#37039#39858#0" expanded="false" />
-            <element signature="e#37164#37937#0" expanded="false" />
-            <element signature="e#38679#39203#0" expanded="false" />
+            <element signature="e#33837#33927#0" expanded="false" />
+            <element signature="e#34161#34975#0" expanded="false" />
+            <element signature="e#35021#35452#0" expanded="false" />
+            <element signature="e#35515#37086#0" expanded="false" />
+            <element signature="e#37169#39988#0" expanded="false" />
+            <element signature="e#37294#38067#0" expanded="false" />
+            <element signature="e#38809#39333#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -837,8 +836,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="604">
-          <caret line="536" column="8" selection-start-line="536" selection-start-column="8" selection-end-line="536" selection-end-column="8" />
+        <state relative-caret-position="568">
+          <caret line="537" column="37" selection-start-line="537" selection-start-column="37" selection-end-line="537" selection-end-column="37" />
           <folding>
             <element signature="e#1934#4136#0" expanded="false" />
             <element signature="e#3186#3773#1" expanded="false" />
@@ -847,13 +846,13 @@
             <element signature="e#20503#20625#0" expanded="false" />
             <element signature="e#20730#29683#0" expanded="false" />
             <element signature="e#22572#24979#0" expanded="false" />
-            <element signature="e#33707#33797#0" expanded="false" />
-            <element signature="e#34031#34845#0" expanded="false" />
-            <element signature="e#34891#35322#0" expanded="false" />
-            <element signature="e#35385#36956#0" expanded="false" />
-            <element signature="e#37039#39858#0" expanded="false" />
-            <element signature="e#37164#37937#0" expanded="false" />
-            <element signature="e#38679#39203#0" expanded="false" />
+            <element signature="e#33837#33927#0" expanded="false" />
+            <element signature="e#34161#34975#0" expanded="false" />
+            <element signature="e#35021#35452#0" expanded="false" />
+            <element signature="e#35515#37086#0" expanded="false" />
+            <element signature="e#37169#39988#0" expanded="false" />
+            <element signature="e#37294#38067#0" expanded="false" />
+            <element signature="e#38809#39333#0" expanded="false" />
           </folding>
         </state>
       </provider>
