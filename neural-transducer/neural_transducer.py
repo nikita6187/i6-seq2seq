@@ -31,6 +31,8 @@ class ConstantsManager(object):
         self.GO_SYMBOL = len(self.vocab_ids)
         self.vocab_ids.append('GO_SYMBOL')
         self.vocab_size = len(self.vocab_ids)
+        self.vocab_ids.append('EOS')
+        self.vocab_size = len(self.vocab_ids)
         self.input_embedding_size = input_embedding_size
         self.inputs_embedded = inputs_embedded
         self.encoder_hidden_units = encoder_hidden_units
@@ -115,31 +117,37 @@ class Model(object):
                 input_type = tf.float32
             else:
                 input_type = tf.int32
-            inputs_full_raw = tf.placeholder(shape=(None, self.cons_manager.batch_size,
+            inputs_full_raw = tf.placeholder(shape=(None, None,
                                                     self.cons_manager.input_dimensions), dtype=input_type,
-                                             name='inputs_full_raw')  # shape [max_time, 1, input_dims]
-            transducer_list_outputs = tf.placeholder(shape=(None,), dtype=tf.int32,
-                                                     name='transducer_list_outputs')  # amount to output per block
+                                             name='inputs_full_raw')  # shape [max_time, batch_size, input_dims]
+            transducer_list_outputs = tf.placeholder(shape=(None, None), dtype=tf.int32,
+                                                     name='transducer_list_outputs')  # amount to output per block, [max_blocks, batch_size]
             start_block = tf.placeholder(dtype=tf.int32, name='transducer_start_block')  # where to start the input
 
             encoder_hidden_init_fw = tf.placeholder(shape=(self.cons_manager.encoder_hidden_layers,
-                                                        2,
-                                                        self.cons_manager.batch_size,
-                                                        self.cons_manager.encoder_hidden_units), dtype=tf.float32,
-                                                 name='encoder_hidden_init_fw')
+                                                    2,
+                                                    None,
+                                                    self.cons_manager.encoder_hidden_units), dtype=tf.float32,
+                                                    name='encoder_hidden_init_fw')
             encoder_hidden_init_bw = tf.placeholder(shape=(self.cons_manager.encoder_hidden_layers,
                                                            2,
-                                                           self.cons_manager.batch_size,
+                                                           None,
                                                            self.cons_manager.encoder_hidden_units), dtype=tf.float32,
                                                     name='encoder_hidden_init_bw')
 
-            trans_hidden_init = tf.placeholder(shape=(2, self.cons_manager.batch_size,
+            trans_hidden_init = tf.placeholder(shape=(2, None,
                                                       self.cons_manager.transducer_hidden_units), dtype=tf.float32,
                                                name='trans_hidden_init')
-            teacher_forcing_targets = tf.placeholder(shape=(None, self.cons_manager.batch_size), dtype=tf.int32,
-                                                     name='teacher_forcing_targets')  # Only has to contain data if in training
+
+            # Only has to contain data if in training
+            # should be padded with EOS so that each example has the same amount of target inputs per transducer block
+            # [outputs, batch_size]
+            teacher_forcing_targets = tf.placeholder(shape=(None, None), dtype=tf.int32,
+                                                     name='teacher_forcing_targets')
             inference_mode = tf.placeholder(shape=(),
                                             dtype=tf.float32, name='inference_mode')  # Set 1.0 for inference, <1.0 for training
+            # Get batch size
+            batch_size = tf.shape(inputs_full_raw)[1]
 
             # Temporary constants, maybe changed during inference
             end_symbol = tf.get_variable(name='end_symbol',
@@ -147,18 +155,15 @@ class Model(object):
                                          shape=(), dtype=tf.int32)
 
             # Process teacher forcing targets
-            #teacher_forcing_targets = tf.transpose(teacher_forcing_targets)  # Due to batch major
             teacher_forcing_targets_emb = tf.nn.embedding_lookup(embeddings, teacher_forcing_targets)
-            #teacher_forcing_targets_emb = tf.Print(teacher_forcing_targets_emb, [tf.shape(teacher_forcing_targets_emb)], message='Teacher Forcing: ')
 
             # Turn inputs into tensor which is easily readable
             inputs_full = tf.reshape(inputs_full_raw, shape=[-1, self.cons_manager.input_block_size,
-                                                             self.cons_manager.batch_size,
+                                                             batch_size,
                                                              self.cons_manager.input_dimensions])
 
             # Outputs
             outputs_ta = tf.TensorArray(dtype=tf.float32, size=max_blocks)
-
             init_state = (start_block, outputs_ta, encoder_hidden_init_fw, encoder_hidden_init_bw, trans_hidden_init,
                           0)
 
@@ -181,12 +186,11 @@ class Model(object):
 
                 # --------------------- ENCODER ----------------------------------------------------------------------
                 encoder_inputs = inputs_full[current_block]
-                encoder_inputs_length = tf.convert_to_tensor([tf.shape(encoder_inputs)[0]])
 
                 if self.cons_manager.inputs_embedded is True:
                     encoder_inputs_embedded = encoder_inputs
                 else:
-                    encoder_inputs = tf.reshape(encoder_inputs, shape=[-1, self.cons_manager.batch_size])
+                    encoder_inputs = tf.reshape(encoder_inputs, shape=[-1, batch_size])
                     encoder_inputs_embedded = tf.nn.embedding_lookup(embeddings, encoder_inputs)
                     # TODO: see if encoder_inputs_embedded is time major
 
@@ -204,12 +208,12 @@ class Model(object):
                     [tf.nn.rnn_cell.LSTMStateTuple(l_bw[idx][0], l_bw[idx][1])
                      for idx in range(self.cons_manager.encoder_hidden_layers)]
                 )
-
+                # TODO: check encoder_inputs_length
                 #   encoder_outputs: [max_time, batch_size, num_units]
                 ((encoder_outputs_fw, encoder_outputs_bw), (encoder_hidden_state_new_fw, encoder_hidden_state_new_bw)) = \
                     tf.nn.bidirectional_dynamic_rnn(cell_fw=encoder_cell_fw, cell_bw=encoder_cell_bw,
                                                     inputs=encoder_inputs_embedded,
-                                                    sequence_length=encoder_inputs_length, time_major=True,
+                                                    time_major=True,
                                                     dtype=tf.float32,
                                                     initial_state_fw=encoder_hidden_state_fw,
                                                     initial_state_bw=encoder_hidden_state_bw)
@@ -236,17 +240,23 @@ class Model(object):
                                                                 self.cons_manager.encoder_hidden_units])
 
                 # --------------------- TRANSDUCER --------------------------------------------------------------------
+                # Each transducer block runs for the max transducer outputs in its respective block
+
                 encoder_raw_outputs = encoder_outputs
                 # Save/load the state as one tensor, use top encoder layer state as init if this is the first block
                 trans_hidden_state = tf.cond(current_block > 0,
                                              lambda: trans_hidden,
                                              lambda: tf.concat([encoder_hidden_state_new_fw[-1], encoder_hidden_state_new_bw[-1]], 2))  # TODO: see if index is '0' or '-1'
                 transducer_amount_outputs = transducer_list_outputs[current_block - start_block]
+                transducer_max_output = tf.reduce_max(transducer_amount_outputs)
 
                 # Model building
+                # TODO: check transducer_amount_outputs
+                # TODO: need to make the variable sequence lengths work in teacher_forcing_targets_emb
+                print teacher_forcing_targets_emb[total_output:total_output + transducer_max_output].shape
                 helper = tf.contrib.seq2seq.ScheduledEmbeddingTrainingHelper(
-                    inputs=teacher_forcing_targets_emb[total_output:total_output + transducer_amount_outputs],  # Get the current target inputs
-                    sequence_length=tf.convert_to_tensor([transducer_amount_outputs]),
+                    inputs=teacher_forcing_targets_emb[total_output:total_output + transducer_max_output],  # Get the current target inputs
+                    sequence_length=transducer_amount_outputs,
                     embedding=embeddings,
                     sampling_probability=inference_mode,
                     time_major=True
@@ -254,6 +264,7 @@ class Model(object):
 
                 attention_states = tf.transpose(encoder_raw_outputs,
                                                 [1, 0, 2])  # attention_states: [batch_size, max_time, num_units]
+                print 'Attention shape: ' + str(attention_states.shape)
 
                 attention_mechanism = tf.contrib.seq2seq.LuongAttention(
                     self.cons_manager.encoder_hidden_units * 2, attention_states)
@@ -273,12 +284,12 @@ class Model(object):
 
                 decoder = tf.contrib.seq2seq.BasicDecoder(
                     decoder_cell, helper,
-                    decoder_cell.zero_state(1, tf.float32).clone(cell_state=trans_hidden_state_t),
+                    decoder_cell.zero_state(batch_size, tf.float32).clone(cell_state=trans_hidden_state_t),
                     output_layer=projection_layer)
-
+                # TODO: check transducer_amount_outputs for max
                 outputs, transducer_hidden_state_new, _ = tf.contrib.seq2seq.dynamic_decode(decoder,
                                                                                             output_time_major=True,
-                                                                                            maximum_iterations=transducer_amount_outputs)
+                                                                                            maximum_iterations=transducer_max_output)
                 logits = outputs.rnn_output  # logits of shape [max_time,batch_size,vocab_size]
                 decoder_prediction = outputs.sample_id  # For debugging
 
@@ -286,6 +297,7 @@ class Model(object):
                 transducer_hidden_state_new = tf.concat(
                     [transducer_hidden_state_new[0].c, transducer_hidden_state_new[0].h],
                     axis=0)
+                # TODO: see if -1 needs to be batch_size
                 transducer_hidden_state_new = tf.reshape(transducer_hidden_state_new,
                                                          shape=[2, -1, self.cons_manager.transducer_hidden_units])
 
@@ -293,7 +305,7 @@ class Model(object):
                 outputs_int = outputs_int.write(current_block - start_block, logits)
 
                 return current_block + 1, outputs_int, encoder_hidden_state_new_fw, encoder_hidden_state_new_bw, \
-                    transducer_hidden_state_new, total_output + transducer_amount_outputs
+                    transducer_hidden_state_new, total_output + transducer_max_output
 
             _, outputs_final, encoder_hidden_state_new_fw, encoder_hidden_state_new_bw, \
                 transducer_hidden_state_new, _ = tf.while_loop(cond, body, init_state, parallel_iterations=1)
@@ -302,7 +314,7 @@ class Model(object):
             outputs = outputs_final.concat()
             logits = tf.reshape(
                 outputs,
-                shape=(-1, 1, self.cons_manager.vocab_size))  # And now its [max_output_time, batch_size, vocab]
+                shape=(-1, batch_size, self.cons_manager.vocab_size))  # And now its [max_output_time, batch_size, vocab]
 
             # For loading the model later on
             logits = tf.identity(logits, name='logits')
@@ -317,11 +329,15 @@ class Model(object):
             logits, encoder_hidden_state_new_fw, encoder_hidden_state_new_bw, transducer_hidden_state_new, train_saver
 
     def build_training_step(self):
-        targets = tf.placeholder(shape=(None,), dtype=tf.int32, name='targets')
+        # All targets should be the same lengths, and be adjusted for this in preprocessing
+        # Of shape [max_time, batch_size]
+        targets = tf.placeholder(shape=(None, None), dtype=tf.int32, name='targets')
         targets_one_hot = tf.one_hot(targets, depth=self.cons_manager.vocab_size, dtype=tf.float32, name='targets_one_hot')
 
         #targets_one_hot = tf.Print(targets_one_hot, [targets], message='Targets: ', summarize=10)
         #targets_one_hot = tf.Print(targets_one_hot, [tf.argmax(self.logits, axis=2)], message='Argmax: ', summarize=10)
+
+        # TODO: check if we need to process the logits due to different target lengths
 
         self.logits = tf.identity(self.logits, name='training_logits')
         stepwise_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=targets_one_hot, logits=self.logits)
@@ -472,8 +488,8 @@ class Model(object):
         """
         Applies a training step to the transducer model. This method can be called multiple times from e.g. a loop.
         :param session: The current session.
-        :param inputs: The full inputs. Shape: [max_time, 1, input_dimensions]
-        :param targets: The full targets. Shape: [time]. Each entry is an index.
+        :param inputs: The full inputs. Shape: [max_time, batch_size, input_dimensions]
+        :param targets: The full targets. Shape: [batch_size, time]. Each entry is an index. Use lists.
         :param input_block_size: The block width for the inputs.
         :param transducer_max_width: The max width for the transducer. Not including the output symbol <e>
         :param training_steps_per_alignment: The amount of times to repeat the training step whilst caching the same
@@ -482,29 +498,45 @@ class Model(object):
         """
 
         # Get alignment and insert it into the targets
-        alignment = self.get_alignment(session=session, inputs=inputs, targets=targets,
+        alignment_temp = self.get_alignment(session=session, inputs=inputs, targets=targets,
                                        input_block_size=input_block_size, transducer_max_width=transducer_max_width)
 
-        print 'Alignment: ' + str(alignment)
+        # Get all alignment as a list of alignments
+        # TODO: make this real...
+        alignments = alignment_temp * 2
+        print 'Alignment: ' + str(alignments)
 
-        # Modify targets for teacher forcing
-        teacher_forcing_targets = list(targets)
-
-        # Modify targets so that it has the appropriate alignment
-        offset = 0
-        for e in alignment:
-            teacher_forcing_targets.insert(e + offset, self.cons_manager.GO_SYMBOL)
-            targets.insert(e + offset, self.cons_manager.E_SYMBOL)
-            offset += 1
-
-        teacher_forcing_targets.insert(0, self.cons_manager.GO_SYMBOL)
-        teacher_forcing_targets.pop(len(teacher_forcing_targets) - 1)
-
-        # Calc length for each transducer block
+        teacher_forcing_targets = []
         lengths = []
-        alignment.insert(0, 0)  # This is so that the length calculation is done correctly
-        for i in range(1, len(alignment)):
-            lengths.append(alignment[i] - alignment[i - 1] + 1)
+
+        # TODO: process for all alignments
+        for batch_index in range(inputs.shape[1]):
+            alignment = alignments[batch_index]
+
+            # Modify targets for teacher forcing
+            teacher_forcing_targets_temp = list(targets[batch_index])
+
+            # Modify targets so that it has the appropriate alignment
+            offset = 0
+            for e in alignment:
+                teacher_forcing_targets_temp.insert(e + offset, self.cons_manager.GO_SYMBOL)
+                targets.insert(e + offset, self.cons_manager.E_SYMBOL)
+                offset += 1
+
+            teacher_forcing_targets_temp.insert(0, self.cons_manager.GO_SYMBOL)
+            teacher_forcing_targets_temp.pop(len(teacher_forcing_targets_temp) - 1)
+            teacher_forcing_targets.append(teacher_forcing_targets_temp)
+
+            # Calc length for each transducer block
+            lengths_temp = []
+            alignment.insert(0, 0)  # This is so that the length calculation is done correctly
+            for i in range(1, len(alignment)):
+                lengths_temp.append(alignment[i] - alignment[i - 1] + 1)
+
+        # TODO: another post processing round to make all lengths the same, as well as targets and teacher forcing
+        
+
+        # TODO: make calculation for lengths for full batch_size
 
         total_loss = 0
 

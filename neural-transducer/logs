@@ -1,51 +1,20 @@
-2018-02-24 19:41:58.629656: I tensorflow/core/platform/cpu_feature_guard.cc:137] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
-Alignment: [0, 0, 0, 0, 0, 0, 3]
-Step: 0
-Loss: 0.06022905548413594
-Alignment: [0, 0, 3, 3, 3, 3]
-Alignment: [0, 0, 1, 3, 3]
-Alignment: [3, 3, 3, 3, 3, 3]
-Alignment: [2, 3, 3, 3, 3, 3]
-Alignment: [2, 2, 3, 3, 3, 3]
-Alignment: [3, 3, 3, 3, 3, 3, 3]
-Alignment: [1, 1, 1, 1, 1, 2, 3]
-Alignment: [2, 2, 2, 2, 2, 3]
-Alignment: [3, 3, 3, 3, 3, 3]
-Alignment: [3, 3, 3, 3, 3, 3, 3]
-Alignment: [1, 1, 1, 2, 3, 3, 3]
-Alignment: [3, 3, 3, 3, 3, 3]
-Alignment: [0, 3, 3, 3, 3, 3]
-Alignment: [1, 2, 3, 3, 3, 3, 3]
-Alignment: [1, 1, 1, 3, 3, 3]
-Alignment: [0, 3, 3, 3, 3, 3, 3]
-Alignment: [0, 0, 3, 3, 3, 3]
-Alignment: [2, 2, 3, 3, 3, 3]
-Alignment: [3, 3, 3, 3, 3, 3]
-Alignment: [2, 2, 3, 3, 3, 3, 3]
-Alignment: [3, 3, 3, 3, 3, 3, 3]
-Alignment: [0, 0, 0, 0, 0, 3]
-Alignment: [1, 3, 3, 3, 3, 3]
-Alignment: [1, 1, 1, 1, 2, 3]
-Alignment: [1, 3, 3, 3, 3, 3, 3]
+(?, ?, 11)
+Attention shape: (?, ?, 200)
+2018-02-25 16:43:10.712026: I tensorflow/core/platform/cpu_feature_guard.cc:137] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
 Traceback (most recent call last):
   File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/nt_demo_addition.py", line 58, in <module>
     training_steps_per_alignment=10)
-  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/neural_transducer.py", line 485, in apply_training_step
+  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/neural_transducer.py", line 503, in apply_training_step
     input_block_size=input_block_size, transducer_max_width=transducer_max_width)
-  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/neural_transducer.py", line 463, in get_alignment
+  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/neural_transducer.py", line 481, in get_alignment
     last_encoder_state=last_encoder_state)
-  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/neural_transducer.py", line 424, in run_new_block
+  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/neural_transducer.py", line 442, in run_new_block
+(1, 1)
     transducer_width=new_alignment_width + 1)
-  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/neural_transducer.py", line 393, in run_transducer
+  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/neural_transducer.py", line 411, in run_transducer
     model.teacher_forcing_targets: teacher_targets_empty,
   File "/usr/local/lib/python2.7/dist-packages/tensorflow/python/client/session.py", line 889, in run
     run_metadata_ptr)
-  File "/usr/local/lib/python2.7/dist-packages/tensorflow/python/client/session.py", line 1120, in _run
-    feed_dict_tensor, options, run_metadata)
-  File "/usr/local/lib/python2.7/dist-packages/tensorflow/python/client/session.py", line 1286, in _do_run
-    feeds = dict((compat.as_bytes(t.name), v) for t, v in feed_dict.items())
-  File "/usr/local/lib/python2.7/dist-packages/tensorflow/python/client/session.py", line 1286, in <genexpr>
-    feeds = dict((compat.as_bytes(t.name), v) for t, v in feed_dict.items())
-  File "/usr/local/lib/python2.7/dist-packages/tensorflow/python/util/compat.py", line 60, in as_bytes
-    return bytes_or_text.encode(encoding)
-KeyboardInterrupt
+  File "/usr/local/lib/python2.7/dist-packages/tensorflow/python/client/session.py", line 1096, in _run
+    % (np_val.shape, subfeed_t.name, str(subfeed_t.get_shape())))
+ValueError: Cannot feed value of shape (1,) for Tensor u'transducer_training/transducer_list_outputs:0', which has shape '(?, ?)'
