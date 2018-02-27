@@ -252,8 +252,6 @@ class Model(object):
 
                 # Model building
                 # TODO: check transducer_amount_outputs
-                # TODO: need to make the variable sequence lengths work in teacher_forcing_targets_emb
-                print teacher_forcing_targets_emb[total_output:total_output + transducer_max_output].shape
                 helper = tf.contrib.seq2seq.ScheduledEmbeddingTrainingHelper(
                     inputs=teacher_forcing_targets_emb[total_output:total_output + transducer_max_output],  # Get the current target inputs
                     sequence_length=transducer_amount_outputs,
@@ -264,7 +262,6 @@ class Model(object):
 
                 attention_states = tf.transpose(encoder_raw_outputs,
                                                 [1, 0, 2])  # attention_states: [batch_size, max_time, num_units]
-                print 'Attention shape: ' + str(attention_states.shape)
 
                 attention_mechanism = tf.contrib.seq2seq.LuongAttention(
                     self.cons_manager.encoder_hidden_units * 2, attention_states)
@@ -338,6 +335,7 @@ class Model(object):
         #targets_one_hot = tf.Print(targets_one_hot, [tf.argmax(self.logits, axis=2)], message='Argmax: ', summarize=10)
 
         # TODO: check if we need to process the logits due to different target lengths
+        # TODO: think not
 
         self.logits = tf.identity(self.logits, name='training_logits')
         stepwise_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=targets_one_hot, logits=self.logits)
@@ -490,7 +488,7 @@ class Model(object):
         :param session: The current session.
         :param inputs: The full inputs. Shape: [max_time, batch_size, input_dimensions]
         :param targets: The full targets. Shape: [batch_size, time]. Each entry is an index. Use lists.
-        All targets have to have the same length. (A list containing a list for each target, same lengths).
+        All targets have to have the same length. (tl;dr: A list containing a list for each target, same lengths).
         :param input_block_size: The block width for the inputs.
         :param transducer_max_width: The max width for the transducer. Not including the output symbol <e>
         :param training_steps_per_alignment: The amount of times to repeat the training step whilst caching the same
@@ -499,12 +497,12 @@ class Model(object):
         """
 
         # Get alignment and insert it into the targets
-        alignment_temp = self.get_alignment(session=session, inputs=inputs, targets=targets,
+        alignment_temp = self.get_alignment(session=session, inputs=np.reshape(inputs[:, 0, :], newshape=(-1, 1, 1)), targets=targets[0],
                                        input_block_size=input_block_size, transducer_max_width=transducer_max_width)
 
         # Get all alignment as a list of alignments
         # TODO: make this real...
-        alignments = alignment_temp * 2
+        alignments = [alignment_temp] * 2
         print 'Alignment: ' + str(alignments)
 
         teacher_forcing_targets = []

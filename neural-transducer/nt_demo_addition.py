@@ -26,18 +26,34 @@ def lookup(i):
 # -- Training ---
 
 def get_feed_dic():
-    a = np.random.randint(0, 499)
-    b = np.random.randint(0, 499)
-    c = a + b
+    def get_random_numbers():
+        a = np.random.randint(100, 499)     # That way any 2 sequences are always the same length
+        b = np.random.randint(100, 499)
+        c = a + b
 
-    inputs = [int(d) for d in str(a)]
-    inputs.append(10)  # Space
-    inputs += list(reversed([int(d) for d in str(b)]))
+        inputs = [int(d) for d in str(a)]
+        inputs.append(10)  # Space
+        inputs += list(reversed([int(d) for d in str(b)]))
 
-    targets = list(reversed([int(d) for d in str(c)]))
+        targets = list(reversed([int(d) for d in str(c)]))
+        return inputs, targets
 
-    inputs = np.asarray([inputs])
-    inputs = np.reshape(inputs, newshape=(-1, 1, 1))
+    batch_size = 2
+
+    inputs = []
+    targets = []
+
+    for i in range(batch_size):
+        temp_inputs, temp_targets = get_random_numbers()
+        inputs.append(temp_inputs)
+        targets.append(temp_targets)
+
+    inputs = np.asarray(inputs)
+    inputs = np.transpose(inputs, axes=[1, 0])
+    inputs = np.reshape(inputs, newshape=(-1, batch_size, 1))
+
+    print inputs
+    print targets
 
     return inputs, targets
 

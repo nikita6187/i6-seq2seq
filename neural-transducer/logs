@@ -1,10 +1,44 @@
-(?, ?, 11)
-Attention shape: (?, ?, 200)
-2018-02-27 17:28:58.201215: I tensorflow/core/platform/cpu_feature_guard.cc:137] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
-Alignment: [1, 1, 1, 1, 1, 2, 3, 1, 1, 1, 1, 1, 2, 3]
+2018-02-27 19:56:49.032835: I tensorflow/core/platform/cpu_feature_guard.cc:137] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
+[[[ 4]
+  [ 3]]
+
+ [[ 6]
+  [ 0]]
+
+ [[ 2]
+  [ 1]]
+
+ [[10]
+  [10]]
+
+ [[ 2]
+  [ 0]]
+
+ [[ 7]
+  [ 0]]
+
+ [[ 3]
+  [ 4]]]
+[[4, 3, 8], [1, 0, 7]]
+---- Inside alignment generation ---
+(7, 1, 1)
+[[[ 4]]
+
+ [[ 6]]
+
+ [[ 2]]
+
+ [[10]]
+
+ [[ 2]]
+
+ [[ 7]]
+
+ [[ 3]]]
 Traceback (most recent call last):
-  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/nt_demo_addition.py", line 58, in <module>
+  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/nt_demo_addition.py", line 74, in <module>
     training_steps_per_alignment=10)
-  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/neural_transducer.py", line 518, in apply_training_step
+  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/neural_transducer.py", line 520, in apply_training_step
     teacher_forcing_targets_temp = list(targets[batch_index])
 TypeError: 'int' object is not iterable
+Alignment: [[0, 0, 3, 3, 3, 3, 3], [0, 0, 3, 3, 3, 3, 3]]
