@@ -401,7 +401,7 @@ class Model(object):
                                                              feed_dict={
                                                                  model.inputs_full_raw: inputs_full,
                                                                  model.max_blocks: 1,
-                                                                 model.transducer_list_outputs: [transducer_width],
+                                                                 model.transducer_list_outputs: [[transducer_width]],
                                                                  model.start_block: block_index - 1,
                                                                  model.encoder_hidden_init_fw: encoder_state[0],
                                                                  model.encoder_hidden_init_bw: encoder_state[1],
@@ -490,7 +490,7 @@ class Model(object):
         :param session: The current session.
         :param inputs: The full inputs. Shape: [max_time, batch_size, input_dimensions]
         :param targets: The full targets. Shape: [batch_size, time]. Each entry is an index. Use lists.
-        All targets have to have the same length
+        All targets have to have the same length. (A list containing a list for each target, same lengths).
         :param input_block_size: The block width for the inputs.
         :param transducer_max_width: The max width for the transducer. Not including the output symbol <e>
         :param training_steps_per_alignment: The amount of times to repeat the training step whilst caching the same

@@ -1,20 +1,10 @@
 (?, ?, 11)
 Attention shape: (?, ?, 200)
-2018-02-25 16:43:10.712026: I tensorflow/core/platform/cpu_feature_guard.cc:137] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
+2018-02-27 17:28:58.201215: I tensorflow/core/platform/cpu_feature_guard.cc:137] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
+Alignment: [1, 1, 1, 1, 1, 2, 3, 1, 1, 1, 1, 1, 2, 3]
 Traceback (most recent call last):
   File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/nt_demo_addition.py", line 58, in <module>
     training_steps_per_alignment=10)
-  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/neural_transducer.py", line 503, in apply_training_step
-    input_block_size=input_block_size, transducer_max_width=transducer_max_width)
-  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/neural_transducer.py", line 481, in get_alignment
-    last_encoder_state=last_encoder_state)
-  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/neural_transducer.py", line 442, in run_new_block
-(1, 1)
-    transducer_width=new_alignment_width + 1)
-  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/neural_transducer.py", line 411, in run_transducer
-    model.teacher_forcing_targets: teacher_targets_empty,
-  File "/usr/local/lib/python2.7/dist-packages/tensorflow/python/client/session.py", line 889, in run
-    run_metadata_ptr)
-  File "/usr/local/lib/python2.7/dist-packages/tensorflow/python/client/session.py", line 1096, in _run
-    % (np_val.shape, subfeed_t.name, str(subfeed_t.get_shape())))
-ValueError: Cannot feed value of shape (1,) for Tensor u'transducer_training/transducer_list_outputs:0', which has shape '(?, ?)'
+  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/neural_transducer.py", line 518, in apply_training_step
+    teacher_forcing_targets_temp = list(targets[batch_index])
+TypeError: 'int' object is not iterable
