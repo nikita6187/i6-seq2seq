@@ -52,14 +52,17 @@ def get_feed_dic():
     inputs = np.transpose(inputs, axes=[1, 0])
     inputs = np.reshape(inputs, newshape=(-1, batch_size, 1))
 
-    print inputs
-    print targets
-
     return inputs, targets
 
 
 with tf.Session() as sess:
-    sess.run(init)
+
+    writer = tf.summary.FileWriter("/tmp/graph", sess.graph)
+    sess.run(tf.global_variables_initializer())
+    writer.flush()
+    writer.close()
+
+    #sess.run(init)
 
     avg_loss = 0
     avg_over = 30

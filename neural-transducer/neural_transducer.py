@@ -3,6 +3,7 @@ from tensorflow.contrib.rnn import LSTMCell, LSTMStateTuple
 from tensorflow.python.layers import core as layers_core
 import numpy as np
 import copy
+from random import shuffle
 import os
 
 # Implementation of the "A Neural Transducer" paper, Navdeep Jaitly et. al (2015): https://arxiv.org/abs/1511.04868
@@ -497,52 +498,63 @@ class Model(object):
         """
 
         # Get alignment and insert it into the targets
-        alignment_temp = self.get_alignment(session=session, inputs=np.reshape(inputs[:, 0, :], newshape=(-1, 1, 1)), targets=targets[0],
+        alignment_temp_1 = self.get_alignment(session=session, inputs=np.reshape(inputs[:, 0, :], newshape=(-1, 1, 1)), targets=targets[0],
                                        input_block_size=input_block_size, transducer_max_width=transducer_max_width)
+        alignment_temp_2 = self.get_alignment(session=session, inputs=np.reshape(inputs[:, 1, :], newshape=(-1, 1, 1)),
+                                              targets=targets[1],
+                                              input_block_size=input_block_size,
+                                              transducer_max_width=transducer_max_width)
 
         # Get all alignment as a list of alignments
         # TODO: make this real...
-        alignments = [alignment_temp] * 2
+        alignments = [alignment_temp_1, alignment_temp_2]  # Testing with batch size 2
         print 'Alignment: ' + str(alignments)
 
-        teacher_forcing_targets = []
+        # Set vars
+        teacher_forcing = []
         lengths = []
 
-        # TODO: process for all alignments
         for batch_index in range(inputs.shape[1]):
             alignment = alignments[batch_index]
-
-            # Modify targets for teacher forcing
-            teacher_forcing_targets_temp = list(targets[batch_index])
 
             # Modify targets so that it has the appropriate alignment
             offset = 0
             for e in alignment:
-                teacher_forcing_targets_temp.insert(e + offset, self.cons_manager.GO_SYMBOL)
-                targets.insert(e + offset, self.cons_manager.E_SYMBOL)
+                targets[batch_index].insert(e + offset, self.cons_manager.E_SYMBOL)
                 offset += 1
 
-            teacher_forcing_targets_temp.insert(0, self.cons_manager.GO_SYMBOL)
-            teacher_forcing_targets_temp.pop(len(teacher_forcing_targets_temp) - 1)
-            teacher_forcing_targets.append(teacher_forcing_targets_temp)
+            # Modify targets for teacher forcing
+            teacher_forcing_temp = list(targets[batch_index])
+            teacher_forcing_temp.insert(0, self.cons_manager.GO_SYMBOL)
+            teacher_forcing_temp.pop(len(teacher_forcing_temp) - 1)
+            teacher_forcing_temp = [self.cons_manager.GO_SYMBOL if x == self.cons_manager.E_SYMBOL else x for x in teacher_forcing_temp]
+            teacher_forcing.append(teacher_forcing_temp)
 
-            # Calc length for each transducer block
+            # Calc temp true lengths for each transducer block
             lengths_temp = []
             alignment.insert(0, 0)  # This is so that the length calculation is done correctly
             for i in range(1, len(alignment)):
                 lengths_temp.append(alignment[i] - alignment[i - 1] + 1)
+            lengths.append(lengths_temp)
+
+        print '-- Pre process 1 fin ---'
+        print targets
+        print teacher_forcing
+        print lengths
 
         # TODO: another post processing round to make all lengths the same, as well as targets and teacher forcing
-        # TODO: See if we need that ^
-
-        # TODO: make calculation for lengths for full batch_size
+        # -TODO: do this where you add PAD to vocab, & then pad every entry so that for each trans block length is equal
 
         # TODO: process targets back to time major
 
+        # TODO: see that targets & teacher forcing are of correct format
+
+        # TODO: test teacher forcing
         total_loss = 0
 
         for i in range(0, training_steps_per_alignment):
             # Init values
+            # TODO: WTF with the init values
             encoder_hidden_init = (np.zeros(shape=(self.cons_manager.encoder_hidden_layers, 2, 1, self.cons_manager.encoder_hidden_units)),
                                    np.zeros(shape=(self.cons_manager.encoder_hidden_layers, 2, 1, self.cons_manager.encoder_hidden_units)))
             trans_hidden_init = np.zeros(shape=(2, 1, self.cons_manager.transducer_hidden_units))
@@ -558,7 +570,7 @@ class Model(object):
                 self.encoder_hidden_init_bw: encoder_hidden_init[1],
                 self.trans_hidden_init: trans_hidden_init,
                 self.inference_mode: 0.0,
-                self.teacher_forcing_targets: np.reshape(teacher_forcing_targets, (-1, 1)),
+                self.teacher_forcing_targets: np.reshape(teacher_forcing, (-1, 1)),
             })
             total_loss += loss
 
@@ -671,3 +683,16 @@ class InferenceManager(object):
         return predict_id, predicted_chars
 
 
+# Visualization
+"""
+constants_manager = ConstantsManager(input_dimensions=1, input_embedding_size=11, inputs_embedded=False,
+                                     encoder_hidden_units=100, transducer_hidden_units=200, vocab_ids=[0, 1, 2],
+                                     input_block_size=1, beam_width=5, encoder_hidden_layers=3)
+model = Model(cons_manager=constants_manager)
+
+with tf.Session() as sess:
+    writer = tf.summary.FileWriter("/home/nikita/Desktop", sess.graph_def)
+    sess.run(tf.global_variables_initializer())
+    writer.flush()
+    writer.close()
+"""
