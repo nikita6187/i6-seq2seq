@@ -1,13 +1,20 @@
-2018-02-27 22:40:08.887152: I tensorflow/core/platform/cpu_feature_guard.cc:137] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
-Alignment: [[3, 3, 3, 3, 3, 3, 3], [0, 0, 0, 1, 3, 3, 3]]
--- Pre process 1 fin ---
-[[7, 4, 4, 11, 11, 11, 11, 11, 11, 11], [11, 11, 11, 2, 11, 8, 4, 11, 11, 11]]
-[[12, 7, 4, 4, 12, 12, 12, 12, 12, 12], [12, 12, 12, 12, 2, 12, 8, 4, 12, 12]]
-[[4, 1, 1, 1, 1, 1, 1], [1, 1, 1, 2, 3, 1, 1]]
+2018-02-28 22:35:50.947204: I tensorflow/core/platform/cpu_feature_guard.cc:137] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
+Alignment: [[0, 0, 0, 0, 0, 0, 3], [2, 2, 2, 2, 2, 2, 3]]
+End: 
+10
+2
+End: 
+10
+2
+-- Pre process 2 fin ---
+[[11, 13, 13, 11, 11, 11, 11, 11, 3, 5, 6, 11], [5, 8, 11, 11, 11, 11, 11, 11, 2, 11, 13, 13]]
+[[12, 12, 13, 13, 12, 12, 12, 12, 12, 3, 5, 6], [12, 5, 8, 12, 12, 12, 12, 12, 12, 2, 12, 13]]
+[[1, 1, 1, 1, 1, 1, 4], [3, 1, 1, 1, 1, 1, 2]]
+[3, 1, 1, 1, 1, 1, 4]
 Traceback (most recent call last):
-  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/nt_demo_addition.py", line 78, in <module>
+  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/nt_demo_addition.py", line 77, in <module>
     training_steps_per_alignment=10)
-  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/neural_transducer.py", line 573, in apply_training_step
+  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/neural_transducer.py", line 590, in apply_training_step
     self.teacher_forcing_targets: np.reshape(teacher_forcing, (-1, 1)),
   File "/usr/local/lib/python2.7/dist-packages/tensorflow/python/client/session.py", line 889, in run
     run_metadata_ptr)
@@ -25,7 +32,7 @@ Caused by op u'transducer_training/while/decoder/while/BasicDecoderStep/decoder/
     model = Model(cons_manager=constants_manager)
   File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/neural_transducer.py", line 104, in __init__
     self.transducer_hidden_state_new, self.train_saver = self.build_full_transducer()
-  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/neural_transducer.py", line 309, in build_full_transducer
+  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/neural_transducer.py", line 306, in build_full_transducer
     transducer_hidden_state_new, _ = tf.while_loop(cond, body, init_state, parallel_iterations=1)
   File "/usr/local/lib/python2.7/dist-packages/tensorflow/python/ops/control_flow_ops.py", line 2816, in while_loop
     result = loop_context.BuildLoop(cond, body, loop_vars, shape_invariants)
@@ -33,7 +40,7 @@ Caused by op u'transducer_training/while/decoder/while/BasicDecoderStep/decoder/
     pred, body, original_loop_vars, loop_vars, shape_invariants)
   File "/usr/local/lib/python2.7/dist-packages/tensorflow/python/ops/control_flow_ops.py", line 2590, in _BuildLoop
     body_result = body(*packed_vars_for_body)
-  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/neural_transducer.py", line 290, in body
+  File "/home/nikita/Desktop/i6-seq2seq-test/i6-seq2seq/neural-transducer/neural_transducer.py", line 288, in body
     maximum_iterations=transducer_max_output)
   File "/usr/local/lib/python2.7/dist-packages/tensorflow/contrib/seq2seq/python/ops/decoder.py", line 286, in dynamic_decode
     swap_memory=swap_memory)
