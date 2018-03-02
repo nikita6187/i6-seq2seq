@@ -505,6 +505,7 @@ class Model(object):
         # Get all alignment as a list of alignments
         # TODO: make this real...
         alignments = [alignment_temp_1, alignment_temp_2]  # Testing with batch size 2
+        print 'New batch ----------------------------------------------'
         print 'Alignment: ' + str(alignments)
 
         # Set vars
@@ -540,10 +541,12 @@ class Model(object):
                 if lengths[batch_index][i] < max_lengths[i]:
                     for app in range(max_lengths[i] - lengths[batch_index][i]):
                         targets[batch_index].insert(alignment[i] + i + 1, self.cons_manager.PAD)
+                        """
                         if i == len(alignment)-1:
                             print 'End: '
                             print str(alignment[i] + i + 1)
                             print str(max_lengths[i] - lengths[batch_index][i])
+                        """
                         # TODO: some error with index (sometimes), look at when alignment is more distributed
 
             # Modify targets for teacher forcing
@@ -555,11 +558,11 @@ class Model(object):
             # TODO: add modification for PAD
             teacher_forcing.append(teacher_forcing_temp)
 
-        print '-- Pre process 2 fin ---'
-        print targets
-        print teacher_forcing
-        print lengths
-        print max_lengths
+        #print '-- Pre process 2 fin ---'
+        print 'Targets:' + str(targets)
+        print 'Teacher forcing: ' + str(teacher_forcing)
+        print 'Lengths: ' + str(lengths)
+        print 'Max lengths: ' + str(max_lengths)
 
         # TODO: process targets back to time major
 
@@ -567,7 +570,7 @@ class Model(object):
 
         # TODO: test teacher forcing
         total_loss = 0
-
+        """
         for i in range(0, training_steps_per_alignment):
             # Init values
             # TODO: Set correct batch stuff here
@@ -590,6 +593,7 @@ class Model(object):
                 self.teacher_forcing_targets: np.reshape(teacher_forcing, (-1, 1)),
             })
             total_loss += loss
+        """
 
         return total_loss/training_steps_per_alignment
 

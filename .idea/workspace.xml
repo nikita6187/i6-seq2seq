@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="BookmarkManager">
-    <bookmark url="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py" line="685" />
+    <bookmark url="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py" line="689" />
     <bookmark url="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py" line="497" />
   </component>
   <component name="ChangeListManager">
@@ -35,28 +35,26 @@
       <file leaf-file-name="neural_transducer.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="544">
-              <caret line="546" column="109" selection-start-line="546" selection-start-column="109" selection-end-line="546" selection-end-column="109" />
+            <state relative-caret-position="214">
+              <caret line="507" column="71" selection-start-line="507" selection-start-column="71" selection-end-line="507" selection-end-column="71" />
               <folding>
                 <element signature="e#593#1859#0" expanded="false" />
                 <element signature="e#1955#4157#0" expanded="false" />
                 <element signature="e#3207#3794#1" expanded="false" />
                 <element signature="e#4191#4299#0" expanded="false" />
-                <element signature="e#4437#5020#0" expanded="false" />
-                <element signature="e#5067#18950#0" expanded="false" />
                 <element signature="e#9949#9996#0" expanded="false" />
                 <element signature="e#18995#20006#0" expanded="false" />
                 <element signature="e#20083#20205#0" expanded="false" />
                 <element signature="e#20310#29265#0" expanded="false" />
                 <element signature="e#22152#24561#0" expanded="false" />
-                <element signature="e#35387#35477#0" expanded="false" />
-                <element signature="e#35517#41541#0" expanded="false" />
-                <element signature="e#35711#36525#0" expanded="false" />
-                <element signature="e#36571#37002#0" expanded="false" />
-                <element signature="e#37065#38636#0" expanded="false" />
-                <element signature="e#38719#41538#0" expanded="false" />
-                <element signature="e#38844#39617#0" expanded="false" />
-                <element signature="e#40359#40883#0" expanded="false" />
+                <element signature="e#35627#35717#0" expanded="false" />
+                <element signature="e#35757#41781#0" expanded="false" />
+                <element signature="e#35951#36765#0" expanded="false" />
+                <element signature="e#36811#37242#0" expanded="false" />
+                <element signature="e#37305#38876#0" expanded="false" />
+                <element signature="e#38959#41778#0" expanded="false" />
+                <element signature="e#39084#39857#0" expanded="false" />
+                <element signature="e#40599#41123#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -65,7 +63,7 @@
       <file leaf-file-name="nt_demo_addition.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/neural-transducer/nt_demo_addition.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="108">
+            <state relative-caret-position="306">
               <caret line="21" column="14" selection-start-line="21" selection-start-column="14" selection-end-line="21" selection-end-column="14" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
@@ -191,8 +189,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scratches" />
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -227,6 +223,8 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scratches" />
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -511,14 +509,14 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="65" y="24" width="1855" height="1056" extended-state="6" />
-    <editor active="false" />
+    <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.24905661" sideWeight="0.494705" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3180428" sideWeight="0.5083558" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.34148827" sideWeight="0.4916442" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.051987767" sideWeight="0.4916442" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.24905661" sideWeight="0.505295" order="2" side_tool="true" content_ui="tabs" />
@@ -566,21 +564,19 @@
             <element signature="e#1955#4157#0" expanded="false" />
             <element signature="e#3207#3794#1" expanded="false" />
             <element signature="e#4191#4299#0" expanded="false" />
-            <element signature="e#4437#5020#0" expanded="false" />
-            <element signature="e#5067#18950#0" expanded="false" />
             <element signature="e#9949#9996#0" expanded="false" />
             <element signature="e#18995#20006#0" expanded="false" />
             <element signature="e#20083#20205#0" expanded="false" />
             <element signature="e#20310#29265#0" expanded="false" />
             <element signature="e#22152#24561#0" expanded="false" />
-            <element signature="e#35387#35477#0" expanded="false" />
-            <element signature="e#35517#41541#0" expanded="false" />
-            <element signature="e#35711#36525#0" expanded="false" />
-            <element signature="e#36571#37002#0" expanded="false" />
-            <element signature="e#37065#38636#0" expanded="false" />
-            <element signature="e#38719#41538#0" expanded="false" />
-            <element signature="e#38844#39617#0" expanded="false" />
-            <element signature="e#40359#40883#0" expanded="false" />
+            <element signature="e#35627#35717#0" expanded="false" />
+            <element signature="e#35757#41781#0" expanded="false" />
+            <element signature="e#35951#36765#0" expanded="false" />
+            <element signature="e#36811#37242#0" expanded="false" />
+            <element signature="e#37305#38876#0" expanded="false" />
+            <element signature="e#38959#41778#0" expanded="false" />
+            <element signature="e#39084#39857#0" expanded="false" />
+            <element signature="e#40599#41123#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -722,13 +718,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/neural-transducer/logs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-267018">
-          <caret line="138" column="109" selection-start-line="19" selection-start-column="99" selection-end-line="19" selection-end-column="109" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file:///usr/local/lib/python2.7/dist-packages/tensorflow/python/util/nest.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="389">
@@ -761,14 +750,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="342">
           <caret line="19" column="42" selection-start-line="19" selection-start-column="42" selection-end-line="19" selection-end-column="42" />
-          <folding>
-            <element signature="e#0#23#0" expanded="false" />
-            <element signature="e#1614#2048#0" expanded="false" />
-            <element signature="e#2095#11650#0" expanded="false" />
-            <element signature="e#2155#11372#0" expanded="false" />
-            <element signature="e#5140#10628#0" expanded="false" />
-            <element signature="e#11695#12428#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -790,7 +771,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="185">
           <caret line="4182" column="0" selection-start-line="4182" selection-start-column="0" selection-end-line="4182" selection-end-column="0" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -832,7 +812,7 @@
     <entry file="file://$PROJECT_DIR$/neural-transducer/test.py" />
     <entry file="file://$PROJECT_DIR$/neural-transducer/nt_demo_addition.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="108">
+        <state relative-caret-position="306">
           <caret line="21" column="14" selection-start-line="21" selection-start-column="14" selection-end-line="21" selection-end-column="14" />
           <folding>
             <element signature="e#0#9#0" expanded="true" />
@@ -840,30 +820,36 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/neural-transducer/logs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-4712">
+          <caret line="138" column="109" selection-start-line="138" selection-start-column="109" selection-end-line="138" selection-end-column="109" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="544">
-          <caret line="546" column="109" selection-start-line="546" selection-start-column="109" selection-end-line="546" selection-end-column="109" />
+        <state relative-caret-position="214">
+          <caret line="507" column="71" selection-start-line="507" selection-start-column="71" selection-end-line="507" selection-end-column="71" />
           <folding>
             <element signature="e#593#1859#0" expanded="false" />
             <element signature="e#1955#4157#0" expanded="false" />
             <element signature="e#3207#3794#1" expanded="false" />
             <element signature="e#4191#4299#0" expanded="false" />
-            <element signature="e#4437#5020#0" expanded="false" />
-            <element signature="e#5067#18950#0" expanded="false" />
             <element signature="e#9949#9996#0" expanded="false" />
             <element signature="e#18995#20006#0" expanded="false" />
             <element signature="e#20083#20205#0" expanded="false" />
             <element signature="e#20310#29265#0" expanded="false" />
             <element signature="e#22152#24561#0" expanded="false" />
-            <element signature="e#35387#35477#0" expanded="false" />
-            <element signature="e#35517#41541#0" expanded="false" />
-            <element signature="e#35711#36525#0" expanded="false" />
-            <element signature="e#36571#37002#0" expanded="false" />
-            <element signature="e#37065#38636#0" expanded="false" />
-            <element signature="e#38719#41538#0" expanded="false" />
-            <element signature="e#38844#39617#0" expanded="false" />
-            <element signature="e#40359#40883#0" expanded="false" />
+            <element signature="e#35627#35717#0" expanded="false" />
+            <element signature="e#35757#41781#0" expanded="false" />
+            <element signature="e#35951#36765#0" expanded="false" />
+            <element signature="e#36811#37242#0" expanded="false" />
+            <element signature="e#37305#38876#0" expanded="false" />
+            <element signature="e#38959#41778#0" expanded="false" />
+            <element signature="e#39084#39857#0" expanded="false" />
+            <element signature="e#40599#41123#0" expanded="false" />
           </folding>
         </state>
       </provider>
