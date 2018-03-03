@@ -537,32 +537,32 @@ class Model(object):
                 offset += 1
 
             # Modify so that all targets have same lengths in each transducer using PAD
+            offset = 0
             for i in range(len(alignment)):
-                if lengths[batch_index][i] < max_lengths[i]:
-                    for app in range(max_lengths[i] - lengths[batch_index][i]):
-                        targets[batch_index].insert(alignment[i] + i + 1, self.cons_manager.PAD)
-                        """
-                        if i == len(alignment)-1:
-                            print 'End: '
-                            print str(alignment[i] + i + 1)
-                            print str(max_lengths[i] - lengths[batch_index][i])
-                        """
-                        # TODO: some error with index (sometimes), look at when alignment is more distributed
+                for app in range(max_lengths[i] - lengths[batch_index][i]):
+                    targets[batch_index].insert(offset + lengths[batch_index][i], self.cons_manager.PAD)
+                offset += max_lengths[i]
 
             # Modify targets for teacher forcing
             teacher_forcing_temp = list(targets[batch_index])
             teacher_forcing_temp.insert(0, self.cons_manager.GO_SYMBOL)
             teacher_forcing_temp.pop(len(teacher_forcing_temp) - 1)
-            teacher_forcing_temp = [self.cons_manager.GO_SYMBOL if x == self.cons_manager.E_SYMBOL else x for x in
-                                    teacher_forcing_temp]
-            # TODO: add modification for PAD
+            for i in range(len(teacher_forcing_temp)):
+                if teacher_forcing_temp[i] == self.cons_manager.E_SYMBOL \
+                        and targets[batch_index][i] != self.cons_manager.PAD:
+                    teacher_forcing_temp[i] = self.cons_manager.GO_SYMBOL
+
+                if i + 1 < len(teacher_forcing_temp) and \
+                        teacher_forcing_temp[i] == self.cons_manager.PAD and \
+                        teacher_forcing_temp[i + 1] != self.cons_manager.PAD:
+                    teacher_forcing_temp[i] = self.cons_manager.GO_SYMBOL
+
             teacher_forcing.append(teacher_forcing_temp)
 
-        #print '-- Pre process 2 fin ---'
-        print 'Targets:' + str(targets)
+        print 'Targets:         ' + str(targets)
         print 'Teacher forcing: ' + str(teacher_forcing)
-        print 'Lengths: ' + str(lengths)
-        print 'Max lengths: ' + str(max_lengths)
+        print 'Lengths:         ' + str(lengths)
+        print 'Max lengths:     ' + str(max_lengths)
 
         # TODO: process targets back to time major
 
