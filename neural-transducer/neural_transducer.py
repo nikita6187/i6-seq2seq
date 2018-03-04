@@ -142,7 +142,7 @@ class Model(object):
 
             # Only has to contain data if in training
             # should be padded (PAD) so that each example has the same amount of target inputs per transducer block
-            # [outputs, batch_size]
+            # [max_time, batch_size]
             teacher_forcing_targets = tf.placeholder(shape=(None, None), dtype=tf.int32,
                                                      name='teacher_forcing_targets')
             inference_mode = tf.placeholder(shape=(),
@@ -252,6 +252,10 @@ class Model(object):
                 transducer_max_output = tf.reduce_max(transducer_amount_outputs)
 
                 # Model building
+                # TODO: check teacher_forcing_targets_emb
+                transducer_amount_outputs = tf.Print(transducer_amount_outputs, [tf.shape(teacher_forcing_targets_emb[total_output:total_output + transducer_max_output])], message='Teacher forcing inp: ', summarize=100)
+                transducer_amount_outputs = tf.Print(transducer_amount_outputs, [transducer_amount_outputs], message='Trans amount outputs: ', summarize=100)
+                # TODO transducer_amount_outputs incorrect shape
                 helper = tf.contrib.seq2seq.ScheduledEmbeddingTrainingHelper(
                     inputs=teacher_forcing_targets_emb[total_output:total_output + transducer_max_output],  # Get the current target inputs
                     sequence_length=transducer_amount_outputs,
@@ -274,6 +278,7 @@ class Model(object):
                 projection_layer = layers_core.Dense(self.cons_manager.vocab_size, use_bias=False)
 
                 # Build previous state
+                # TODO: finish checking reshapes (done here)
                 trans_hidden_c, trans_hidden_h = tf.split(trans_hidden_state, num_or_size_splits=2, axis=0)
                 trans_hidden_c = tf.reshape(trans_hidden_c, shape=[-1, self.cons_manager.transducer_hidden_units])
                 trans_hidden_h = tf.reshape(trans_hidden_h, shape=[-1, self.cons_manager.transducer_hidden_units])
@@ -329,11 +334,8 @@ class Model(object):
         targets = tf.placeholder(shape=(None, None), dtype=tf.int32, name='targets')
         targets_one_hot = tf.one_hot(targets, depth=self.cons_manager.vocab_size, dtype=tf.float32, name='targets_one_hot')
 
-        #targets_one_hot = tf.Print(targets_one_hot, [targets], message='Targets: ', summarize=10)
-        #targets_one_hot = tf.Print(targets_one_hot, [tf.argmax(self.logits, axis=2)], message='Argmax: ', summarize=10)
-
-        # TODO: check if we need to process the logits due to different target lengths
-        # TODO: think not
+        targets_one_hot = tf.Print(targets_one_hot, [targets], message='Targets: ', summarize=10)
+        targets_one_hot = tf.Print(targets_one_hot, [tf.argmax(self.logits, axis=2)], message='Argmax: ', summarize=10)
 
         self.logits = tf.identity(self.logits, name='training_logits')
         stepwise_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=targets_one_hot, logits=self.logits)
@@ -493,7 +495,10 @@ class Model(object):
         alignment.
         :return: Average loss of this training step.
         """
+        # Assertions
+        assert inputs.shape[1] == len(targets), 'Batch size not same for inputs & targets'
 
+        # TODO: make this parallel
         # Get alignment and insert it into the targets
         alignment_temp_1 = self.get_alignment(session=session, inputs=np.reshape(inputs[:, 0, :], newshape=(-1, 1, 1)), targets=targets[0],
                                        input_block_size=input_block_size, transducer_max_width=transducer_max_width)
@@ -503,7 +508,6 @@ class Model(object):
                                               transducer_max_width=transducer_max_width)
 
         # Get all alignment as a list of alignments
-        # TODO: make this real...
         alignments = [alignment_temp_1, alignment_temp_2]  # Testing with batch size 2
         print 'New batch ----------------------------------------------'
         print 'Alignment: ' + str(alignments)
@@ -512,9 +516,10 @@ class Model(object):
         teacher_forcing = []
         lengths = []
         max_lengths = [0] * len(alignment_temp_1)
+        batch_size = inputs.shape[1]
 
         # First calculate (max) lengths for all sequences
-        for batch_index in range(inputs.shape[1]):
+        for batch_index in range(batch_size):
             alignment = alignments[batch_index]
 
             # Calc temp true & max lengths for each transducer block
@@ -559,27 +564,29 @@ class Model(object):
 
             teacher_forcing.append(teacher_forcing_temp)
 
-        print 'Targets:         ' + str(targets)
-        print 'Teacher forcing: ' + str(teacher_forcing)
-        print 'Lengths:         ' + str(lengths)
-        print 'Max lengths:     ' + str(max_lengths)
+        # Process targets back to time major
+        targets = np.asarray(targets)
+        targets = np.transpose(targets, axes=[1, 0])
 
-        # TODO: process targets back to time major
+        # See that teacher forcing are of correct format
+        teacher_forcing = np.asarray(teacher_forcing)
+        teacher_forcing = np.transpose(teacher_forcing, axes=[1, 0])
 
-        # TODO: see that targets & teacher forcing are of correct format
+        # Process lengths
+        lengths = np.asarray(lengths)
+        lengths = np.transpose(lengths, axes=[1, 0])
 
         # TODO: test teacher forcing
+
         total_loss = 0
-        """
+
         for i in range(0, training_steps_per_alignment):
             # Init values
-            # TODO: Set correct batch stuff here
-            encoder_hidden_init = (np.zeros(shape=(self.cons_manager.encoder_hidden_layers, 2, 1, self.cons_manager.encoder_hidden_units)),
-                                   np.zeros(shape=(self.cons_manager.encoder_hidden_layers, 2, 1, self.cons_manager.encoder_hidden_units)))
-            trans_hidden_init = np.zeros(shape=(2, 1, self.cons_manager.transducer_hidden_units))
+            encoder_hidden_init = (np.zeros(shape=(self.cons_manager.encoder_hidden_layers, 2, batch_size, self.cons_manager.encoder_hidden_units)),
+                                   np.zeros(shape=(self.cons_manager.encoder_hidden_layers, 2, batch_size, self.cons_manager.encoder_hidden_units)))
+            trans_hidden_init = np.zeros(shape=(2, batch_size, self.cons_manager.transducer_hidden_units))
 
             # Run training step
-            # TODO: make all this correct
             _, loss = session.run([self.train_op, self.loss], feed_dict={
                 self.max_blocks: len(lengths),
                 self.inputs_full_raw: inputs,
@@ -590,10 +597,9 @@ class Model(object):
                 self.encoder_hidden_init_bw: encoder_hidden_init[1],
                 self.trans_hidden_init: trans_hidden_init,
                 self.inference_mode: 0.0,
-                self.teacher_forcing_targets: np.reshape(teacher_forcing, (-1, 1)),
+                self.teacher_forcing_targets: teacher_forcing,
             })
             total_loss += loss
-        """
 
         return total_loss/training_steps_per_alignment
 
