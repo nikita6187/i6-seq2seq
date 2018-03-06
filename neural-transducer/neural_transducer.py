@@ -90,6 +90,18 @@ def softmax(x, axis=None):
 
 # ----------------- Model ---------------------------------------
 
+class Aligner(object):
+    def __init__(self, cons_manager):
+        self.cons_manager = cons_manager
+
+    def run(self):
+        # TODO: make the input data in text file form
+        # TODO: get index of data on which to work
+        # TODO: make the aligner automatically get the newest model & session when needed
+        # TODO: make alignment work
+        # TODO: manage communication back using a queue
+        # TODO: manage all entries in a dic
+
 
 class Model(object):
     def __init__(self, cons_manager):
