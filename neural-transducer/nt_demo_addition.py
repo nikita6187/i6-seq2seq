@@ -14,8 +14,8 @@ vocab_ids = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'SPACE']
 transducer_width = 8
 
 constants_manager = ConstantsManager(input_dimensions=1, input_embedding_size=11, inputs_embedded=False,
-                                     encoder_hidden_units=2, transducer_hidden_units=4, vocab_ids=vocab_ids,
-                                     input_block_size=1, beam_width=5, encoder_hidden_layers=3)
+                                     encoder_hidden_units=100, transducer_hidden_units=200, vocab_ids=vocab_ids,
+                                     input_block_size=1, beam_width=5, encoder_hidden_layers=1)
 model = Model(cons_manager=constants_manager)
 init = tf.global_variables_initializer()
 
@@ -48,9 +48,6 @@ def get_feed_dic():
         inputs.append(temp_inputs)
         targets.append(temp_targets)
 
-    print 'Inputs: ' + str(inputs)
-    print 'Targets: ' + str(targets)
-
     inputs = np.asarray(inputs)
     inputs = np.transpose(inputs, axes=[1, 0])
     inputs = np.reshape(inputs, newshape=(-1, batch_size, 1))
@@ -77,7 +74,7 @@ with tf.Session() as sess:
 
         temp_loss = model.apply_training_step(session=sess, inputs=new_in, input_block_size=constants_manager.input_block_size,
                                         targets=new_targets, transducer_max_width=transducer_width,
-                                        training_steps_per_alignment=10)
+                                        training_steps_per_alignment=1)
         avg_loss += temp_loss
         if i % avg_over == 0:
             avg_loss /= avg_over#

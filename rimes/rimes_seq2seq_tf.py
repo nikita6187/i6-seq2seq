@@ -46,14 +46,14 @@ encoder_outputs, encoder_state = tf.nn.dynamic_rnn(
 
 decoder_inputs_embedded = tf.Print(decoder_inputs_embedded, [tf.shape(encoder_state)], 'Encoder state shape')
 
-helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
-            embedding=embeddings,
-            start_tokens=tf.tile([vocab_size-2], [batch_size]),
-            end_token=vocab_size-1)
+#helper = tf.contrib.seq2seq.GreedyEmbeddingHelper(
+#            embedding=embeddings,
+#            start_tokens=tf.tile([vocab_size-2], [batch_size]),
+#            end_token=vocab_size-1)
 
 # ---- Decoder -----
-#helper = tf.contrib.seq2seq.TrainingHelper(
-#    decoder_inputs_embedded, decoder_full_length, time_major=True)  # TODO: decoder_full_length is bad for training
+helper = tf.contrib.seq2seq.TrainingHelper(
+    decoder_inputs_embedded, decoder_full_length, time_major=True)  # TODO: decoder_full_length is bad for training
 
 attention_states = tf.transpose(encoder_outputs, [1, 0, 2])  # attention_states: [batch_size, max_time, num_units]
 attention_mechanism = tf.contrib.seq2seq.LuongAttention(
@@ -80,6 +80,7 @@ decoder_prediction = outputs.sample_id
 
 
 targets_one_hot = tf.one_hot(decoder_targets, depth=vocab_size, dtype=tf.float32)
+
 stepwise_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=targets_one_hot, logits=logits)
 loss = tf.reduce_mean(stepwise_cross_entropy)
 train_op = tf.train.AdamOptimizer().minimize(loss)

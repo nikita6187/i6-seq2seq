@@ -11,7 +11,7 @@ import os
 # NOTE: Time major
 
 # TODO: teacher forcing         [p]
-# TODO: variable batch size
+# TODO: variable batch size     [p]
 # TODO: distributed alignment
 # TODO: inference update
 
@@ -79,7 +79,6 @@ class Alignment(object):
         """
         self.alignment_locations.append(index)
         self.alignment_position = (index, block_index)
-        # TODO: look if new log_prob is done additively or absolute (I think additively)
         self.log_prob += self.__compute_sum_probabilities(transducer_outputs, targets, transducer_amount_outputs)
         self.last_state_transducer = new_transducer_state
 
@@ -253,9 +252,8 @@ class Model(object):
 
                 # Model building
                 # TODO: check teacher_forcing_targets_emb
-                transducer_amount_outputs = tf.Print(transducer_amount_outputs, [tf.shape(teacher_forcing_targets_emb[total_output:total_output + transducer_max_output])], message='Teacher forcing inp: ', summarize=100)
-                transducer_amount_outputs = tf.Print(transducer_amount_outputs, [transducer_amount_outputs], message='Trans amount outputs: ', summarize=100)
-                # TODO transducer_amount_outputs incorrect shape
+                # TODO: fix teacher forcing, see if embedding is correctly done
+                #transducer_amount_outputs = tf.Print(transducer_amount_outputs, [teacher_forcing_targets[total_output:total_output + transducer_max_output]], message='Teacher forcing targets: ', summarize=100)
                 helper = tf.contrib.seq2seq.ScheduledEmbeddingTrainingHelper(
                     inputs=teacher_forcing_targets_emb[total_output:total_output + transducer_max_output],  # Get the current target inputs
                     sequence_length=transducer_amount_outputs,
@@ -278,7 +276,6 @@ class Model(object):
                 projection_layer = layers_core.Dense(self.cons_manager.vocab_size, use_bias=False)
 
                 # Build previous state
-                # TODO: finish checking reshapes (done here)
                 trans_hidden_c, trans_hidden_h = tf.split(trans_hidden_state, num_or_size_splits=2, axis=0)
                 trans_hidden_c = tf.reshape(trans_hidden_c, shape=[-1, self.cons_manager.transducer_hidden_units])
                 trans_hidden_h = tf.reshape(trans_hidden_h, shape=[-1, self.cons_manager.transducer_hidden_units])
@@ -295,6 +292,7 @@ class Model(object):
                 decoder_prediction = outputs.sample_id  # For debugging
 
                 # Modify output of transducer_hidden_state_new so that it can be fed back in again without problems.
+
                 transducer_hidden_state_new = tf.concat(
                     [transducer_hidden_state_new[0].c, transducer_hidden_state_new[0].h],
                     axis=0)
@@ -311,10 +309,7 @@ class Model(object):
                 transducer_hidden_state_new, _ = tf.while_loop(cond, body, init_state, parallel_iterations=1)
 
             # Process outputs
-            outputs = outputs_final.concat()
-            logits = tf.reshape(
-                outputs,
-                shape=(-1, batch_size, self.cons_manager.vocab_size))  # And now its [max_output_time, batch_size, vocab]
+            logits = outputs_final.concat()  # And now its [max_output_time, batch_size, vocab]
 
             # For loading the model later on
             logits = tf.identity(logits, name='logits')
@@ -334,8 +329,8 @@ class Model(object):
         targets = tf.placeholder(shape=(None, None), dtype=tf.int32, name='targets')
         targets_one_hot = tf.one_hot(targets, depth=self.cons_manager.vocab_size, dtype=tf.float32, name='targets_one_hot')
 
-        targets_one_hot = tf.Print(targets_one_hot, [targets], message='Targets: ', summarize=10)
-        targets_one_hot = tf.Print(targets_one_hot, [tf.argmax(self.logits, axis=2)], message='Argmax: ', summarize=10)
+        targets_one_hot = tf.Print(targets_one_hot, [targets], message='Targets: ', summarize=100)
+        targets_one_hot = tf.Print(targets_one_hot, [tf.argmax(self.logits, axis=2)], message='Argmax: ', summarize=100)
 
         self.logits = tf.identity(self.logits, name='training_logits')
         stepwise_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=targets_one_hot, logits=self.logits)
@@ -500,8 +495,11 @@ class Model(object):
 
         # TODO: make this parallel
         # Get alignment and insert it into the targets
-        alignment_temp_1 = self.get_alignment(session=session, inputs=np.reshape(inputs[:, 0, :], newshape=(-1, 1, 1)), targets=targets[0],
-                                       input_block_size=input_block_size, transducer_max_width=transducer_max_width)
+        alignment_temp_1 = self.get_alignment(session=session, inputs=np.reshape(inputs[:, 0, :], newshape=(-1, 1, 1)),
+                                              targets=targets[0],
+                                              input_block_size=input_block_size,
+                                              transducer_max_width=transducer_max_width)
+
         alignment_temp_2 = self.get_alignment(session=session, inputs=np.reshape(inputs[:, 1, :], newshape=(-1, 1, 1)),
                                               targets=targets[1],
                                               input_block_size=input_block_size,
@@ -509,7 +507,9 @@ class Model(object):
 
         # Get all alignment as a list of alignments
         alignments = [alignment_temp_1, alignment_temp_2]  # Testing with batch size 2
-        print 'New batch ----------------------------------------------'
+
+        #alignments = [alignment_temp_1]
+        # print 'New batch ----------------------------------------------'
         print 'Alignment: ' + str(alignments)
 
         # Set vars
@@ -577,6 +577,7 @@ class Model(object):
         lengths = np.transpose(lengths, axes=[1, 0])
 
         # TODO: test teacher forcing
+        # TODO: fix teacher forcing!
 
         total_loss = 0
 
@@ -596,7 +597,7 @@ class Model(object):
                 self.encoder_hidden_init_fw: encoder_hidden_init[0],
                 self.encoder_hidden_init_bw: encoder_hidden_init[1],
                 self.trans_hidden_init: trans_hidden_init,
-                self.inference_mode: 0.0,
+                self.inference_mode: 1.0,  # TODO testing with 1.0, original 0.0
                 self.teacher_forcing_targets: teacher_forcing,
             })
             total_loss += loss
