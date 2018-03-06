@@ -223,7 +223,6 @@ class Model(object):
                 encoder_hidden_state_new_fw = tf.concat(
                     [tf.concat([ehs.c, ehs.h], axis=0) for ehs in encoder_hidden_state_new_fw],
                     axis=0)
-                # TODO: check for EACH reshape whether the data is still correct!!
                 encoder_hidden_state_new_fw = tf.reshape(encoder_hidden_state_new_fw,
                                                       shape=[self.cons_manager.encoder_hidden_layers,
                                                              2,
@@ -251,9 +250,6 @@ class Model(object):
                 transducer_max_output = tf.reduce_max(transducer_amount_outputs)
 
                 # Model building
-                # TODO: check teacher_forcing_targets_emb
-                # TODO: fix teacher forcing, see if embedding is correctly done
-                #transducer_amount_outputs = tf.Print(transducer_amount_outputs, [teacher_forcing_targets[total_output:total_output + transducer_max_output]], message='Teacher forcing targets: ', summarize=100)
                 helper = tf.contrib.seq2seq.ScheduledEmbeddingTrainingHelper(
                     inputs=teacher_forcing_targets_emb[total_output:total_output + transducer_max_output],  # Get the current target inputs
                     sequence_length=transducer_amount_outputs,
@@ -387,7 +383,7 @@ class Model(object):
                 :return: transducer outputs [max_output_time, 1, vocab], transducer_state [2, 1, transducer_hidden_units],
                 encoder_state [2, 1, encoder_hidden_units]
                 """
-                teacher_targets_empty = np.zeros([transducer_width, 1])
+                teacher_targets_empty = np.ones([transducer_width, 1]) * self.cons_manager.GO_SYMBOL  # Only use go, rest is greedy
 
                 logits, trans_state, enc_state_fw, enc_state_bw = session.run([model.logits, model.transducer_hidden_state_new,
                                                               model.encoder_hidden_state_new_fw, model.encoder_hidden_state_new_bw],
@@ -576,9 +572,6 @@ class Model(object):
         lengths = np.asarray(lengths)
         lengths = np.transpose(lengths, axes=[1, 0])
 
-        # TODO: test teacher forcing
-        # TODO: fix teacher forcing!
-
         total_loss = 0
 
         for i in range(0, training_steps_per_alignment):
@@ -597,7 +590,7 @@ class Model(object):
                 self.encoder_hidden_init_fw: encoder_hidden_init[0],
                 self.encoder_hidden_init_bw: encoder_hidden_init[1],
                 self.trans_hidden_init: trans_hidden_init,
-                self.inference_mode: 1.0,  # TODO testing with 1.0, original 0.0
+                self.inference_mode: 0.0,  # TODO testing with 1.0, original 0.0
                 self.teacher_forcing_targets: teacher_forcing,
             })
             total_loss += loss
