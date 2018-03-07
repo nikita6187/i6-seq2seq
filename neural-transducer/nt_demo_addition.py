@@ -1,5 +1,5 @@
 import os
-from neural_transducer import ConstantsManager, Model, AlignerManager
+from neural_transducer import ConstantsManager, Model
 import tensorflow as tf
 import numpy as np
 import dataset_loader

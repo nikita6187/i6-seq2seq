@@ -3,10 +3,7 @@ from tensorflow.contrib.rnn import LSTMCell, LSTMStateTuple
 from tensorflow.python.layers import core as layers_core
 import numpy as np
 import copy
-from multiprocessing import Process, Queue
 import random
-import sys
-from neural_transducer_helpers import Aligner
 
 # Implementation of the "A Neural Transducer" paper, Navdeep Jaitly et. al (2015): https://arxiv.org/abs/1511.04868
 
@@ -24,11 +21,10 @@ from neural_transducer_helpers import Aligner
 class ConstantsManager(object):
     def __init__(self, input_dimensions, input_embedding_size, inputs_embedded, encoder_hidden_units,
                  transducer_hidden_units, vocab_ids, input_block_size, beam_width, encoder_hidden_layers,
-                 transducer_max_width):
-
+                 transducer_max_width, path_to_model, path_to_inputs, path_to_alignments):
         assert transducer_hidden_units == 2 * encoder_hidden_units, 'Transducer has to have 2 times the amount ' \
                                                                     'of the encoder of units'
-        self.input_dimensions = input_dimensions
+        # Vocab vars
         self.vocab_ids = vocab_ids
         self.E_SYMBOL = len(self.vocab_ids)
         self.vocab_ids.append('E_SYMBOL')
@@ -37,16 +33,22 @@ class ConstantsManager(object):
         self.PAD = len(self.vocab_ids)
         self.vocab_ids.append('PAD')
         self.vocab_size = len(self.vocab_ids)
+        # Transducer vars
+        self.input_dimensions = input_dimensions
         self.input_embedding_size = input_embedding_size
         self.inputs_embedded = inputs_embedded
         self.encoder_hidden_units = encoder_hidden_units
         self.transducer_hidden_units = transducer_hidden_units
         self.input_block_size = input_block_size
         self.beam_width = beam_width
-        #self.batch_size = 1  # Cannot be increased, see paper
         self.log_prob_init_value = 0
         self.encoder_hidden_layers = encoder_hidden_layers
         self.transducer_max_width = transducer_max_width
+        # Path vars
+        self.path_to_model = path_to_model
+        self.path_to_inputs = path_to_inputs
+        self.path_to_alignments = path_to_alignments
+    # TODO: add lookup function for vocab
 
 
 # ---------------- Helper classes -------------------------------
@@ -92,41 +94,10 @@ def softmax(x, axis=None):
     return e_x / np.sum(e_x, axis=axis, keepdims=True)
 
 
+# TODO: add input manager
+# TODO: add aligner manager that holds the alignment info
+
 # ----------------- Model ---------------------------------------
-
-
-class AlignerManager(object):
-    def __init__(self):
-        self.alignment_dic = {}
-        self.input_queue = Queue(10)
-        self.output_queue = Queue(10)
-        self.update_queue = Queue(10)
-        self.processes = []
-
-    def start_aligners(self, amount_of_aligners, cons_manager, init_model_path):
-        # Start new processes for aligners
-        for i in range(amount_of_aligners):
-            a = Aligner(cons_manager=cons_manager)
-            p = Process(target=a.run, args=(self.input_queue, self.output_queue, self.update_queue, init_model_path))
-            p.daemon = True
-            self.processes.append(p)
-            p.start()
-
-    def run_new_alignments(self, inputs, targets):
-        batch_size = inputs.shape[1]
-        for i in range(batch_size):
-            if self.input_queue.full() is False:
-                print 'Manager: Putting in new data: ' + str(targets)
-                self.input_queue.put(obj=(np.reshape(inputs[:, i, :], newshape=(-1, 1, 1)), targets[i]))
-                self.alignment_dic[str(targets[i])] = (None, np.reshape(inputs[:, i, :], newshape=(-1, 1, 1)))
-
-    def retrieve_new_alignments(self):
-        while self.output_queue.empty() is False:
-            (target, alignment) = self.output_queue.get()
-            print 'Manager: Got new alignments: ' + str(alignment)
-            (_, inputs) = self.alignment_dic[str(target)]
-            self.alignment_dic[str(target)] = (alignment, inputs)
-
 
 class Model(object):
 

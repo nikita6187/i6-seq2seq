@@ -1,80 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="BookmarkManager">
-    <bookmark url="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py" line="591" />
+    <bookmark url="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py" line="562" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d17a6bc1-5a44-454e-8396-d93488e20b4e" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
-      <change beforePath="$PROJECT_DIR$/.idea/codeStyleSettings.xml" afterPath="$PROJECT_DIR$/.idea/codeStyleSettings.xml" />
-      <change beforePath="$PROJECT_DIR$/.idea/codeStyles/Project.xml" afterPath="$PROJECT_DIR$/.idea/codeStyles/Project.xml" />
-      <change beforePath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" afterPath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" />
-      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/nikita.xml" afterPath="$PROJECT_DIR$/.idea/dictionaries/nikita.xml" />
-      <change beforePath="$PROJECT_DIR$/.idea/i6-seq2seq.iml" afterPath="$PROJECT_DIR$/.idea/i6-seq2seq.iml" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" afterPath="$PROJECT_DIR$/.idea/modules.xml" />
-      <change beforePath="$PROJECT_DIR$/.idea/other.xml" afterPath="$PROJECT_DIR$/.idea/other.xml" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
-      <change beforePath="$PROJECT_DIR$/basic-tests/Todo" afterPath="$PROJECT_DIR$/basic-tests/Todo" />
-      <change beforePath="$PROJECT_DIR$/basic-tests/linear-regression/LinearRegression.py" afterPath="$PROJECT_DIR$/basic-tests/linear-regression/LinearRegression.py" />
-      <change beforePath="$PROJECT_DIR$/basic-tests/mnist/MNIST_data/t10k-images-idx3-ubyte.gz" afterPath="$PROJECT_DIR$/basic-tests/mnist/MNIST_data/t10k-images-idx3-ubyte.gz" />
-      <change beforePath="$PROJECT_DIR$/basic-tests/mnist/MNIST_data/t10k-labels-idx1-ubyte.gz" afterPath="$PROJECT_DIR$/basic-tests/mnist/MNIST_data/t10k-labels-idx1-ubyte.gz" />
-      <change beforePath="$PROJECT_DIR$/basic-tests/mnist/MNIST_data/train-images-idx3-ubyte.gz" afterPath="$PROJECT_DIR$/basic-tests/mnist/MNIST_data/train-images-idx3-ubyte.gz" />
-      <change beforePath="$PROJECT_DIR$/basic-tests/mnist/MNIST_data/train-labels-idx1-ubyte.gz" afterPath="$PROJECT_DIR$/basic-tests/mnist/MNIST_data/train-labels-idx1-ubyte.gz" />
-      <change beforePath="$PROJECT_DIR$/basic-tests/mnist/mnist_basic.py" afterPath="$PROJECT_DIR$/basic-tests/mnist/mnist_basic.py" />
-      <change beforePath="$PROJECT_DIR$/basic-tests/mnist/mnist_cnn.py" afterPath="$PROJECT_DIR$/basic-tests/mnist/mnist_cnn.py" />
-      <change beforePath="$PROJECT_DIR$/basic-tests/mnist/mnist_dnn.py" afterPath="$PROJECT_DIR$/basic-tests/mnist/mnist_dnn.py" />
-      <change beforePath="$PROJECT_DIR$/basic-tests/save-loading/loadingtests.py" afterPath="$PROJECT_DIR$/basic-tests/save-loading/loadingtests.py" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/1511.04868 - A Neural Transducer.pdf" afterPath="$PROJECT_DIR$/neural-transducer/1511.04868 - A Neural Transducer.pdf" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/__init__.py" afterPath="$PROJECT_DIR$/neural-transducer/__init__.py" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/dataset_loader.py" afterPath="$PROJECT_DIR$/neural-transducer/dataset_loader.py" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/helpers.py" afterPath="$PROJECT_DIR$/neural-transducer/helpers.py" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/logs" afterPath="$PROJECT_DIR$/neural-transducer/logs" />
       <change beforePath="$PROJECT_DIR$/neural-transducer/neural_transducer.py" afterPath="$PROJECT_DIR$/neural-transducer/neural_transducer.py" />
+      <change beforePath="$PROJECT_DIR$/neural-transducer/neural_transducer_helpers.py" afterPath="$PROJECT_DIR$/neural-transducer/neural_transducer_helpers.py" />
       <change beforePath="$PROJECT_DIR$/neural-transducer/nt_demo_addition.py" afterPath="$PROJECT_DIR$/neural-transducer/nt_demo_addition.py" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/nt_demo_usage.py" afterPath="$PROJECT_DIR$/neural-transducer/nt_demo_usage.py" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/nt_rimes.py" afterPath="$PROJECT_DIR$/neural-transducer/nt_rimes.py" />
-      <change beforePath="$PROJECT_DIR$/rimes/__init__.py" afterPath="$PROJECT_DIR$/rimes/__init__.py" />
-      <change beforePath="$PROJECT_DIR$/rimes/dataset_loader.py" afterPath="$PROJECT_DIR$/rimes/dataset_loader.py" />
-      <change beforePath="$PROJECT_DIR$/rimes/model_save/checkpoint" afterPath="$PROJECT_DIR$/rimes/model_save/checkpoint" />
-      <change beforePath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-0.data-00000-of-00001" afterPath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-0.data-00000-of-00001" />
-      <change beforePath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-0.index" afterPath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-0.index" />
-      <change beforePath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-0.meta" afterPath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-0.meta" />
-      <change beforePath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12200.data-00000-of-00001" afterPath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12200.data-00000-of-00001" />
-      <change beforePath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12200.index" afterPath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12200.index" />
-      <change beforePath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12200.meta" afterPath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12200.meta" />
-      <change beforePath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12400.data-00000-of-00001" afterPath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12400.data-00000-of-00001" />
-      <change beforePath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12400.index" afterPath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12400.index" />
-      <change beforePath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12400.meta" afterPath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12400.meta" />
-      <change beforePath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12600.data-00000-of-00001" afterPath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12600.data-00000-of-00001" />
-      <change beforePath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12600.index" afterPath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12600.index" />
-      <change beforePath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12600.meta" afterPath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12600.meta" />
-      <change beforePath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12800.data-00000-of-00001" afterPath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12800.data-00000-of-00001" />
-      <change beforePath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12800.index" afterPath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12800.index" />
-      <change beforePath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12800.meta" afterPath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-12800.meta" />
-      <change beforePath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-13000.data-00000-of-00001" afterPath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-13000.data-00000-of-00001" />
-      <change beforePath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-13000.index" afterPath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-13000.index" />
-      <change beforePath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-13000.meta" afterPath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-13000.meta" />
-      <change beforePath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-200.data-00000-of-00001" afterPath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-200.data-00000-of-00001" />
-      <change beforePath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-200.index" afterPath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-200.index" />
-      <change beforePath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-200.meta" afterPath="$PROJECT_DIR$/rimes/model_save/seq2seq_attn_saver-200.meta" />
-      <change beforePath="$PROJECT_DIR$/rimes/rimes_seq2seq_attn.py" afterPath="$PROJECT_DIR$/rimes/rimes_seq2seq_attn.py" />
-      <change beforePath="$PROJECT_DIR$/rimes/rimes_seq2seq_basic.py" afterPath="$PROJECT_DIR$/rimes/rimes_seq2seq_basic.py" />
-      <change beforePath="$PROJECT_DIR$/rimes/rimes_seq2seq_tf.py" afterPath="$PROJECT_DIR$/rimes/rimes_seq2seq_tf.py" />
-      <change beforePath="$PROJECT_DIR$/rimes/rimes_tests_output" afterPath="$PROJECT_DIR$/rimes/rimes_tests_output" />
-      <change beforePath="$PROJECT_DIR$/rimes/temporary/__init__.py" afterPath="$PROJECT_DIR$/rimes/temporary/__init__.py" />
-      <change beforePath="$PROJECT_DIR$/rimes/temporary/rimes_seq2seq_native.py" afterPath="$PROJECT_DIR$/rimes/temporary/rimes_seq2seq_native.py" />
-      <change beforePath="$PROJECT_DIR$/rimes/temporary/temp_rimes_seq2seq_attn.py" afterPath="$PROJECT_DIR$/rimes/temporary/temp_rimes_seq2seq_attn.py" />
-      <change beforePath="$PROJECT_DIR$/seq2seq/seq2seq-attn/helpers.py" afterPath="$PROJECT_DIR$/seq2seq/seq2seq-attn/helpers.py" />
-      <change beforePath="$PROJECT_DIR$/seq2seq/seq2seq-attn/seq2seq_attn.py" afterPath="$PROJECT_DIR$/seq2seq/seq2seq-attn/seq2seq_attn.py" />
-      <change beforePath="$PROJECT_DIR$/seq2seq/seq2seq-attn/test.py" afterPath="$PROJECT_DIR$/seq2seq/seq2seq-attn/test.py" />
-      <change beforePath="$PROJECT_DIR$/seq2seq/seq2seq-basic/__init__.py" afterPath="$PROJECT_DIR$/seq2seq/seq2seq-basic/__init__.py" />
-      <change beforePath="$PROJECT_DIR$/seq2seq/seq2seq-basic/helpers.py" afterPath="$PROJECT_DIR$/seq2seq/seq2seq-basic/helpers.py" />
-      <change beforePath="$PROJECT_DIR$/seq2seq/seq2seq-basic/seq2seq_basic.py" afterPath="$PROJECT_DIR$/seq2seq/seq2seq-basic/seq2seq_basic.py" />
-      <change beforePath="$PROJECT_DIR$/seq2seq/seq2seq-bilstm/helpers.py" afterPath="$PROJECT_DIR$/seq2seq/seq2seq-bilstm/helpers.py" />
-      <change beforePath="$PROJECT_DIR$/seq2seq/seq2seq-bilstm/seq2seq_bilstm.py" afterPath="$PROJECT_DIR$/seq2seq/seq2seq-bilstm/seq2seq_bilstm.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -101,54 +34,59 @@
       <file leaf-file-name="neural_transducer.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="935">
-              <caret line="380" column="18" lean-forward="false" selection-start-line="380" selection-start-column="18" selection-end-line="380" selection-end-column="18" />
+            <state relative-caret-position="157">
+              <caret line="20" column="31" lean-forward="false" selection-start-line="20" selection-start-column="31" selection-end-line="20" selection-end-column="31" />
               <folding>
                 <element signature="e#0#23#0" expanded="true" />
-                <element signature="e#2136#4249#0" expanded="false" />
-                <element signature="e#2178#2654#0" expanded="false" />
-                <element signature="e#3388#3975#1" expanded="false" />
-                <element signature="e#4283#4391#0" expanded="false" />
-                <element signature="e#5984#6567#0" expanded="false" />
-                <element signature="e#6614#20287#0" expanded="false" />
-                <element signature="e#11497#11544#0" expanded="false" />
-                <element signature="e#11679#19107#0" expanded="false" />
-                <element signature="e#20332#21229#0" expanded="false" />
-                <element signature="e#21306#21428#0" expanded="false" />
-                <element signature="e#28238#28669#0" expanded="false" />
-                <element signature="e#28732#30303#0" expanded="false" />
-                <element signature="e#30386#33205#0" expanded="false" />
-                <element signature="e#30511#31284#0" expanded="false" />
-                <element signature="e#32026#32550#0" expanded="false" />
+                <element signature="e#578#2174#0" expanded="false" />
+                <element signature="e#2273#4386#0" expanded="false" />
+                <element signature="e#2315#2791#0" expanded="false" />
+                <element signature="e#3525#4112#1" expanded="false" />
+                <element signature="e#4420#4528#0" expanded="false" />
+                <element signature="e#4709#25912#0" expanded="false" />
+                <element signature="e#4752#5335#0" expanded="false" />
+                <element signature="e#5382#19055#0" expanded="false" />
+                <element signature="e#10265#10312#0" expanded="false" />
+                <element signature="e#10447#17875#0" expanded="false" />
+                <element signature="e#19100#19997#0" expanded="false" />
+                <element signature="e#20074#20196#0" expanded="false" />
+                <element signature="e#20279#25752#0" expanded="false" />
+                <element signature="e#25952#31973#0" expanded="false" />
+                <element signature="e#27006#27437#0" expanded="false" />
+                <element signature="e#27500#29071#0" expanded="false" />
+                <element signature="e#29154#31973#0" expanded="false" />
+                <element signature="e#29279#30052#0" expanded="false" />
+                <element signature="e#30794#31318#0" expanded="false" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="neural_transducer_helpers.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="neural_transducer_helpers.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer_helpers.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="259">
-              <caret line="190" column="28" lean-forward="true" selection-start-line="190" selection-start-column="28" selection-end-line="190" selection-end-column="28" />
+            <state relative-caret-position="931">
+              <caret line="256" column="120" lean-forward="false" selection-start-line="256" selection-start-column="120" selection-end-line="256" selection-end-column="120" />
               <folding>
                 <element signature="e#0#23#0" expanded="true" />
-                <element signature="e#738#9753#0" expanded="false" />
-                <element signature="e#9804#11760#0" expanded="false" />
+                <element signature="e#407#903#0" expanded="false" />
+                <element signature="e#1008#10023#0" expanded="false" />
+                <element signature="e#10074#12030#0" expanded="false" />
+                <element signature="e#12097#13585#0" expanded="false" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="nt_demo_addition.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="nt_demo_addition.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/neural-transducer/nt_demo_addition.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="259">
-              <caret line="57" column="16" lean-forward="false" selection-start-line="57" selection-start-column="16" selection-end-line="57" selection-end-column="16" />
+            <state relative-caret-position="18">
+              <caret line="1" column="53" lean-forward="false" selection-start-line="1" selection-start-column="53" selection-end-line="1" selection-end-column="53" />
               <folding>
-                <element signature="e#0#9#0" expanded="true" />
-                <element signature="e#839#876#0" expanded="false" />
-                <element signature="e#922#1717#0" expanded="false" />
-                <element signature="e#2746#3234#1" expanded="false" />
+                <element signature="e#823#860#0" expanded="false" />
+                <element signature="e#906#1701#0" expanded="false" />
+                <element signature="e#2730#3218#1" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -216,9 +154,9 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
-  <component name="ProjectFrameBounds" extendedState="1">
+  <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="67" />
-    <option name="y" value="139" />
+    <option name="y" value="138" />
     <option name="width" value="1657" />
     <option name="height" value="941" />
   </component>
@@ -266,6 +204,8 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scratches" />
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -278,18 +218,10 @@
               <item name="i6-seq2seq" type="462c0819:PsiDirectoryNode" />
               <item name="neural-transducer" type="462c0819:PsiDirectoryNode" />
             </path>
-            <path>
-              <item name="i6-seq2seq" type="b2602c69:ProjectViewProjectNode" />
-              <item name="i6-seq2seq" type="462c0819:PsiDirectoryNode" />
-              <item name="neural-transducer" type="462c0819:PsiDirectoryNode" />
-              <item name="addition" type="462c0819:PsiDirectoryNode" />
-            </path>
           </expand>
           <select />
         </subPane>
       </pane>
-      <pane id="Scratches" />
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -581,22 +513,22 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="67" y="139" width="1657" height="941" extended-state="1" />
+    <frame x="67" y="25" width="1853" height="1055" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3180428" sideWeight="0.5083558" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.13085234" sideWeight="0.4916442" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.13085234" sideWeight="0.4916442" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2112251" sideWeight="0.494705" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.18888289" sideWeight="0.494705" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Docker" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="SciView" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4587156" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.24905661" sideWeight="0.505295" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4587156" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -626,7 +558,7 @@
       <breakpoints-dialog>
         <breakpoints-dialog />
       </breakpoints-dialog>
-      <option name="time" value="131" />
+      <option name="time" value="132" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -753,32 +685,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="74">
           <caret line="100" column="0" lean-forward="false" selection-start-line="100" selection-start-column="0" selection-end-line="100" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="935">
-          <caret line="380" column="18" lean-forward="false" selection-start-line="380" selection-start-column="18" selection-end-line="380" selection-end-column="18" />
-          <folding>
-            <element signature="e#0#23#0" expanded="true" />
-            <element signature="e#2136#4249#0" expanded="false" />
-            <element signature="e#2178#2654#0" expanded="false" />
-            <element signature="e#3388#3975#1" expanded="false" />
-            <element signature="e#4283#4391#0" expanded="false" />
-            <element signature="e#5984#6567#0" expanded="false" />
-            <element signature="e#6614#20287#0" expanded="false" />
-            <element signature="e#11497#11544#0" expanded="false" />
-            <element signature="e#11679#19107#0" expanded="false" />
-            <element signature="e#20332#21229#0" expanded="false" />
-            <element signature="e#21306#21428#0" expanded="false" />
-            <element signature="e#28238#28669#0" expanded="false" />
-            <element signature="e#28732#30303#0" expanded="false" />
-            <element signature="e#30386#33205#0" expanded="false" />
-            <element signature="e#30511#31284#0" expanded="false" />
-            <element signature="e#32026#32550#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -786,31 +692,60 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="117522">
           <caret line="6916" column="53" lean-forward="false" selection-start-line="6916" selection-start-column="53" selection-end-line="6916" selection-end-column="53" />
-          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/neural-transducer/nt_demo_addition.py">
+    <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="259">
-          <caret line="57" column="16" lean-forward="false" selection-start-line="57" selection-start-column="16" selection-end-line="57" selection-end-column="16" />
+        <state relative-caret-position="157">
+          <caret line="20" column="31" lean-forward="false" selection-start-line="20" selection-start-column="31" selection-end-line="20" selection-end-column="31" />
           <folding>
-            <element signature="e#0#9#0" expanded="true" />
-            <element signature="e#839#876#0" expanded="false" />
-            <element signature="e#922#1717#0" expanded="false" />
-            <element signature="e#2746#3234#1" expanded="false" />
+            <element signature="e#0#23#0" expanded="true" />
+            <element signature="e#578#2174#0" expanded="false" />
+            <element signature="e#2273#4386#0" expanded="false" />
+            <element signature="e#2315#2791#0" expanded="false" />
+            <element signature="e#3525#4112#1" expanded="false" />
+            <element signature="e#4420#4528#0" expanded="false" />
+            <element signature="e#4709#25912#0" expanded="false" />
+            <element signature="e#4752#5335#0" expanded="false" />
+            <element signature="e#5382#19055#0" expanded="false" />
+            <element signature="e#10265#10312#0" expanded="false" />
+            <element signature="e#10447#17875#0" expanded="false" />
+            <element signature="e#19100#19997#0" expanded="false" />
+            <element signature="e#20074#20196#0" expanded="false" />
+            <element signature="e#20279#25752#0" expanded="false" />
+            <element signature="e#25952#31973#0" expanded="false" />
+            <element signature="e#27006#27437#0" expanded="false" />
+            <element signature="e#27500#29071#0" expanded="false" />
+            <element signature="e#29154#31973#0" expanded="false" />
+            <element signature="e#29279#30052#0" expanded="false" />
+            <element signature="e#30794#31318#0" expanded="false" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer_helpers.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="259">
-          <caret line="190" column="28" lean-forward="true" selection-start-line="190" selection-start-column="28" selection-end-line="190" selection-end-column="28" />
+        <state relative-caret-position="931">
+          <caret line="256" column="120" lean-forward="false" selection-start-line="256" selection-start-column="120" selection-end-line="256" selection-end-column="120" />
           <folding>
             <element signature="e#0#23#0" expanded="true" />
-            <element signature="e#738#9753#0" expanded="false" />
-            <element signature="e#9804#11760#0" expanded="false" />
+            <element signature="e#407#903#0" expanded="false" />
+            <element signature="e#1008#10023#0" expanded="false" />
+            <element signature="e#10074#12030#0" expanded="false" />
+            <element signature="e#12097#13585#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/neural-transducer/nt_demo_addition.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="18">
+          <caret line="1" column="53" lean-forward="false" selection-start-line="1" selection-start-column="53" selection-end-line="1" selection-end-column="53" />
+          <folding>
+            <element signature="e#823#860#0" expanded="false" />
+            <element signature="e#906#1701#0" expanded="false" />
+            <element signature="e#2730#3218#1" expanded="false" />
           </folding>
         </state>
       </provider>
