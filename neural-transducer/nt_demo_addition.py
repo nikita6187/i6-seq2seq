@@ -56,14 +56,14 @@ def get_feed_dic():
 
 
 with tf.Session() as sess:
-
     sess.run(init)
-
     model.save_model_for_inference(session=sess, path_name=model_save)
+
 
     aligner_man = AlignerManager()
     aligner_man.start_aligners(amount_of_aligners=2, cons_manager=constants_manager, init_model_path=model_save)
 
+    sess.run(init)
     avg_loss = 0
     avg_over = 30
 
