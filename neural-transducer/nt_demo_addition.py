@@ -1,5 +1,5 @@
 import os
-from neural_transducer import ConstantsManager, Model, InferenceManager
+from neural_transducer import ConstantsManager, Model, AlignerManager
 import tensorflow as tf
 import numpy as np
 import dataset_loader
@@ -7,7 +7,7 @@ import dataset_loader
 # Remaking the toy addition testing example from the paper
 
 dir = os.path.dirname(os.path.realpath(__file__))
-model_save = dir + '/addition/model_test1'
+model_save = dir + '/addition/model_init'
 
 vocab_ids = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'SPACE']
 
@@ -15,7 +15,7 @@ transducer_width = 8
 
 constants_manager = ConstantsManager(input_dimensions=1, input_embedding_size=11, inputs_embedded=False,
                                      encoder_hidden_units=100, transducer_hidden_units=200, vocab_ids=vocab_ids,
-                                     input_block_size=1, beam_width=5, encoder_hidden_layers=1)
+                                     input_block_size=1, beam_width=5, encoder_hidden_layers=1, transducer_max_width=8)
 model = Model(cons_manager=constants_manager)
 init = tf.global_variables_initializer()
 
@@ -57,12 +57,12 @@ def get_feed_dic():
 
 with tf.Session() as sess:
 
-    writer = tf.summary.FileWriter("/tmp/graph", sess.graph)
-    sess.run(tf.global_variables_initializer())
-    writer.flush()
-    writer.close()
+    sess.run(init)
 
-    #sess.run(init)
+    model.save_model_for_inference(session=sess, path_name=model_save)
+
+    aligner_man = AlignerManager()
+    aligner_man.start_aligners(amount_of_aligners=2, cons_manager=constants_manager, init_model_path=model_save)
 
     avg_loss = 0
     avg_over = 30
@@ -70,20 +70,24 @@ with tf.Session() as sess:
     # Apply training step
     for i in range(0, 500000):
 
+        # Get parallel alignment data
         new_in, new_targets = get_feed_dic()
+        aligner_man.run_new_alignments(new_in, new_targets)
+        aligner_man.retrieve_new_alignments()
 
-        temp_loss = model.apply_training_step(session=sess, inputs=new_in, input_block_size=constants_manager.input_block_size,
-                                        targets=new_targets, transducer_max_width=transducer_width,
-                                        training_steps_per_alignment=1)
+        # Apply training
+        """
+        temp_loss = model.apply_training_step(session=sess, batch_size=2, aligner_manager=aligner_man)
         avg_loss += temp_loss
         if i % avg_over == 0:
-            avg_loss /= avg_over#
+            avg_loss /= avg_over
             print 'Step: ' + str(i)
             print 'Loss: ' + str(avg_loss)
             avg_loss = 0
+        """
 
     # Save for inference later
-    model.save_model_for_inference(sess, model_save)
+    #model.save_model_for_inference(sess, model_save)
 
 
 # -- Inference --
