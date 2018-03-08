@@ -1,12 +1,16 @@
+#!/usr/bin/env python2
 import tensorflow as tf
 import numpy as np
 import copy
 import sys
 from multiprocessing import Process, Queue
+import cPickle
+from neural_transducer import ConstantsManager, Alignment
 
-# TODO: figure out a way to use the cons_manager (pickle?)
-# TODO: inputs manager? maybe preprocess inputs into dic file which is then pickled and then loaded into the manager
-# TODO: maybe not use queues? (probs ok for now)
+
+def softmax(x, axis=None):
+    e_x = np.exp(x - np.max(x, axis=axis, keepdims=True))
+    return e_x / np.sum(e_x, axis=axis, keepdims=True)
 
 
 class Aligner(object):
@@ -155,13 +159,7 @@ class Aligner(object):
 
         # Restore graph
         saver = tf.train.import_meta_graph(path + '.meta')
-        print 'Here 1'
-        try:
-            saver.restore(session, path)
-        except Exception as e:
-            print str(e.message)
-            sys.stdout.flush()
-        print 'Here 2'
+        saver.restore(session, path)
         # Setup constants
         graph = tf.get_default_graph()
         #self.end_symbol = graph.get_tensor_by_name(name='transducer_training/end_symbol:0')
@@ -180,39 +178,30 @@ class Aligner(object):
         self.encoder_hidden_state_new_fw = graph.get_operation_by_name(name='transducer_training/encoder_hidden_state_new_fw').outputs[0]
         self.encoder_hidden_state_new_bw = graph.get_operation_by_name(name='transducer_training/encoder_hidden_state_new_bw').outputs[0]
         self.transducer_hidden_state_new = graph.get_operation_by_name(name='transducer_training/transducer_hidden_state_new').outputs[0]
+        # TODO run initializer?
 
     def run(self, queue_input, queue_output, init_path):
         temp_list = []  # Holds the processed data
 
-        x = tf.get_variable('x', [1])
-        x = tf.Print(x, [x], message='Hello')
-
         # Init session
-        print 'Child: start'
         with tf.Session() as sess:
-
-            print 'Run test: ' + str(sess.run([x]))
             sys.stdout.flush()
 
             # Do init graph loading
             self.get_model(sess, init_path)
-
-            print 'Child: got model!'
             sys.stdout.flush()
 
             # Main loop
             while True:
                 # Process new alignment
                 if queue_input.empty() is False:
-                    print 'Child: new inputs!'
-                    sys.stdout.flush()
                     (inputs, target) = queue_input.get()  # Retrieve new data
+                    sys.stdout.flush()
                     new_alignment = self.get_alignment(sess, inputs=inputs, targets=target,
                                                        input_block_size=self.cons_manager.input_block_size,
                                                        transducer_max_width=self.cons_manager.transducer_max_width)
-                    print 'Child: new alignments! ' + str(new_alignment)
                     sys.stdout.flush()
-                    new_alignment.append((target, new_alignment))
+                    temp_list.append((inputs.tostring(), new_alignment))
 
                 # Push all new alignments onto the output queue
                 for a in temp_list:
@@ -222,36 +211,73 @@ class Aligner(object):
 
 
 class AlignerManager(object):
-    def __init__(self):
-        self.alignment_dic = {}
+    def __init__(self, cons_manager):
+        self.alignment_dic = {}  # key = inputs.tostring, value = (alignment)
         self.input_queue = Queue(10)
         self.output_queue = Queue(10)
         self.processes = []
+        self.cons_manager = cons_manager
 
-    def start_aligners(self, amount_of_aligners, cons_manager, init_model_path):
+    def start_aligners(self):
         # Start new processes for aligners
-        for i in range(amount_of_aligners):
-            a = Aligner(cons_manager=cons_manager)
-            p = Process(target=a.run, args=(self.input_queue, self.output_queue, init_model_path))
+        for i in range(self.cons_manager.amount_of_aligners):
+            a = Aligner(cons_manager=self.cons_manager)
+            p = Process(target=a.run, args=(self.input_queue, self.output_queue, self.cons_manager.path_to_model))
             p.daemon = True
             self.processes.append(p)
             p.start()
 
     def run_new_alignments(self, inputs, targets):
-        # TODO: Rewrite the way inputs are managed
         batch_size = inputs.shape[1]
-        for i in range(batch_size):
+        i = 0
+        # Run for the whole inputs
+        while i < batch_size:
+            # Send new data out
             if self.input_queue.full() is False:
-                print 'Manager: Putting in new data: ' + str(targets)
-                self.input_queue.put(obj=(np.reshape(inputs[:, i, :], newshape=(-1, 1, 1)), targets[i]))
-                self.alignment_dic[str(targets[i])] = (None, np.reshape(inputs[:, i, :], newshape=(-1, 1, 1)))
+                self.input_queue.put(obj=(np.reshape(inputs[:, i, :], newshape=(-1, 1, 1)), targets[i]))  # TODO: see if reshape is correct
+                self.alignment_dic[inputs[:, i, :].tostring()] = None
+                i += 1
+            # Receive new data
+            self.retrieve_new_alignments()
+            #print 'Loading: {0}\r'.format(float(i)/batch_size)
+
+        # Wait for cleanup:
+        while self.input_queue.empty() is False:
+            self.retrieve_new_alignments()
+
+        # Finally process results into new dictionary
+
+        save_dic = {}  # Now: key = inputs.tostring, value = alignment
+        for key in self.alignment_dic:
+            # In case of errors
+            if self.alignment_dic[key] is not None:
+                save_dic[key] = self.alignment_dic[key]
+        file_alignments = open(self.cons_manager.path_to_alignments, 'wb')
+        cPickle.dump(save_dic, file_alignments)
+        file_alignments.close()
 
     def retrieve_new_alignments(self):
         while self.output_queue.empty() is False:
-            (target, alignment) = self.output_queue.get()
-            print 'Manager: Got new alignments: ' + str(alignment)
-            (_, inputs) = self.alignment_dic[str(target)]
-            self.alignment_dic[str(target)] = (alignment, inputs)
-        # TODO: save this in a file
+            (inputs_hash, alignment) = self.output_queue.get()
+            self.alignment_dic[inputs_hash] = alignment
 
-# TODO: remanage entry input to this script (using args), which is then executed automatically from neural_transducer.py
+
+def main():
+    # Get cons manager
+    path_to_cons_manager = sys.argv[1]
+    cons_man_file = open(path_to_cons_manager, 'rb')
+    cons_manager = cPickle.load(cons_man_file)
+    cons_man_file.close()
+
+    # Make alignment manager
+    align_manager = AlignerManager(cons_manager)
+    align_manager.start_aligners()
+
+    # Load inputs and targets
+    inputs = np.load(cons_manager.path_to_inputs)
+    targets = np.load(cons_manager.path_to_targets).tolist()
+    align_manager.run_new_alignments(inputs, targets)
+
+
+if __name__ == '__main__':
+    main()

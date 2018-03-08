@@ -4,6 +4,9 @@ from tensorflow.python.layers import core as layers_core
 import numpy as np
 import copy
 import random
+import cPickle
+import os
+import time
 
 # Implementation of the "A Neural Transducer" paper, Navdeep Jaitly et. al (2015): https://arxiv.org/abs/1511.04868
 
@@ -21,7 +24,8 @@ import random
 class ConstantsManager(object):
     def __init__(self, input_dimensions, input_embedding_size, inputs_embedded, encoder_hidden_units,
                  transducer_hidden_units, vocab_ids, input_block_size, beam_width, encoder_hidden_layers,
-                 transducer_max_width, path_to_model, path_to_inputs, path_to_alignments):
+                 transducer_max_width, path_to_model, path_to_inputs, path_to_targets, path_to_alignments,
+                 path_to_cons_manager, amount_of_aligners):
         assert transducer_hidden_units == 2 * encoder_hidden_units, 'Transducer has to have 2 times the amount ' \
                                                                     'of the encoder of units'
         # Vocab vars
@@ -48,6 +52,10 @@ class ConstantsManager(object):
         self.path_to_model = path_to_model
         self.path_to_inputs = path_to_inputs
         self.path_to_alignments = path_to_alignments
+        self.path_to_targets = path_to_targets
+        self.path_to_cons_manager = path_to_cons_manager
+        # Alignment managing
+        self.amount_of_aligners = amount_of_aligners
     # TODO: add lookup function for vocab
 
 
@@ -94,8 +102,69 @@ def softmax(x, axis=None):
     return e_x / np.sum(e_x, axis=axis, keepdims=True)
 
 
-# TODO: add input manager
-# TODO: add aligner manager that holds the alignment info
+class DataManager(object):
+    def __init__(self, cons_manager, full_inputs, full_targets, model, session):
+        """
+        Loads the data manager
+        :param cons_manager:
+        :param full_inputs: Of shape [max_input_time, amount, ...] (Time major)
+        :param full_targets: Of shape [amount, max_output_time, ...] (Batch major)
+        :param model: The model object
+        """
+        assert full_inputs.shape[1] == len(full_targets), 'Input batch size not equal to target batch size!'
+
+        self.data_dic = {}  # Key is the input as string, each entry of shape (input, targets, alignment)
+        self.cons_manager = cons_manager
+        self.inputs = full_inputs
+        self.targets = full_targets
+        self.model = model
+        self.session = session
+
+        # Save inputs, targets, model & cons_manager
+        np.save(self.cons_manager.path_to_inputs, self.inputs)
+        np.save(self.cons_manager.path_to_targets, np.asarray(self.targets))
+        model.save_model_for_inference(session, path_name=self.cons_manager.path_to_model)
+        cons_man_file = open(self.cons_manager.path_to_cons_manager, 'wb')
+        cPickle.dump(self.cons_manager, cons_man_file)
+        cons_man_file.close()
+
+        # Init the data dictionary
+        for sample_id in range(full_inputs.shape[1]):
+            # TODO: see how to make the reshape better
+            self.data_dic[self.inputs[:, sample_id, :].tostring()] = (np.reshape(self.inputs[:, sample_id, :], newshape=(-1, 1, 1)),
+                                                                      self.targets[sample_id],
+                                                                      None)
+
+    def run_new_alignments(self):
+        print 'Loading in new alignments'
+        # Save model and run new alignments
+        self.model.save_model_for_inference(self.session, path_name=self.cons_manager.path_to_model)
+        os.system('python ./neural_transducer_helpers.py ' + str(self.cons_manager.path_to_cons_manager))
+
+        # Waits until new alignments are there, so the alignments file has changed
+        # TODO: something more elegant
+
+        # Load in new alignments
+        new_al_file = open(self.cons_manager.path_to_alignments, 'rb')
+        new_alignments = cPickle.load(new_al_file)
+        new_al_file.close()
+
+        # Apply new alignments to internal dictionary
+        for input_key in new_alignments:
+            self.data_dic[input_key] = (self.data_dic[input_key][0], self.data_dic[input_key][1], new_alignments[input_key])
+        print 'New alignments loaded'
+
+    def get_new_sample(self, inputs):
+        # Skip None alignments
+        (inp, targ, al) = self.data_dic[inputs]
+        while al is None:
+            (inp, targ, al) = self.data_dic[inputs]
+        return inp, targ, al
+
+    def get_new_random_sample(self):
+        key = random.choice(self.data_dic.keys())
+        return self.get_new_sample(key)
+
 
 # ----------------- Model ---------------------------------------
 
@@ -351,7 +420,7 @@ class Model(object):
             dic[var.name] = var.name.replace(old_name, new_name)
         return dic
 
-    def apply_training_step(self, session, batch_size, aligner_manager):
+    def apply_training_step(self, session, batch_size, data_manager):
         """
         Applies a training step to the transducer model. This method can be called multiple times from e.g. a loop.
         :param session: The current session.
@@ -367,21 +436,18 @@ class Model(object):
 
         # Get vars
         alignments = []
-        inputs = np.asarray([])
+        inputs = []
         targets = []
 
         # Get batch size amount of data
         for i in range(batch_size):
-            target, (alignment, temp_inputs) = random.choice(list(aligner_manager.alignment_dic.items()))
-
-            print 'New in batch: --'
-            print target
-            print alignment
-            print temp_inputs
+            (temp_inputs, target, alignment) = data_manager.get_new_random_sample()
 
             alignments.append(alignment)
             targets.append(list(target))
-            inputs = np.concatenate((inputs, temp_inputs), axis=1)
+            inputs.append(temp_inputs)
+
+        inputs = np.concatenate(inputs, axis=1)
 
         print 'Alignment: ' + str(alignments)
 
