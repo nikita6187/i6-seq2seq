@@ -146,13 +146,13 @@ class BatchManager:
         # Go over all outputs and create lookup dictionary
         for target in range(len(self.targets)):
             for letter in range(len(self.targets[target])):
-                if self.targets[target][letter].lower() not in self.lookup:
-                    self.lookup.append(self.targets[target][letter].lower())
+                if self.targets[target][letter] not in self.lookup:
+                    self.lookup.append(self.targets[target][letter])
 
     def lookup_letter(self, letter):
         if letter is self.pad:
             return self.get_size_vocab() + 1
-        return self.lookup.index(letter.lower())
+        return self.lookup.index(letter)
 
     def get_size_vocab(self):
         return len(self.lookup)

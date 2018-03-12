@@ -130,8 +130,7 @@ class DataManager(object):
 
         # Init the data dictionary
         for sample_id in range(full_inputs.shape[1]):
-            # TODO: see how to make the reshape better
-            self.data_dic[self.inputs[:, sample_id, :].tostring()] = (np.reshape(self.inputs[:, sample_id, :], newshape=(-1, 1, 1)),
+            self.data_dic[self.inputs[:, sample_id, :].tostring()] = (np.reshape(self.inputs[:, sample_id, :], newshape=(-1, 1, self.cons_manager.input_dimensions)),
                                                                       self.targets[sample_id],
                                                                       None)
 

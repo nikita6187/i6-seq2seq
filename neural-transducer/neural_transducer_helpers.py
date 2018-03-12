@@ -234,13 +234,17 @@ class AlignerManager(object):
         while i < batch_size:
             # Send new data out
             if self.input_queue.full() is False:
-                self.input_queue.put(obj=(np.reshape(inputs[:, i, :], newshape=(-1, 1, 1)), targets[i]))  # TODO: see if reshape is correct
+                self.input_queue.put(obj=(
+                        np.reshape(inputs[:, i, :], newshape=(-1, 1, self.cons_manager.input_dimensions)),
+                        targets[i]))
                 self.alignment_dic[inputs[:, i, :].tostring()] = None
                 i += 1
             # Receive new data
             self.retrieve_new_alignments()
-            #print 'Loading: {0}\r'.format(float(i)/batch_size)
+            sys.stdout.write('\r Progress: {0:02.3f}%'.format(float(i)/batch_size * 100))
+            sys.stdout.flush()
 
+        # TODO: make this use join
         # Wait for cleanup:
         while self.input_queue.empty() is False:
             self.retrieve_new_alignments()
