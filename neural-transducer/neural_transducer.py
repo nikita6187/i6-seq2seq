@@ -230,6 +230,7 @@ class Model(object):
             # Get batch size
             batch_size = tf.shape(inputs_full_raw)[1]
 
+
             # Temporary constants, maybe changed during inference
             end_symbol = tf.get_variable(name='end_symbol',
                                          initializer=tf.constant_initializer(self.cons_manager.vocab_size),
@@ -242,6 +243,8 @@ class Model(object):
             inputs_full = tf.reshape(inputs_full_raw, shape=[-1, self.cons_manager.input_block_size,
                                                              batch_size,
                                                              self.cons_manager.input_dimensions])
+
+            inputs_full = tf.Print(inputs_full, [inputs_full], message='Inputs', summarize=10)
 
             # Outputs
             outputs_ta = tf.TensorArray(dtype=tf.float32, size=max_blocks)
