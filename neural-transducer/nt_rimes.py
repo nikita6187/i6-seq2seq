@@ -52,8 +52,11 @@ def main():
 
         return targets_list
 
-    with tf.Session(config=tf.ConfigProto(allow_soft_placement=constants_manager.device_soft_placement,
-                                          log_device_placement=False)) as sess:
+    config = tf.ConfigProto(allow_soft_placement=constants_manager.device_soft_placement,
+                            log_device_placement=constants_manager.debug_devices)
+    config.gpu_options.allow_growth = True
+
+    with tf.Session(config=config) as sess:
         sess.run(init)
 
         avg_loss = 0
