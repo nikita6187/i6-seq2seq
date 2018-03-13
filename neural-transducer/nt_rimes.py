@@ -29,8 +29,9 @@ def main():
                                          input_block_size=67, beam_width=5, encoder_hidden_layers=1, transducer_max_width=8,
                                          path_to_model=model_save, path_to_inputs=input_save, path_to_targets=target_save,
                                          path_to_alignments=alignments_save, path_to_cons_manager=cons_man_save,
-                                         amount_of_aligners=int(sys.argv[2]))
-    with tf.device('/device:' + str(sys.argv[1])):  # Set device here
+                                         amount_of_aligners=int(sys.argv[2]), device_to_run=str(sys.argv[1]),
+                                         device_soft_placement=True)
+    with tf.device(constants_manager.device_to_run):  # Set device here
         model = Model(cons_manager=constants_manager)
 
     init = tf.global_variables_initializer()
@@ -51,7 +52,7 @@ def main():
 
         return targets_list
 
-    with tf.Session() as sess:
+    with tf.Session(config=tf.ConfigProto(allow_soft_placement=constants_manager.device_soft_placement)) as sess:
         sess.run(init)
 
         avg_loss = 0

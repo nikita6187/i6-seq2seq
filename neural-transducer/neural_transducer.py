@@ -25,7 +25,7 @@ class ConstantsManager(object):
     def __init__(self, input_dimensions, input_embedding_size, inputs_embedded, encoder_hidden_units,
                  transducer_hidden_units, vocab_ids, input_block_size, beam_width, encoder_hidden_layers,
                  transducer_max_width, path_to_model, path_to_inputs, path_to_targets, path_to_alignments,
-                 path_to_cons_manager, amount_of_aligners):
+                 path_to_cons_manager, amount_of_aligners, device_to_run, device_soft_placement):
         assert transducer_hidden_units == 2 * encoder_hidden_units, 'Transducer has to have 2 times the amount ' \
                                                                     'of the encoder of units'
         # Vocab vars
@@ -56,6 +56,9 @@ class ConstantsManager(object):
         self.path_to_cons_manager = path_to_cons_manager
         # Alignment managing
         self.amount_of_aligners = amount_of_aligners
+        self.device_to_run = device_to_run
+        self.device_soft_placement = device_soft_placement
+
     # TODO: add lookup function for vocab
 
 

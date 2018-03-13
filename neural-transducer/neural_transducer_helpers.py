@@ -184,11 +184,14 @@ class Aligner(object):
         temp_list = []  # Holds the processed data
 
         # Init session
-        with tf.Session() as sess:
+        with tf.Session(config=tf.ConfigProto(allow_soft_placement=self.cons_manager.device_soft_placement,
+                                              log_device_placement=True)) as sess:
             sys.stdout.flush()
 
             # Do init graph loading
-            self.get_model(sess, init_path)
+            with tf.device(self.cons_manager.device_to_run):
+                self.get_model(sess, init_path)
+
             sys.stdout.flush()
 
             # Main loop
