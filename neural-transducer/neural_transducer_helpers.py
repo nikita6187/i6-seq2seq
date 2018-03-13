@@ -6,6 +6,7 @@ import sys
 from multiprocessing import Process, Queue
 import cPickle
 from neural_transducer import ConstantsManager, Alignment
+import time
 
 
 def softmax(x, axis=None):
@@ -237,6 +238,7 @@ class AlignerManager(object):
     def run_new_alignments(self, inputs, targets):
         batch_size = inputs.shape[1]
         i = 0
+        init_time = time.time()
         # Run for the whole inputs
         while i < batch_size:
             # Send new data out
@@ -248,7 +250,7 @@ class AlignerManager(object):
                 i += 1
             # Receive new data
             self.retrieve_new_alignments()
-            sys.stdout.write('\r Progress: {0:02.3f}%'.format(float(i)/batch_size * 100))
+            sys.stdout.write('\r Progress: {0:02.3f}% Time running {1:08d}'.format(float(i)/batch_size * 100, int(time.time() - init_time)))
             sys.stdout.flush()
 
         # TODO: make this use join

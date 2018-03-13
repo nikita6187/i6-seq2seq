@@ -24,6 +24,7 @@ def main():
     alignments_save = dir + '/rimes/alignments'
     cons_man_save = dir + '/rimes/cons_manager'
 
+
     constants_manager = ConstantsManager(input_dimensions=i.shape[2], input_embedding_size=i.shape[2], inputs_embedded=True,
                                          encoder_hidden_units=256, transducer_hidden_units=512, vocab_ids=bm.lookup,
                                          input_block_size=67, beam_width=5, encoder_hidden_layers=1, transducer_max_width=8,
