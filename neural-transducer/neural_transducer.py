@@ -247,7 +247,7 @@ class Model(object):
                                                              batch_size,
                                                              self.cons_manager.input_dimensions])
 
-            inputs_full = tf.Print(inputs_full, [inputs_full], message='Inputs', summarize=10)
+            #inputs_full = tf.Print(inputs_full, [inputs_full], message='Inputs', summarize=10)
 
             # Outputs
             outputs_ta = tf.TensorArray(dtype=tf.float32, size=max_blocks)
