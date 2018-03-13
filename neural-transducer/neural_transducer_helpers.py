@@ -185,7 +185,7 @@ class Aligner(object):
 
         # Init session
         with tf.Session(config=tf.ConfigProto(allow_soft_placement=self.cons_manager.device_soft_placement,
-                                              log_device_placement=self.debug_devices)) as sess:
+                                              log_device_placement=self.cons_manager.debug_devices)) as sess:
             sys.stdout.flush()
 
             # Do init graph loading
