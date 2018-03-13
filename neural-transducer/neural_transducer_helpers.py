@@ -199,12 +199,13 @@ class Aligner(object):
                 # Process new alignment
                 if queue_input.empty() is False:
                     (inputs, target) = queue_input.get()  # Retrieve new data
-                    sys.stdout.flush()
-                    new_alignment = self.get_alignment(sess, inputs=inputs, targets=target,
-                                                       input_block_size=self.cons_manager.input_block_size,
-                                                       transducer_max_width=self.cons_manager.transducer_max_width)
-                    sys.stdout.flush()
-                    temp_list.append((inputs.tostring(), new_alignment))
+                    if inputs is not None and target is not None:
+                        sys.stdout.flush()
+                        new_alignment = self.get_alignment(sess, inputs=inputs, targets=target,
+                                                           input_block_size=self.cons_manager.input_block_size,
+                                                           transducer_max_width=self.cons_manager.transducer_max_width)
+                        sys.stdout.flush()
+                        temp_list.append((inputs.tostring(), new_alignment))
 
                 # Push all new alignments onto the output queue
                 for a in temp_list:
