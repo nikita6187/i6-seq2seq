@@ -30,7 +30,7 @@ def main():
                                          path_to_model=model_save, path_to_inputs=input_save, path_to_targets=target_save,
                                          path_to_alignments=alignments_save, path_to_cons_manager=cons_man_save,
                                          amount_of_aligners=int(sys.argv[2]), device_to_run=str(sys.argv[1]),
-                                         device_soft_placement=True, debug_devices=bool(sys.argv[3]))
+                                         device_soft_placement=True, debug_devices=((sys.argv[3]).lower() == 'true'))
     with tf.device(constants_manager.device_to_run):  # Set device here
         model = Model(cons_manager=constants_manager)
 
@@ -52,7 +52,8 @@ def main():
 
         return targets_list
 
-    with tf.Session(config=tf.ConfigProto(allow_soft_placement=constants_manager.device_soft_placement)) as sess:
+    with tf.Session(config=tf.ConfigProto(allow_soft_placement=constants_manager.device_soft_placement,
+                                          log_device_placement=False)) as sess:
         sess.run(init)
 
         avg_loss = 0
