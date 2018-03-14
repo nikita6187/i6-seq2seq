@@ -32,8 +32,9 @@ def main():
                                          path_to_alignments=alignments_save, path_to_cons_manager=cons_man_save,
                                          amount_of_aligners=int(sys.argv[2]), device_to_run=str(sys.argv[1]),
                                          device_soft_placement=True, debug_devices=((sys.argv[3]).lower() == 'true'))
-    with tf.device(constants_manager.device_to_run):  # Set device here
-        model = Model(cons_manager=constants_manager)
+
+    #with tf.device(constants_manager.device_to_run):  # Set device here
+    model = Model(cons_manager=constants_manager)
 
     init = tf.global_variables_initializer()
 
