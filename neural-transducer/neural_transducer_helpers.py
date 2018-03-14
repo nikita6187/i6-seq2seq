@@ -26,6 +26,7 @@ class Aligner(object):
             self.trans_hidden_init = self.teacher_forcing_targets = self.inference_mode = self.logits = \
             self.encoder_hidden_state_new_fw = self.encoder_hidden_state_new_bw = \
             self.transducer_hidden_state_new = None
+        self.full_time_needed_transducer = 0
 
     def get_alignment(self, session, inputs, targets, input_block_size, transducer_max_width):
         """
@@ -38,6 +39,7 @@ class Aligner(object):
         :return: Returns a list of indices where <e>'s need to be inserted into the target sequence. (see paper)
         """
         model = self
+        self.full_time_needed_transducer = 0
 
         def run_new_block(session, full_inputs, previous_alignments, block_index, transducer_max_width, targets,
                           total_blocks, last_encoder_state):
@@ -71,6 +73,8 @@ class Aligner(object):
                 """
                 teacher_targets_empty = np.ones([transducer_width, 1]) * self.cons_manager.GO_SYMBOL  # Only use go, rest is greedy
 
+                temp_init_time = time.time()
+
                 logits, trans_state, enc_state_fw, enc_state_bw = session.run([model.logits, model.transducer_hidden_state_new,
                                                               model.encoder_hidden_state_new_fw, model.encoder_hidden_state_new_bw],
                                                              feed_dict={
@@ -84,6 +88,8 @@ class Aligner(object):
                                                                  model.inference_mode: 1.0,
                                                                  model.teacher_forcing_targets: teacher_targets_empty,
                                                              })
+                model.full_time_needed_transducer += time.time() - temp_init_time
+
                 # apply softmax on the outputs
                 trans_out = softmax(logits, axis=2)
 
@@ -153,8 +159,12 @@ class Aligner(object):
                                                                    transducer_max_width=transducer_max_width,
                                                                    targets=targets, total_blocks=amount_of_input_blocks,
                                                                    last_encoder_state=last_encoder_state)
+            print 'Size of alignments: ' + str(float(asizeof.asizeof(current_alignments))/(1024 * 1024))
+            sys.stdout.flush()
 
         # Select first alignment if we have multiple with the same log prob (happens with ~1% probability in training)
+
+        print 'Full time needed for transducer: ' + str(self.full_time_needed_transducer)
 
         return current_alignments[0].alignment_locations
 
@@ -191,6 +201,9 @@ class Aligner(object):
                                 log_device_placement=self.cons_manager.debug_devices)
         config.gpu_options.allow_growth = True
 
+        print 'Child process alive.'
+        sys.stdout.flush()
+
         with tf.Session(config=config) as sess:
             sys.stdout.flush()
 
@@ -206,11 +219,13 @@ class Aligner(object):
                 if queue_input.empty() is False:
                     (inputs, target) = queue_input.get()  # Retrieve new data
                     if inputs is not None and target is not None:
-                        sys.stdout.flush()
+                        init_time = time.time()
                         new_alignment = self.get_alignment(sess, inputs=inputs, targets=target,
                                                            input_block_size=self.cons_manager.input_block_size,
                                                            transducer_max_width=self.cons_manager.transducer_max_width)
                         temp_list.append((inputs.tostring(), new_alignment))
+                        print 'Aligner time needed full: ' + str(time.time() - init_time)
+                        sys.stdout.flush()
 
                 # Debugging
                 sys.stdout.flush()
@@ -220,6 +235,8 @@ class Aligner(object):
                     if queue_output.full() is False:
                         queue_output.put(a)
                         temp_list.remove(a)
+            print 'Child process dead.'
+            sys.stdout.flush()
 
 
 class AlignerManager(object):
@@ -266,9 +283,9 @@ class AlignerManager(object):
             for p in process_data:
                 mem_usage += p.memory_info().rss
             mem_usage = float(mem_usage)/(1024 * 1024 * 1024) * 10
-            sys.stdout.write(
-                '\r Progress: {0:02.3f}% / Time running: {1:08d} / Memory Usage: {2:.3f}G / Amount of child processes: {3:02d}'.format(
-                    float(i) / batch_size * 100, int(time.time() - init_time), mem_usage, len(self.processes)))
+            #sys.stdout.write(
+            #    '\r Progress: {0:02.3f}% / Time running: {1:08d} / Memory Usage: {2:.3f}G / Amount of child processes: {3:02d}'.format(
+            #        float(i) / batch_size * 100, int(time.time() - init_time), mem_usage, len(self.processes)))
             sys.stdout.flush()
 
         # TODO: make this use join
