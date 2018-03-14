@@ -168,6 +168,7 @@ class DataManager(object):
                                           transducer_max_width=self.cons_manager.transducer_max_width)
         else:
             # Skip None alignments
+            # TODO: some error here
             (inp, targ, al) = self.data_dic[inputs]
             while al is None:
                 (inp, targ, al) = self.data_dic[inputs]

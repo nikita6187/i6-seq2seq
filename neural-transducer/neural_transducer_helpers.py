@@ -259,7 +259,7 @@ class AlignerManager(object):
             p.start()
 
     def run_new_alignments(self, inputs, targets):
-        batch_size = 20 #inputs.shape[1]
+        batch_size = 12 #inputs.shape[1]
         i = 0
         init_time = time.time()
         temp_debug_time = time.time()
@@ -295,10 +295,9 @@ class AlignerManager(object):
 
         # TODO: make this use join
         # Wait for cleanup:
-        #while self.input_queue.empty() is False:
-        #    self.retrieve_new_alignments()
-        for p in self.processes:
-            p.join()
+        time.sleep(5)  # Give another 5 seconds to clean up
+        while self.input_queue.empty() is False:
+            self.retrieve_new_alignments()
 
         # Finally process results into new dictionary
 

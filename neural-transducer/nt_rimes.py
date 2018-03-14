@@ -80,7 +80,8 @@ def main():
                 print 'Loss: ' + str(loss)
 
             # Switch to offline alignments after 1000 batches
-            data_manager.set_online_alignment(False)
+            if i == 1000:
+                data_manager.set_online_alignment(False)
 
         print 'Total Time Needed: ' + str(time.time() - init_time)
 
