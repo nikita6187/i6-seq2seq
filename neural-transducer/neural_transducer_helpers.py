@@ -169,7 +169,6 @@ class AlignerWorker(object):
         return current_alignments[0].alignment_locations
 
     def get_model(self, session, path):
-
         # Restore graph
         saver = tf.train.import_meta_graph(path + '.meta')
         saver.restore(session, path)
@@ -191,7 +190,6 @@ class AlignerWorker(object):
         self.encoder_hidden_state_new_fw = graph.get_operation_by_name(name='transducer_training/encoder_hidden_state_new_fw').outputs[0]
         self.encoder_hidden_state_new_bw = graph.get_operation_by_name(name='transducer_training/encoder_hidden_state_new_bw').outputs[0]
         self.transducer_hidden_state_new = graph.get_operation_by_name(name='transducer_training/transducer_hidden_state_new').outputs[0]
-        # TODO run initializer?
 
     def run(self, queue_input, queue_output, init_path):
         temp_list = []  # Holds the processed data
@@ -259,6 +257,7 @@ class AlignerManager(object):
             p.start()
 
     def run_new_alignments(self, inputs, targets):
+        # TODO: set this back
         batch_size = 12 #inputs.shape[1]
         i = 0
         init_time = time.time()
