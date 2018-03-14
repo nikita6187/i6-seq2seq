@@ -2,11 +2,10 @@
 <project version="4">
   <component name="BookmarkManager">
     <bookmark url="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py" line="637" />
-    <bookmark url="file://$PROJECT_DIR$/neural-transducer/neural_transducer_helpers.py" line="304" />
+    <bookmark url="file://$PROJECT_DIR$/neural-transducer/neural_transducer_helpers.py" line="310" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d17a6bc1-5a44-454e-8396-d93488e20b4e" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change beforePath="$PROJECT_DIR$/neural-transducer/neural_transducer_helpers.py" afterPath="$PROJECT_DIR$/neural-transducer/neural_transducer_helpers.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -34,13 +33,13 @@
       <file leaf-file-name="neural_transducer_helpers.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer_helpers.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="9" column="13" lean-forward="true" selection-start-line="9" selection-start-column="13" selection-end-line="9" selection-end-column="13" />
+            <state relative-caret-position="660">
+              <caret line="226" column="0" lean-forward="false" selection-start-line="226" selection-start-column="0" selection-end-line="226" selection-end-column="0" />
               <folding>
                 <element signature="e#23#46#0" expanded="true" />
-                <element signature="e#445#941#0" expanded="false" />
-                <element signature="e#1046#10061#0" expanded="false" />
-                <element signature="e#10112#11942#0" expanded="false" />
+                <element signature="e#473#969#0" expanded="false" />
+                <element signature="e#1074#10089#0" expanded="false" />
+                <element signature="e#10140#11970#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -151,7 +150,7 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
-  <component name="ProjectFrameBounds" extendedState="7">
+  <component name="ProjectFrameBounds" extendedState="6">
     <option name="y" value="25" />
     <option name="width" value="960" />
     <option name="height" value="984" />
@@ -509,7 +508,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="25" width="1920" height="984" extended-state="7" />
+    <frame x="0" y="25" width="1920" height="984" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -680,13 +679,13 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer_helpers.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="9" column="13" lean-forward="true" selection-start-line="9" selection-start-column="13" selection-end-line="9" selection-end-column="13" />
+        <state relative-caret-position="660">
+          <caret line="226" column="0" lean-forward="false" selection-start-line="226" selection-start-column="0" selection-end-line="226" selection-end-column="0" />
           <folding>
             <element signature="e#23#46#0" expanded="true" />
-            <element signature="e#445#941#0" expanded="false" />
-            <element signature="e#1046#10061#0" expanded="false" />
-            <element signature="e#10112#11942#0" expanded="false" />
+            <element signature="e#473#969#0" expanded="false" />
+            <element signature="e#1074#10089#0" expanded="false" />
+            <element signature="e#10140#11970#0" expanded="false" />
           </folding>
         </state>
       </provider>

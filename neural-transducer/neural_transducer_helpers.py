@@ -8,6 +8,7 @@ import cPickle
 from neural_transducer import ConstantsManager, Alignment
 import time
 import psutil
+from pympler import asizeof
 
 
 def softmax(x, axis=None):
@@ -209,8 +210,13 @@ class Aligner(object):
                         new_alignment = self.get_alignment(sess, inputs=inputs, targets=target,
                                                            input_block_size=self.cons_manager.input_block_size,
                                                            transducer_max_width=self.cons_manager.transducer_max_width)
-                        sys.stdout.flush()
                         temp_list.append((inputs.tostring(), new_alignment))
+
+                # Debugging
+                mem = float(asizeof.asizeof(temp_list)) / (1024 * 1024 * 1024) * 10 + float(
+                    asizeof.asizeof(queue_input)) / (1024 * 1024 * 1024) * 10
+                print '\n Mem usage: ' + str(mem)
+                sys.stdout.flush()
 
                 # Push all new alignments onto the output queue
                 for a in temp_list:
