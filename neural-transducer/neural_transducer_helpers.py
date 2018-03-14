@@ -235,6 +235,8 @@ class Aligner(object):
                     if queue_output.full() is False:
                         queue_output.put(a)
                         temp_list.remove(a)
+                time.sleep(1)
+
             print 'Child process dead.'
             sys.stdout.flush()
 
@@ -282,7 +284,7 @@ class AlignerManager(object):
             # Monitoring
             if time.time() - temp_debug_time > 10:
                 mem_usage = 0
-                temp_debug_time = 0
+                temp_debug_time = time.time()
                 for p in process_data:
                     mem_usage += p.memory_info().rss
                 mem_usage = float(mem_usage)/(1024 * 1024 * 1024) * 10
