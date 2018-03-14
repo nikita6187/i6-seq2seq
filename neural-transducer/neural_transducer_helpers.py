@@ -201,7 +201,7 @@ class Aligner(object):
             sys.stdout.flush()
 
             # Main loop
-            while True:
+            while queue_input.empty() is False:
                 # Process new alignment
                 if queue_input.empty() is False:
                     (inputs, target) = queue_input.get()  # Retrieve new data
@@ -213,9 +213,6 @@ class Aligner(object):
                         temp_list.append((inputs.tostring(), new_alignment))
 
                 # Debugging
-                mem = float(asizeof.asizeof(temp_list)) / (1024 * 1024 * 1024) * 10 + float(
-                    asizeof.asizeof(queue_input)) / (1024 * 1024 * 1024) * 10
-                print '\n Mem usage: ' + str(mem)
                 sys.stdout.flush()
 
                 # Push all new alignments onto the output queue
@@ -228,8 +225,8 @@ class Aligner(object):
 class AlignerManager(object):
     def __init__(self, cons_manager):
         self.alignment_dic = {}  # key = inputs.tostring, value = (alignment)
-        self.input_queue = Queue(10)
-        self.output_queue = Queue(10)
+        self.input_queue = Queue(10 * cons_manager.amount_of_aligners)
+        self.output_queue = Queue(10 * cons_manager.amount_of_aligners)
         self.processes = []
         self.cons_manager = cons_manager
 
