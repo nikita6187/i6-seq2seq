@@ -1,0 +1,176 @@
+/u/makarov/i6-seq2seq/env/local/lib/python2.7/site-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+/u/makarov/i6-seq2seq/env/local/lib/python2.7/site-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
+  from ._conv import register_converters as _register_converters
+Child process alive.
+Child process alive.
+ Progress: 0.425% / Time running: 00000010 / Memory Usage: 4.480G / Amount of child processes: 02Full time needed for transducer: 12.8403279781
+Aligner time needed full: 13.0994699001
+Full time needed for transducer: 13.8775162697
+Aligner time needed full: 14.1514999866
+ Progress: 0.464% / Time running: 00000020 / Memory Usage: 4.669G / Amount of child processes: 02 Progress: 0.464% / Time running: 00000030 / Memory Usage: 4.685G / Amount of child processes: 02Full time needed for transducer: 13.3536462784
+Aligner time needed full: 13.625027895
+Full time needed for transducer: 13.884909153
+Aligner time needed full: 14.1464369297
+ Progress: 0.503% / Time running: 00000040 / Memory Usage: 4.690G / Amount of child processes: 02Full time needed for transducer: 12.8542706966
+Aligner time needed full: 13.1268780231
+Full time needed for transducer: 13.103259325
+Aligner time needed full: 13.3540849686
+ Progress: 0.541% / Time running: 00000050 / Memory Usage: 4.693G / Amount of child processes: 02Full time needed for transducer: 12.5489351749
+Aligner time needed full: 12.8110430241
+Full time needed for transducer: 12.4323985577
+Aligner time needed full: 12.6871039867
+ Progress: 0.561% / Time running: 00000060 / Memory Usage: 4.697G / Amount of child processes: 02 Progress: 0.580% / Time running: 00000070 / Memory Usage: 4.701G / Amount of child processes: 02Full time needed for transducer: 12.8802542686
+Aligner time needed full: 13.1659059525
+Full time needed for transducer: 11.9855093956
+Aligner time needed full: 12.2331171036
+ Progress: 0.619% / Time running: 00000080 / Memory Usage: 4.708G / Amount of child processes: 02Full time needed for transducer: 11.8897776604
+Aligner time needed full: 12.1457290649
+Full time needed for transducer: 12.6811292171
+Aligner time needed full: 12.9570150375
+ Progress: 0.657% / Time running: 00000090 / Memory Usage: 4.709G / Amount of child processes: 02Full time needed for transducer: 11.6054697037
+Aligner time needed full: 11.8628671169
+ Progress: 0.657% / Time running: 00000100 / Memory Usage: 4.713G / Amount of child processes: 02Full time needed for transducer: 12.9063706398
+Aligner time needed full: 13.1771521568
+ Progress: 0.696% / Time running: 00000110 / Memory Usage: 4.716G / Amount of child processes: 02Full time needed for transducer: 11.5074727535
+Aligner time needed full: 11.7717440128
+Full time needed for transducer: 12.0572645664
+Aligner time needed full: 12.3307611942
+ Progress: 0.735% / Time running: 00000120 / Memory Usage: 4.718G / Amount of child processes: 02Full time needed for transducer: 11.682942152
+Aligner time needed full: 11.9370720387
+Full time needed for transducer: 13.3965289593
+Aligner time needed full: 13.6961269379
+ Progress: 0.773% / Time running: 00000130 / Memory Usage: 4.720G / Amount of child processes: 02Full time needed for transducer: 12.0689952374
+Aligner time needed full: 12.3306379318
+ Progress: 0.793% / Time running: 00000140 / Memory Usage: 4.722G / Amount of child processes: 02Full time needed for transducer: 13.0032548904
+Aligner time needed full: 13.2774989605
+ Progress: 0.812% / Time running: 00000150 / Memory Usage: 4.723G / Amount of child processes: 02Full time needed for transducer: 11.6690869331
+Aligner time needed full: 11.9203670025
+Full time needed for transducer: 12.1309084892
+Aligner time needed full: 12.394233942
+ Progress: 0.851% / Time running: 00000160 / Memory Usage: 4.724G / Amount of child processes: 02Full time needed for transducer: 11.7355308533
+Aligner time needed full: 11.9814341068
+Full time needed for transducer: 12.3018736839
+Aligner time needed full: 12.5788209438
+ Progress: 0.870% / Time running: 00000170 / Memory Usage: 4.726G / Amount of child processes: 02Full time needed for transducer: 11.915348053
+Aligner time needed full: 12.1637210846
+ Progress: 0.909% / Time running: 00000180 / Memory Usage: 4.728G / Amount of child processes: 02Full time needed for transducer: 11.7558994293
+Aligner time needed full: 12.0269978046
+ Progress: 0.928% / Time running: 00000190 / Memory Usage: 4.729G / Amount of child processes: 02Full time needed for transducer: 11.6979968548
+Aligner time needed full: 11.9617600441
+Full time needed for transducer: 12.2276675701
+Aligner time needed full: 12.5149991512
+ Progress: 0.967% / Time running: 00000200 / Memory Usage: 4.729G / Amount of child processes: 02Full time needed for transducer: 11.8318452835
+Aligner time needed full: 12.0760340691
+ Progress: 0.986% / Time running: 00000210 / Memory Usage: 4.730G / Amount of child processes: 02Full time needed for transducer: 12.5418930054
+Aligner time needed full: 12.8311560154
+Full time needed for transducer: 11.7918343544
+Aligner time needed full: 12.0390748978
+ Progress: 1.025% / Time running: 00000220 / Memory Usage: 4.730G / Amount of child processes: 02Full time needed for transducer: 12.4814984798
+Aligner time needed full: 12.766728878
+Full time needed for transducer: 11.8311963081
+Aligner time needed full: 12.0817239285
+ Progress: 1.044% / Time running: 00000230 / Memory Usage: 4.735G / Amount of child processes: 02Full time needed for transducer: 11.9944186211
+Aligner time needed full: 12.2717680931
+ Progress: 1.083% / Time running: 00000240 / Memory Usage: 4.736G / Amount of child processes: 02Full time needed for transducer: 11.5489723682
+Aligner time needed full: 11.8070759773
+Full time needed for transducer: 11.5790472031
+Aligner time needed full: 11.8505709171
+ Progress: 1.102% / Time running: 00000250 / Memory Usage: 4.736G / Amount of child processes: 02Full time needed for transducer: 11.5781188011
+Aligner time needed full: 11.8266568184
+ Progress: 1.141% / Time running: 00000260 / Memory Usage: 4.736G / Amount of child processes: 02Full time needed for transducer: 11.5972437859
+Aligner time needed full: 11.876940012
+Full time needed for transducer: 11.766017437
+Aligner time needed full: 12.0247290134
+ Progress: 1.179% / Time running: 00000270 / Memory Usage: 4.736G / Amount of child processes: 02Full time needed for transducer: 11.3099343777
+Aligner time needed full: 11.5853469372
+ Progress: 1.199% / Time running: 00000280 / Memory Usage: 4.737G / Amount of child processes: 02Full time needed for transducer: 12.3257603645
+Aligner time needed full: 12.5949440002
+Full time needed for transducer: 11.4203104973
+Aligner time needed full: 11.6761491299
+ Progress: 1.237% / Time running: 00000290 / Memory Usage: 4.739G / Amount of child processes: 02Full time needed for transducer: 11.9848482609
+Aligner time needed full: 12.2619330883
+ Progress: 1.257% / Time running: 00000300 / Memory Usage: 4.739G / Amount of child processes: 02Full time needed for transducer: 11.2386670113
+Aligner time needed full: 11.5298609734
+Full time needed for transducer: 12.4956486225
+Aligner time needed full: 12.7803750038
+ Progress: 1.295% / Time running: 00000310 / Memory Usage: 4.740G / Amount of child processes: 02Full time needed for transducer: 11.0720207691
+Aligner time needed full: 11.3451559544
+ Progress: 1.315% / Time running: 00000320 / Memory Usage: 4.740G / Amount of child processes: 02Full time needed for transducer: 12.0573687553
+Aligner time needed full: 12.3478391171
+Full time needed for transducer: 11.1365067959
+Aligner time needed full: 11.3994979858
+ Progress: 1.353% / Time running: 00000330 / Memory Usage: 4.740G / Amount of child processes: 02Full time needed for transducer: 11.7528181076
+Aligner time needed full: 12.0432488918
+Full time needed for transducer: 11.4618828297
+Aligner time needed full: 11.7457840443
+ Progress: 1.392% / Time running: 00000340 / Memory Usage: 4.741G / Amount of child processes: 02Full time needed for transducer: 11.6193068027
+Aligner time needed full: 11.9032278061
+ Progress: 1.411% / Time running: 00000350 / Memory Usage: 4.743G / Amount of child processes: 02Full time needed for transducer: 11.6164951324
+Aligner time needed full: 11.8939740658
+ Progress: 1.431% / Time running: 00000360 / Memory Usage: 4.744G / Amount of child processes: 02Full time needed for transducer: 12.2542302608
+Aligner time needed full: 12.5513978004
+Full time needed for transducer: 16.7435634136
+Aligner time needed full: 17.0477628708
+ Progress: 1.450% / Time running: 00000370 / Memory Usage: 4.745G / Amount of child processes: 02Full time needed for transducer: 12.2554440498
+Aligner time needed full: 12.5614771843
+ Progress: 1.488% / Time running: 00000380 / Memory Usage: 4.746G / Amount of child processes: 02Full time needed for transducer: 16.2601537704
+Aligner time needed full: 16.5641331673
+Full time needed for transducer: 12.1886651516
+Aligner time needed full: 12.4986619949
+ Progress: 1.527% / Time running: 00000390 / Memory Usage: 4.748G / Amount of child processes: 02 Progress: 1.527% / Time running: 00000400 / Memory Usage: 4.748G / Amount of child processes: 02Full time needed for transducer: 12.1140286922
+Aligner time needed full: 12.4272508621
+Full time needed for transducer: 17.2649366856
+Aligner time needed full: 17.580083847
+ Progress: 1.566% / Time running: 00000410 / Memory Usage: 4.748G / Amount of child processes: 02Full time needed for transducer: 11.7447519302
+Aligner time needed full: 12.0440428257
+ Progress: 1.585% / Time running: 00000420 / Memory Usage: 4.748G / Amount of child processes: 02Full time needed for transducer: 15.7539012432
+Aligner time needed full: 16.0646560192
+Full time needed for transducer: 11.8133122921
+Aligner time needed full: 12.1224718094
+ Progress: 1.624% / Time running: 00000430 / Memory Usage: 4.749G / Amount of child processes: 02Full time needed for transducer: 15.804443121
+Aligner time needed full: 16.101151228
+ Progress: 1.624% / Time running: 00000440 / Memory Usage: 4.749G / Amount of child processes: 02Full time needed for transducer: 12.1444387436
+Aligner time needed full: 12.4577431679
+ Progress: 1.662% / Time running: 00000450 / Memory Usage: 4.751G / Amount of child processes: 02Full time needed for transducer: 11.9287037849
+Aligner time needed full: 12.2440259457
+Full time needed for transducer: 16.849034071
+Aligner time needed full: 17.1687200069
+ Progress: 1.701% / Time running: 00000460 / Memory Usage: 4.752G / Amount of child processes: 02Full time needed for transducer: 11.9060945511
+Aligner time needed full: 12.2281889915
+ Progress: 1.720% / Time running: 00000470 / Memory Usage: 4.752G / Amount of child processes: 02Full time needed for transducer: 17.4866607189
+Aligner time needed full: 17.8049900532
+ Progress: 1.740% / Time running: 00000480 / Memory Usage: 4.752G / Amount of child processes: 02Full time needed for transducer: 11.8464560509
+Aligner time needed full: 12.1420369148
+ Progress: 1.759% / Time running: 00000490 / Memory Usage: 4.752G / Amount of child processes: 02Full time needed for transducer: 12.177448988
+Aligner time needed full: 12.4790000916
+Full time needed for transducer: 17.4614760876
+Aligner time needed full: 17.7850589752
+ Progress: 1.798% / Time running: 00000500 / Memory Usage: 4.754G / Amount of child processes: 02Full time needed for transducer: 12.2318313122
+Aligner time needed full: 12.5352571011
+ Progress: 1.817% / Time running: 00000510 / Memory Usage: 4.754G / Amount of child processes: 02Full time needed for transducer: 17.0496480465
+Aligner time needed full: 17.3614709377
+ Progress: 1.836% / Time running: 00000520 / Memory Usage: 4.756G / Amount of child processes: 02Full time needed for transducer: 12.4196515083
+Aligner time needed full: 12.7183558941
+ Progress: 1.856% / Time running: 00000530 / Memory Usage: 4.756G / Amount of child processes: 02Full time needed for transducer: 17.2498087883
+Aligner time needed full: 17.5482439995
+Full time needed for transducer: 12.0950064659
+Aligner time needed full: 12.4000279903
+ Progress: 1.894% / Time running: 00000540 / Memory Usage: 4.756G / Amount of child processes: 02Full time needed for transducer: 12.0773701668
+Aligner time needed full: 12.37981987
+Full time needed for transducer: 16.5399746895
+Aligner time needed full: 16.8488068581
+ Progress: 1.914% / Time running: 00000550 / Memory Usage: 4.757G / Amount of child processes: 02 Progress: 1.933% / Time running: 00000560 / Memory Usage: 4.757G / Amount of child processes: 02Full time needed for transducer: 12.3991546631
+Aligner time needed full: 12.6989750862
+Full time needed for transducer: 15.8076283932
+Aligner time needed full: 16.1177899837
+ Progress: 1.972% / Time running: 00000570 / Memory Usage: 4.757G / Amount of child processes: 02Full time needed for transducer: 12.0460124016
+Aligner time needed full: 12.3423750401
+ Progress: 1.991% / Time running: 00000580 / Memory Usage: 4.757G / Amount of child processes: 02Full time needed for transducer: 15.3957474232
+Aligner time needed full: 15.6912620068
+Full time needed for transducer: 12.4818224907
+Aligner time needed full: 12.7773439884
+ Progress: 2.010% / Time running: 00000590 / Memory Usage: 4.758G / Amount of child processes: 02 Progress: 2.030% / Time running: 00000600 / Memory Usage: 4.758G / Amount of child processes: 02Full time needed for transducer: 15.8574843407
+Aligner time needed full: 16.1585330963
+Full time needed for transducer: 12.1018972397
+Aligner time needed full: 12.4066820145
