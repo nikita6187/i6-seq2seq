@@ -120,3 +120,64 @@ Size of alignments: 0.00815582275391
 Full time needed for transducer: 3.19458770752
 Aligner time needed full: 3.30387783051
 Size of alignments: 0.0522689819336
+Size of alignments: 0.0910491943359
+Size of alignments: 0.0524978637695
+Size of alignments: 0.0081787109375
+Full time needed for transducer: 3.17205166817
+Aligner time needed full: 3.27504396439
+Size of alignments: 0.0522689819336
+Size of alignments: 0.0910491943359
+Size of alignments: 0.0524749755859
+Size of alignments: 0.0081787109375
+Full time needed for transducer: 3.16113948822
+Aligner time needed full: 3.27360701561
+Size of alignments: 0.0522689819336
+Size of alignments: 0.0910491943359
+Size of alignments: 0.0524749755859
+Size of alignments: 0.0081787109375
+Full time needed for transducer: 3.20970511436
+Aligner time needed full: 3.31900596619
+Size of alignments: 0.0522689819336
+Size of alignments: 0.0910491943359
+Size of alignments: 0.0524520874023
+Size of alignments: 0.00815582275391
+Full time needed for transducer: 3.1315100193
+Aligner time needed full: 3.23780989647
+Size of alignments: 0.0522689819336
+Size of alignments: 0.0910491943359
+Size of alignments: 0.0524749755859
+Size of alignments: 0.00815582275391
+Full time needed for transducer: 3.29698371887
+Aligner time needed full: 3.41295003891
+Size of alignments: 0.0522689819336
+Size of alignments: 0.0910491943359
+Size of alignments: 0.0524749755859
+Size of alignments: 0.00820159912109
+Full time needed for transducer: 3.9126598835
+Aligner time needed full: 4.02889895439
+Size of alignments: 0.0522689819336
+Size of alignments: 0.0910491943359
+Size of alignments: 0.0524978637695
+Size of alignments: 0.0081787109375
+Full time needed for transducer: 4.14415025711
+Aligner time needed full: 4.2702460289
+Size of alignments: 0.0522689819336
+Size of alignments: 0.0910491943359
+Size of alignments: 0.0524520874023
+Size of alignments: 0.00815582275391
+Full time needed for transducer: 3.68305969238
+Aligner time needed full: 3.80663299561
+Size of alignments: 0.0522689819336
+Size of alignments: 0.0910491943359
+Size of alignments: 0.0524749755859
+Size of alignments: 0.0081787109375
+Full time needed for transducer: 3.55070209503
+Aligner time needed full: 3.66883206367
+Size of alignments: 0.0522689819336
+Size of alignments: 0.0910491943359
+Size of alignments: 0.0525207519531
+Size of alignments: 0.00815582275391
+Full time needed for transducer: 3.35605478287
+Aligner time needed full: 3.47831702232
+Size of alignments: 0.0522689819336
+Size of alignments: 0.0910491943359
