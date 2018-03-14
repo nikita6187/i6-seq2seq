@@ -9,6 +9,7 @@ from neural_transducer import ConstantsManager, Alignment
 import time
 import psutil
 from pympler import asizeof
+import subprocess
 
 
 def softmax(x, axis=None):
@@ -258,7 +259,7 @@ class AlignerManager(object):
 
     def run_new_alignments(self, inputs, targets):
         # TODO: set this back
-        batch_size = 12 #inputs.shape[1]
+        batch_size = 1000 #inputs.shape[1]
         i = 0
         init_time = time.time()
         temp_debug_time = time.time()
@@ -281,14 +282,18 @@ class AlignerManager(object):
             self.retrieve_new_alignments()
 
             # Monitoring
-            if time.time() - temp_debug_time > 10:
+            if time.time() - temp_debug_time > 2:
                 mem_usage = 0
                 temp_debug_time = time.time()
                 for p in process_data:
                     mem_usage += p.memory_info().rss
+                for p in self.processes:
+                    # TODO: test if this works on cluster
+                    print '\n Process running on core: ' + str(open('/proc/{pid}/stat'.format(pid=str(p.pid)), 'rb').read().split(' ')[-14])
+
                 mem_usage = float(mem_usage)/(1024 * 1024 * 1024) * 10
                 sys.stdout.write(
-                    '\r Progress: {0:02.3f}% / Time running: {1:08d} / Memory Usage: {2:.3f}G / Amount of child processes: {3:02d}'.format(
+                    '\n Progress: {0:02.3f}% / Time running: {1:08d} / Memory Usage: {2:.3f}G / Amount of child processes: {3:02d}'.format(
                         float(i) / batch_size * 100, int(time.time() - init_time), mem_usage, len(self.processes)))
                 sys.stdout.flush()
 

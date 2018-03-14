@@ -748,41 +748,59 @@ class InferenceManager(object):
 
     def run_inference(self, session, full_inputs, clean_e):
         # Can only process 1 sequence at a time
+        model = self
 
-        # TODO: build this so running a block is correct
-        # TODO: create beam search for optimimum next block phase
-        # TODO: test & debug
+        def run_greedy_transducer_block(session, full_inputs, current_block, encoder_init_state, transducer_init_state,
+                                        transducer_amount_out):
+            teacher_targets_empty = np.ones(
+                [transducer_amount_out, 1]) * self.cons_manager.GO_SYMBOL  # Only use go, rest is greedy
 
-        def run_greedy_transducer_block(session, full_inputs, current_block, encoder_init_state, transducer_init_state):
-            logits, encoder_new_state, transducer_new_state = \
-                session.run([self.logits, self.encoder_hidden_state_new,
-                             self.transducer_hidden_state_new], feed_dict={
-                    self.inputs_full_raw: full_inputs,
-                    self.max_blocks: 1,
-                    self.transducer_list_outputs: [self.transducer_width+1],  # +1 due to <e> not being in trans width
-                    self.start_block: current_block,
-                    self.encoder_hidden_init: encoder_init_state,
-                    self.trans_hidden_init: transducer_init_state
+            logits, trans_state, enc_state_fw, enc_state_bw = session.run(
+                [model.logits, model.transducer_hidden_state_new,
+                 model.encoder_hidden_state_new_fw, model.encoder_hidden_state_new_bw],
+                feed_dict={
+                    model.inputs_full_raw: full_inputs,
+                    model.max_blocks: 1,
+                    model.transducer_list_outputs: [[transducer_amount_out]],
+                    model.start_block: current_block,
+                    model.encoder_hidden_init_fw: encoder_init_state[0],
+                    model.encoder_hidden_init_bw: encoder_init_state[1],
+                    model.trans_hidden_init: transducer_init_state,
+                    model.inference_mode: 1.0,
+                    model.teacher_forcing_targets: teacher_targets_empty,
                 })
-            # TODO test softmax the logits
             logits = softmax(logits, axis=2)
-            return logits, encoder_new_state, transducer_new_state
+            return logits, (enc_state_fw, enc_state_bw), trans_state
 
         # Meta parameters
         amount_of_input_blocks = int(np.ceil(full_inputs.shape[0] / self.cons_manager.input_block_size))
         # Init encoder/decoder states
-        last_encoder_state = np.zeros(shape=(2, 1, self.cons_manager.encoder_hidden_units))
+        last_encoder_state = (np.zeros(shape=(self.cons_manager.encoder_hidden_layers, 2, 1, self.cons_manager.encoder_hidden_units)),
+                              np.zeros(shape=(self.cons_manager.encoder_hidden_layers, 2, 1, self.cons_manager.encoder_hidden_units)))
         last_transducer_state = np.zeros(shape=(2, 1, self.cons_manager.transducer_hidden_units))
         logits = []
 
+        # Do a beam type search to find the optimium end
         for current_input_block in range(0, amount_of_input_blocks):
-                # TODO: here
-                new_logits, last_encoder_state, last_transducer_state = \
-                    run_greedy_transducer_block(session=session,
-                                                full_inputs=full_inputs,
-                                                current_block=current_input_block,
-                                                encoder_init_state=last_encoder_state,
-                                                transducer_init_state=last_transducer_state)
+
+                max_e = 0
+                new_logits = []  # TODO: see if this works
+
+                for temp_width in range(1, self.cons_manager.transducer_max_width):
+                    temp_logits, temp_enc, temp_trans = \
+                        run_greedy_transducer_block(session=session,
+                                                    full_inputs=full_inputs,
+                                                    current_block=current_input_block,
+                                                    encoder_init_state=last_encoder_state,
+                                                    transducer_init_state=last_transducer_state,
+                                                    transducer_amount_out=temp_width)
+
+                    if temp_logits[-1, 0, self.cons_manager.E_SYMBOL] > max_e:
+                        max_e = temp_logits[-1, 0, self.cons_manager.E_SYMBOL]
+                        last_encoder_state = temp_enc
+                        last_transducer_state = temp_trans
+                        new_logits = temp_logits
+
                 logits.append(new_logits)
 
         # Post process logits into one np array and transform into list of ids
