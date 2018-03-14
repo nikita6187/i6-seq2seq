@@ -24,7 +24,6 @@ def main():
     alignments_save = dir + '/rimes/alignments'
     cons_man_save = dir + '/rimes/cons_manager'
 
-
     constants_manager = ConstantsManager(input_dimensions=i.shape[2], input_embedding_size=i.shape[2], inputs_embedded=True,
                                          encoder_hidden_units=256, transducer_hidden_units=512, vocab_ids=bm.lookup,
                                          input_block_size=67, beam_width=5, encoder_hidden_layers=1, transducer_max_width=8,
@@ -61,9 +60,6 @@ def main():
     with tf.Session(config=config) as sess:
         sess.run(init)
 
-        avg_loss = 0
-        avg_over = 10
-
         # For benchmarking
         inputs = np.transpose(i, axes=[1, 0, 2])  # Time major
         targets = t.tolist()  # We need batch major lists for targets
@@ -71,8 +67,20 @@ def main():
 
         init_time = time.time()
 
-        data_manager = DataManager(constants_manager, full_inputs=inputs, full_targets=targets, model=model, session=sess)
+        data_manager = DataManager(constants_manager, full_inputs=inputs, full_targets=targets, model=model,
+                                   session=sess, online_alignments=False)
         data_manager.run_new_alignments()
+        print 'Time Needed for Alignments: ' + str(time.time() - init_time)
+        data_manager.set_online_alignment(True)  # Set initial online alignments for higher convergence
+
+        # Run training
+        for i in range(5000):
+            loss = model.apply_training_step(session=sess, batch_size=8, data_manager=data_manager)
+            if i % 10:
+                print 'Loss: ' + str(loss)
+
+            # Switch to offline alignments after 1000 batches
+            data_manager.set_online_alignment(False)
 
         print 'Total Time Needed: ' + str(time.time() - init_time)
 

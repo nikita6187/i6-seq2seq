@@ -109,7 +109,7 @@ def softmax(x, axis=None):
 
 
 class DataManager(object):
-    def __init__(self, cons_manager, full_inputs, full_targets, model, session):
+    def __init__(self, cons_manager, full_inputs, full_targets, model, session, online_alignments):
         """
         Loads the data manager
         :param cons_manager:
@@ -125,6 +125,7 @@ class DataManager(object):
         self.targets = full_targets
         self.model = model
         self.session = session
+        self.online_alignments = online_alignments
 
         # Save inputs, targets, model & cons_manager
         np.save(self.cons_manager.path_to_inputs, self.inputs)
@@ -160,15 +161,30 @@ class DataManager(object):
         print 'New alignments loaded'
 
     def get_new_sample(self, inputs):
-        # Skip None alignments
-        (inp, targ, al) = self.data_dic[inputs]
-        while al is None:
+        if self.online_alignments is True:
+            (inp, targ, _) = self.data_dic[inputs]
+            al = self.model.get_alignment(session=self.session, inputs=inp, targets=targ,
+                                          input_block_size=self.cons_manager.input_block_size,
+                                          transducer_max_width=self.cons_manager.transducer_max_width)
+        else:
+            # Skip None alignments
             (inp, targ, al) = self.data_dic[inputs]
+            while al is None:
+                (inp, targ, al) = self.data_dic[inputs]
         return inp, targ, al
 
     def get_new_random_sample(self):
         key = random.choice(self.data_dic.keys())
         return self.get_new_sample(key)
+
+    def set_online_alignment(self, mode):
+        """
+        Sets either to use pre-calculated alignments or to calculate them on the fly (uses more processing time,
+        but more precise).
+        :param mode: True/False, True for online alignments.
+        :return:
+        """
+        self.online_alignments = mode
 
 
 # ----------------- Model ---------------------------------------
@@ -427,6 +443,146 @@ class Model(object):
         for var in list_vars:
             dic[var.name] = var.name.replace(old_name, new_name)
         return dic
+
+    # TODO: This is identical to the function in neural_transducer_helpers.py:AlignerWorker, used for hybrid mode
+    def get_alignment(self, session, inputs, targets, input_block_size, transducer_max_width):
+        """
+        Finds the alignment of the target sequence to the actual output.
+        :param session: The current session.
+        :param inputs: The complete inputs for the encoder of shape [max_time, 1, input_dimensions], note padding if needed
+        :param targets: The target sequence of shape [time] where each enty is an index.
+        :param input_block_size: The width of one encoder block.
+        :param transducer_max_width: The max width of one transducer block.
+        :return: Returns a list of indices where <e>'s need to be inserted into the target sequence. (see paper)
+        """
+        model = self
+        self.full_time_needed_transducer = 0
+
+        def run_new_block(session, full_inputs, previous_alignments, block_index, transducer_max_width, targets,
+                          total_blocks, last_encoder_state):
+            """
+            Runs one block of the alignment process.
+            :param session: The current TF session.
+            :param full_inputs: The full inputs. Shape: [max_time, 1, input_dimensions]
+            :param previous_alignments: List of alignment objects from previous block step.
+            :param block_index: The index of the current new block.
+            :param transducer_max_width: The max width of the transducer block.
+            :param targets: The full target array of shape [time]
+            :param total_blocks: The total amount of blocks.
+            :param last_encoder_state: The encoder state of the previous step. Shape [2, 1, encoder_hidden_units]
+            :return: new_alignments as list of Alignment objects,
+            last_encoder_state_new in shape of [2, 1, encoder_hidden_units]
+            """
+
+            last_encoder_state_new = last_encoder_state  # fallback value
+
+            def run_transducer(session, inputs_full, encoder_state, transducer_state, transducer_width):
+                """
+                Runs a transducer on one block of inputs for transducer_amount_outputs.
+                :param session: Current session.
+                :param inputs_full: The full inputs. Shape: [max_time, 1, input_dimensions]
+                :param encoder_state: Tuple containing (encoder_state_fw, encoder_state_bw). Each state of size [encoder
+                layers, 2, 1, encoder_hidden_units]
+                :param transducer_state: The last transducer state as [2, 1, transducer_hidden_units] tensor.
+                :param transducer_width: The amount of outputs the transducer should produce.
+                :return: transducer outputs [max_output_time, 1, vocab], transducer_state [2, 1, transducer_hidden_units],
+                encoder_state [2, 1, encoder_hidden_units]
+                """
+                teacher_targets_empty = np.ones([transducer_width, 1]) * self.cons_manager.GO_SYMBOL  # Only use go, rest is greedy
+
+                temp_init_time = time.time()
+
+                logits, trans_state, enc_state_fw, enc_state_bw = session.run([model.logits, model.transducer_hidden_state_new,
+                                                              model.encoder_hidden_state_new_fw, model.encoder_hidden_state_new_bw],
+                                                             feed_dict={
+                                                                 model.inputs_full_raw: inputs_full,
+                                                                 model.max_blocks: 1,
+                                                                 model.transducer_list_outputs: [[transducer_width]],
+                                                                 model.start_block: block_index - 1,
+                                                                 model.encoder_hidden_init_fw: encoder_state[0],
+                                                                 model.encoder_hidden_init_bw: encoder_state[1],
+                                                                 model.trans_hidden_init: transducer_state,
+                                                                 model.inference_mode: 1.0,
+                                                                 model.teacher_forcing_targets: teacher_targets_empty,
+                                                             })
+                model.full_time_needed_transducer += time.time() - temp_init_time
+
+                # apply softmax on the outputs
+                trans_out = softmax(logits, axis=2)
+
+                return trans_out, trans_state, (enc_state_fw, enc_state_bw)
+
+            # Look into every existing alignment
+            new_alignments = []
+            for i in range(len(previous_alignments)):
+                alignment = previous_alignments[i]
+
+                # Expand the alignment for each transducer width, only look at valid options
+                targets_length = len(targets)
+                min_index = alignment.alignment_position[0] + transducer_max_width + \
+                            max(-transducer_max_width,
+                                targets_length - ((total_blocks - block_index + 1) * transducer_max_width
+                                                  + alignment.alignment_position[0]))
+                max_index = alignment.alignment_position[0] + transducer_max_width + min(0, targets_length - (
+                    alignment.alignment_position[0] + transducer_max_width))
+
+                # new_alignment_index's value is equal to the index of y~ for that computation
+                for new_alignment_index in range(min_index, max_index + 1):  # +1 so that the max_index is also used
+                    # print 'Alignment index: ' + str(new_alignment_index)
+                    # Create new alignment
+                    new_alignment = copy.deepcopy(alignment)
+                    new_alignment_width = new_alignment_index - new_alignment.alignment_position[0]
+                    trans_out, trans_state, last_encoder_state_new = run_transducer(session=session,
+                                                                                    inputs_full=full_inputs,
+                                                                                    encoder_state=last_encoder_state,
+                                                                                    transducer_state=alignment.last_state_transducer,
+                                                                                    transducer_width=new_alignment_width + 1)
+                    # last_encoder_state_new being set every time again -> not relevant
+
+                    new_alignment.insert_alignment(new_alignment_index, block_index, trans_out, targets,
+                                                   new_alignment_width, trans_state)
+                    new_alignments.append(new_alignment)
+
+            # Delete all overlapping alignments, keeping the highest log prob
+            for a in reversed(new_alignments):
+                for o in new_alignments:
+                    if o is not a and a.alignment_position == o.alignment_position and o.log_prob > a.log_prob:
+                        if a in new_alignments:
+                            new_alignments.remove(a)
+
+            return new_alignments, last_encoder_state_new
+
+        # Manage variables
+        amount_of_input_blocks = int(np.ceil(inputs.shape[0] / input_block_size))
+        current_block_index = 1
+        current_alignments = [Alignment(cons_manager=self.cons_manager)]
+        last_encoder_state = (np.zeros(shape=(self.cons_manager.encoder_hidden_layers, 2, 1, self.cons_manager.encoder_hidden_units)),
+                              np.zeros(shape=(self.cons_manager.encoder_hidden_layers, 2, 1, self.cons_manager.encoder_hidden_units)))
+
+        # Do assertions to check whether everything was correctly set up.
+        assert inputs.shape[0] % input_block_size == 0, \
+            'Input shape not corresponding to input block size (add padding or see if batch first).'
+        assert inputs.shape[
+                   2] == self.cons_manager.input_dimensions, 'Input dimension [2] not corresponding to specified input dimension.'
+        assert inputs.shape[1] == 1, 'Batch size needs to be one.'
+        assert transducer_max_width * amount_of_input_blocks >= len(
+            targets), 'transducer_max_width to small for targets'
+
+        for block in range(current_block_index, amount_of_input_blocks + 1):
+            # Run all blocks
+            current_alignments, last_encoder_state = run_new_block(session=session, full_inputs=inputs,
+                                                                   previous_alignments=current_alignments,
+                                                                   block_index=block,
+                                                                   transducer_max_width=transducer_max_width,
+                                                                   targets=targets, total_blocks=amount_of_input_blocks,
+                                                                   last_encoder_state=last_encoder_state)
+            #print 'Size of alignments: ' + str(float(asizeof.asizeof(current_alignments))/(1024 * 1024))
+
+        # Select first alignment if we have multiple with the same log prob (happens with ~1% probability in training)
+
+        print 'Full time needed for transducer: ' + str(self.full_time_needed_transducer)
+
+        return current_alignments[0].alignment_locations
 
     def apply_training_step(self, session, batch_size, data_manager):
         """

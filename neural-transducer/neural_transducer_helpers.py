@@ -16,7 +16,7 @@ def softmax(x, axis=None):
     return e_x / np.sum(e_x, axis=axis, keepdims=True)
 
 
-class Aligner(object):
+class AlignerWorker(object):
 
     def __init__(self, cons_manager):
         self.cons_manager = cons_manager
@@ -252,14 +252,14 @@ class AlignerManager(object):
     def start_aligners(self):
         # Start new processes for aligners
         for i in range(self.cons_manager.amount_of_aligners):
-            a = Aligner(cons_manager=self.cons_manager)
+            a = AlignerWorker(cons_manager=self.cons_manager)
             p = Process(target=a.run, args=(self.input_queue, self.output_queue, self.cons_manager.path_to_model))
             p.daemon = True
             self.processes.append(p)
             p.start()
 
     def run_new_alignments(self, inputs, targets):
-        batch_size = inputs.shape[1]
+        batch_size = 20 #inputs.shape[1]
         i = 0
         init_time = time.time()
         temp_debug_time = time.time()
@@ -295,8 +295,10 @@ class AlignerManager(object):
 
         # TODO: make this use join
         # Wait for cleanup:
-        while self.input_queue.empty() is False:
-            self.retrieve_new_alignments()
+        #while self.input_queue.empty() is False:
+        #    self.retrieve_new_alignments()
+        for p in self.processes:
+            p.join()
 
         # Finally process results into new dictionary
 
