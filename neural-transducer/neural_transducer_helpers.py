@@ -170,10 +170,10 @@ class AlignerWorker(object):
 
         return current_alignments[0].alignment_locations
 
-    def get_model(self, session, path):
+    def get_model(self, path):
         # Restore graph
         saver = tf.train.import_meta_graph(path + '.meta')
-        saver.restore(session, path)
+
         # Setup constants
         graph = tf.get_default_graph()
         #self.end_symbol = graph.get_tensor_by_name(name='transducer_training/end_symbol:0')
@@ -192,6 +192,7 @@ class AlignerWorker(object):
         self.encoder_hidden_state_new_fw = graph.get_operation_by_name(name='transducer_training/encoder_hidden_state_new_fw').outputs[0]
         self.encoder_hidden_state_new_bw = graph.get_operation_by_name(name='transducer_training/encoder_hidden_state_new_bw').outputs[0]
         self.transducer_hidden_state_new = graph.get_operation_by_name(name='transducer_training/transducer_hidden_state_new').outputs[0]
+        return saver
 
     def run(self, queue_input, queue_output, init_path):
         temp_list = []  # Holds the processed data
@@ -199,19 +200,23 @@ class AlignerWorker(object):
         # Init session
         config = tf.ConfigProto(allow_soft_placement=self.cons_manager.device_soft_placement,
                                 log_device_placement=self.cons_manager.debug_devices,
-                                device_count={'CPU': 1},
-                                inter_op_parallelism_threads=1, intra_op_parallelism_threads=1)
+                                device_count={'CPU': self.cons_manager.amount_of_aligners},
+                                inter_op_parallelism_threads=self.cons_manager.amount_of_aligners,
+                                intra_op_parallelism_threads=self.cons_manager.amount_of_aligners)
         config.gpu_options.allow_growth = True
 
         print 'Child process alive: ' + str(self.cpu_core)
         sys.stdout.flush()
 
+        # Do init graph loading
+        with tf.device('/cpu:' + str(self.cpu_core)):
+            saver = self.get_model(init_path)
+
         with tf.Session(config=config) as sess:
             sys.stdout.flush()
 
-            # Do init graph loading
-            with tf.device('/cpu:' + str(self.cpu_core)):
-                self.get_model(sess, init_path)
+            # Restore prev session
+            saver.restore(sess, init_path)
 
             sys.stdout.flush()
 
