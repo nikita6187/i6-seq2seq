@@ -199,7 +199,7 @@ class AlignerWorker(object):
         # Init session
         config = tf.ConfigProto(allow_soft_placement=self.cons_manager.device_soft_placement,
                                 log_device_placement=self.cons_manager.debug_devices,
-                                device_count={'CPU': 5},
+                                device_count={'CPU': 30},
                                 inter_op_parallelism_threads=10, intra_op_parallelism_threads=1)
         config.gpu_options.allow_growth = True
 
