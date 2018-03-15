@@ -201,7 +201,7 @@ class AlignerWorker(object):
                                 log_device_placement=self.cons_manager.debug_devices,
                                 device_count={'CPU': 1},
                                 inter_op_parallelism_threads=1, intra_op_parallelism_threads=1,
-                                use_per_session_threads=1, session_inter_op_thread_pool=1)
+                                use_per_session_threads=True)
         config.gpu_options.allow_growth = True
 
         print 'Child process alive.'
