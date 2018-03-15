@@ -69,9 +69,10 @@ def main():
 
         data_manager = DataManager(constants_manager, full_inputs=inputs, full_targets=targets, model=model,
                                    session=sess, online_alignments=False)
-        #data_manager.run_new_alignments()
+        data_manager.run_new_alignments()
         #print 'Time Needed for Alignments: ' + str(time.time() - init_time)
 
+        """
         data_manager.set_online_alignment(True)  # Set initial online alignments for higher convergence
 
         # Run training
@@ -83,7 +84,7 @@ def main():
             # Switch to offline alignments after 1000 batches
             if i == 1000:
                 data_manager.set_online_alignment(False)
-
+        """
         print 'Total Time Needed: ' + str(time.time() - init_time)
 
 

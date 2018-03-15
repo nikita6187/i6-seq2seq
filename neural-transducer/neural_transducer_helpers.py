@@ -287,8 +287,10 @@ class AlignerManager(object):
                 for p in process_data:
                     mem_usage += p.memory_info().rss
                 for p in self.processes:
-                    # TODO: test if this works on cluster, see if we need to close the file
-                    print '\n Process running on core: ' + str(open('/proc/{pid}/stat'.format(pid=str(p.pid)), 'rb').read().split(' ')[-14])
+                    # TODO: test if this works on cluster
+                    f = open('/proc/{pid}/stat'.format(pid=str(p.pid)), 'rb')
+                    print '\n Process running on core: ' + str(f.read().split(' ')[-14])
+                    f.close()
 
                 mem_usage = float(mem_usage)/(1024 * 1024 * 1024) * 10
                 sys.stdout.write(

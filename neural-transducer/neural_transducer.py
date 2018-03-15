@@ -779,9 +779,8 @@ class InferenceManager(object):
 
         # Do a beam type search to find the optimium end
         for current_input_block in range(0, amount_of_input_blocks):
-
                 max_e = 0
-                new_logits = []  # TODO: see if this works
+                new_logits = None  # TODO: see if this works
 
                 for temp_width in range(1, self.cons_manager.transducer_max_width):
                     temp_logits, temp_enc, temp_trans = \
