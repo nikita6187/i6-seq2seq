@@ -211,7 +211,7 @@ class AlignerWorker(object):
             sys.stdout.flush()
 
             # Do init graph loading
-            with tf.device('/cpu:' + self.cpu_core):
+            with tf.device('/cpu:' + str(self.cpu_core)):
                 self.get_model(sess, init_path)
 
             sys.stdout.flush()
