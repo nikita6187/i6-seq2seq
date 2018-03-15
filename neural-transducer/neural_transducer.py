@@ -12,10 +12,7 @@ import time
 
 # NOTE: Time major
 
-# TODO: teacher forcing         [p]
-# TODO: variable batch size     [p]
-# TODO: distributed alignment
-# TODO: inference update
+# TODO: inference update [p]
 
 # TODO: documentation
 

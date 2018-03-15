@@ -258,8 +258,7 @@ class AlignerManager(object):
             p.start()
 
     def run_new_alignments(self, inputs, targets):
-        # TODO: set this back
-        batch_size = 1000 #inputs.shape[1]
+        batch_size = inputs.shape[1]
         i = 0
         init_time = time.time()
         temp_debug_time = time.time()
@@ -288,7 +287,7 @@ class AlignerManager(object):
                 for p in process_data:
                     mem_usage += p.memory_info().rss
                 for p in self.processes:
-                    # TODO: test if this works on cluster
+                    # TODO: test if this works on cluster, see if we need to close the file
                     print '\n Process running on core: ' + str(open('/proc/{pid}/stat'.format(pid=str(p.pid)), 'rb').read().split(' ')[-14])
 
                 mem_usage = float(mem_usage)/(1024 * 1024 * 1024) * 10
@@ -297,7 +296,6 @@ class AlignerManager(object):
                         float(i) / batch_size * 100, int(time.time() - init_time), mem_usage, len(self.processes)))
                 sys.stdout.flush()
 
-        # TODO: make this use join
         # Wait for cleanup:
         time.sleep(5)  # Give another 5 seconds to clean up
         while self.input_queue.empty() is False:
