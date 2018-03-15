@@ -19,7 +19,7 @@ def softmax(x, axis=None):
 
 class AlignerWorker(object):
 
-    def __init__(self, cons_manager):
+    def __init__(self, cons_manager, cpu_core):
         self.cons_manager = cons_manager
         # Init the interface for model loading
         self.max_blocks = self.inputs_full_raw = self.transducer_list_outputs = self.start_block = \
@@ -28,6 +28,7 @@ class AlignerWorker(object):
             self.encoder_hidden_state_new_fw = self.encoder_hidden_state_new_bw = \
             self.transducer_hidden_state_new = None
         self.full_time_needed_transducer = 0
+        self.cpu_core = cpu_core
 
     def get_alignment(self, session, inputs, targets, input_block_size, transducer_max_width):
         """
@@ -197,7 +198,9 @@ class AlignerWorker(object):
 
         # Init session
         config = tf.ConfigProto(allow_soft_placement=self.cons_manager.device_soft_placement,
-                                log_device_placement=self.cons_manager.debug_devices)
+                                log_device_placement=self.cons_manager.debug_devices,
+                                device_count={'CPU': 1},
+                                inter_op_parallelism=1, intra_op_parallelism=1)
         config.gpu_options.allow_growth = True
 
         print 'Child process alive.'
@@ -207,8 +210,8 @@ class AlignerWorker(object):
             sys.stdout.flush()
 
             # Do init graph loading
-            #with tf.device(self.cons_manager.device_to_run):
-            self.get_model(sess, init_path)
+            with tf.device('/cpu:' + self.cpu_core):
+                self.get_model(sess, init_path)
 
             sys.stdout.flush()
 
@@ -251,7 +254,7 @@ class AlignerManager(object):
     def start_aligners(self):
         # Start new processes for aligners
         for i in range(self.cons_manager.amount_of_aligners):
-            a = AlignerWorker(cons_manager=self.cons_manager)
+            a = AlignerWorker(cons_manager=self.cons_manager, cpu_core=i+1)
             p = Process(target=a.run, args=(self.input_queue, self.output_queue, self.cons_manager.path_to_model))
             p.daemon = True
             self.processes.append(p)
