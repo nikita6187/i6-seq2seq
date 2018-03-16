@@ -1,0 +1,7 @@
+2018-03-16.11-05-20 mv cluster_cpu_core_assign_1_then_5 cluster_cpu_core_assign_1_then_5_cproportionnal
+2018-03-16.11-05-41 mv cluster_cpu_core_assign_1_then_5_cproportionnal cluster_cpu_core_assign_1_then_5_cproportional
+2018-03-16.11-05-59 git commit -am "NT: Benchmarks"
+2018-03-16.11-06-09 git add ./cluster_cpu_core_assign_1_then_5_cproportional 
+2018-03-16.11-06-13 git commit -am "NT: Benchmarks"
+2018-03-16.11-06-25 git push
+2018-03-16.11-09-54 git pull
