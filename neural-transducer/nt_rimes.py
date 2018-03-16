@@ -98,7 +98,9 @@ def main():
                 data_manager.set_online_alignment(False)
                 data_manager.run_new_alignments()
 
-            # TODO: Save the model every 20 iterations
+            # Save the model every 20 iterations
+            if i % 20 == 0:
+                model.save_model_for_inference(session=sess, path_name=dir + '/checkpoint/rimes_model_chkpt_' + str(i))
 
         print 'Total Time Needed: ' + str(time.time() - init_time)
 

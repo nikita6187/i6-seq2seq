@@ -34,7 +34,7 @@
         <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer_helpers.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="480">
-              <caret line="204" column="89" lean-forward="true" selection-start-line="200" selection-start-column="7" selection-end-line="204" selection-end-column="89" />
+              <caret line="204" column="89" lean-forward="false" selection-start-line="200" selection-start-column="7" selection-end-line="204" selection-end-column="89" />
               <folding>
                 <element signature="e#23#46#0" expanded="true" />
                 <element signature="e#1186#10603#0" expanded="false" />
@@ -43,11 +43,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="neural_transducer.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="neural_transducer.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="521">
-              <caret line="619" column="39" lean-forward="false" selection-start-line="619" selection-start-column="39" selection-end-line="619" selection-end-column="39" />
+            <state relative-caret-position="181">
+              <caret line="707" column="57" lean-forward="false" selection-start-line="707" selection-start-column="48" selection-end-line="707" selection-end-column="57" />
               <folding>
                 <element signature="e#0#23#0" expanded="true" />
                 <element signature="e#2736#4849#0" expanded="false" />
@@ -64,11 +64,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="nt_rimes.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="nt_rimes.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/neural-transducer/nt_rimes.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="361">
-              <caret line="65" column="74" lean-forward="false" selection-start-line="65" selection-start-column="74" selection-end-line="65" selection-end-column="74" />
+            <state relative-caret-position="580">
+              <caret line="101" column="26" lean-forward="false" selection-start-line="101" selection-start-column="26" selection-end-line="101" selection-end-column="26" />
               <folding>
                 <element signature="e#0#9#0" expanded="true" />
               </folding>
@@ -640,10 +640,31 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer_helpers.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="480">
+          <caret line="204" column="89" lean-forward="false" selection-start-line="200" selection-start-column="7" selection-end-line="204" selection-end-column="89" />
+          <folding>
+            <element signature="e#23#46#0" expanded="true" />
+            <element signature="e#1186#10603#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/neural-transducer/nt_rimes.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="580">
+          <caret line="101" column="26" lean-forward="false" selection-start-line="101" selection-start-column="26" selection-end-line="101" selection-end-column="26" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="521">
-          <caret line="619" column="39" lean-forward="false" selection-start-line="619" selection-start-column="39" selection-end-line="619" selection-end-column="39" />
+        <state relative-caret-position="181">
+          <caret line="707" column="57" lean-forward="false" selection-start-line="707" selection-start-column="48" selection-end-line="707" selection-end-column="57" />
           <folding>
             <element signature="e#0#23#0" expanded="true" />
             <element signature="e#2736#4849#0" expanded="false" />
@@ -655,27 +676,6 @@
             <element signature="e#24291#24413#0" expanded="false" />
             <element signature="e#40517#42545#0" expanded="false" />
             <element signature="e#42873#43965#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer_helpers.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="480">
-          <caret line="204" column="89" lean-forward="true" selection-start-line="200" selection-start-column="7" selection-end-line="204" selection-end-column="89" />
-          <folding>
-            <element signature="e#23#46#0" expanded="true" />
-            <element signature="e#1186#10603#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/neural-transducer/nt_rimes.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="361">
-          <caret line="65" column="74" lean-forward="false" selection-start-line="65" selection-start-column="74" selection-end-line="65" selection-end-column="74" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
           </folding>
         </state>
       </provider>
