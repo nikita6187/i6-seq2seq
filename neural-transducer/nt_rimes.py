@@ -60,7 +60,10 @@ def main():
         return targets_list
 
     config = tf.ConfigProto(allow_soft_placement=constants_manager.device_soft_placement,
-                            log_device_placement=constants_manager.debug_devices)
+                            log_device_placement=constants_manager.debug_devices,
+                            device_count={'CPU': constants_manager.max_cores},
+                            inter_op_parallelism_threads=constants_manager.max_cores,
+                            intra_op_parallelism_threads=constants_manager.max_cores)
     config.gpu_options.allow_growth = True
 
     run_offline_alignments = sys.argv[5].lower() == 'true'
