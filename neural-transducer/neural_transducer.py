@@ -601,6 +601,8 @@ class Model(object):
         inputs = []
         targets = []
 
+        init_time = time.time()
+
         # Get batch size amount of data
         for i in range(batch_size):
             (temp_inputs, target, alignment) = data_manager.get_new_random_sample()
@@ -611,6 +613,7 @@ class Model(object):
 
         inputs = np.concatenate(inputs, axis=1)
 
+        print 'Alignment time: ' + str(time.time() - init_time)
         print 'Alignment: ' + str(alignments)
 
         # Set vars
