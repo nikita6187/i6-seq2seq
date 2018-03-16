@@ -6,7 +6,12 @@ import dataset_loader
 import sys
 import time
 
-# USAGE: specify device as the first parameter ('CPU:0' or 'GPU:1'), amount of worker aligners as the second
+# USAGE:
+# Param 1: Device (e.g. CPU:0)
+# Param 2: Amount of aligners (e.g. 5)
+# Param 3: Debug device (True/False)
+# Param 4: Max cores to use for TF (e.g. 5)
+# Param 5: Run offline alignments (True) or not (False)
 
 # To make this work, put the RIMES 'train.0010' file into this directory
 
@@ -58,6 +63,8 @@ def main():
                             log_device_placement=constants_manager.debug_devices)
     config.gpu_options.allow_growth = True
 
+    run_offline_alignments = sys.argv[5].lower() == 'true'
+
     with tf.Session(config=config) as sess:
         sess.run(init)
 
@@ -69,10 +76,13 @@ def main():
         init_time = time.time()
 
         data_manager = DataManager(constants_manager, full_inputs=inputs, full_targets=targets, model=model,
-                                   session=sess, online_alignments=True)
-        #data_manager.run_new_alignments()
-        #print 'Time Needed for Alignments: ' + str(time.time() - init_time)
-        #data_manager.set_online_alignment(True)  # Set initial online alignments for higher convergence
+                                   session=sess, online_alignments=False)
+        
+        if run_offline_alignments is True:
+            data_manager.run_new_alignments()
+            print 'Time Needed for Alignments: ' + str(time.time() - init_time)
+        else:
+            data_manager.set_online_alignment(True)
 
         # Run training
         for i in range(5000):
@@ -80,9 +90,10 @@ def main():
 
             print 'Loss: ' + str(loss)
 
-            # Switch to offline alignments after 1000 batches
+            # Switch to offline alignments after 1000 batches & run new alignments
             if i == 1000:
                 data_manager.set_online_alignment(False)
+                data_manager.run_new_alignments()
 
             # TODO: Save the model every 20 iterations
 
