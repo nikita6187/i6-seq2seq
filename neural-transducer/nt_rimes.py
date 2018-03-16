@@ -30,7 +30,8 @@ def main():
                                          path_to_model=model_save, path_to_inputs=input_save, path_to_targets=target_save,
                                          path_to_alignments=alignments_save, path_to_cons_manager=cons_man_save,
                                          amount_of_aligners=int(sys.argv[2]), device_to_run=str(sys.argv[1]),
-                                         device_soft_placement=True, debug_devices=((sys.argv[3]).lower() == 'true'))
+                                         device_soft_placement=True, debug_devices=((sys.argv[3]).lower() == 'true'),
+                                         max_cores=int(sys.argv[4]))
 
     #with tf.device(constants_manager.device_to_run):  # Set device here
     model = Model(cons_manager=constants_manager)
