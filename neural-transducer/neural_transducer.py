@@ -614,7 +614,11 @@ class Model(object):
         inputs = np.concatenate(inputs, axis=1)
 
         print 'Alignment time: ' + str(time.time() - init_time)
-        print 'Alignment: ' + str(alignments)
+        print 'Alignment: \n' + str(alignments)
+
+        f = open('/proc/{pid}/stat'.format(pid=str(os.getpid())), 'rb')
+        print 'Running main training on core: ' + str(f.read().split(' ')[-14])
+        f.close()
 
         # Set vars
         teacher_forcing = []

@@ -77,7 +77,7 @@ def main():
 
         data_manager = DataManager(constants_manager, full_inputs=inputs, full_targets=targets, model=model,
                                    session=sess, online_alignments=False)
-        
+
         if run_offline_alignments is True:
             data_manager.run_new_alignments()
             print 'Time Needed for Alignments: ' + str(time.time() - init_time)
