@@ -148,6 +148,9 @@ class DataManager(object):
         # TODO: something more elegant
 
         # Load in new alignments
+        self.load_in_alignments()
+
+    def load_in_alignments(self):
         new_al_file = open(self.cons_manager.path_to_alignments, 'rb')
         new_alignments = cPickle.load(new_al_file)
         new_al_file.close()
