@@ -712,6 +712,31 @@ class Model(object):
         self.train_saver.save(session, path_name)
         print 'Model saved to ' + str(path_name)
 
+    def load_model(self, session, path):
+        saver = tf.train.import_meta_graph(path + '.meta')
+        saver.restore(session, path)
+        # Setup constants
+        graph = tf.get_default_graph()
+        # self.end_symbol = graph.get_tensor_by_name(name='transducer_training/end_symbol:0')
+        # Get inputs
+        self.max_blocks = graph.get_tensor_by_name(name='transducer_training/max_blocks:0')
+        self.inputs_full_raw = graph.get_tensor_by_name(name='transducer_training/inputs_full_raw:0')
+        self.transducer_list_outputs = graph.get_tensor_by_name(name='transducer_training/transducer_list_outputs:0')
+        self.start_block = graph.get_tensor_by_name(name='transducer_training/transducer_start_block:0')
+        self.encoder_hidden_init_fw = graph.get_tensor_by_name(name='transducer_training/encoder_hidden_init_fw:0')
+        self.encoder_hidden_init_bw = graph.get_tensor_by_name(name='transducer_training/encoder_hidden_init_bw:0')
+        self.trans_hidden_init = graph.get_tensor_by_name(name='transducer_training/trans_hidden_init:0')
+        self.teacher_forcing_targets = graph.get_tensor_by_name(name='transducer_training/teacher_forcing_targets:0')
+        self.inference_mode = graph.get_tensor_by_name(name='transducer_training/inference_mode:0')
+        # Get return ops
+        self.logits = graph.get_operation_by_name(name='transducer_training/logits').outputs[0]
+        self.encoder_hidden_state_new_fw = \
+            graph.get_operation_by_name(name='transducer_training/encoder_hidden_state_new_fw').outputs[0]
+        self.encoder_hidden_state_new_bw = \
+            graph.get_operation_by_name(name='transducer_training/encoder_hidden_state_new_bw').outputs[0]
+        self.transducer_hidden_state_new = \
+            graph.get_operation_by_name(name='transducer_training/transducer_hidden_state_new').outputs[0]
+
 
 class InferenceManager(object):
 
@@ -750,8 +775,6 @@ class InferenceManager(object):
         self.transducer_hidden_state_new = \
         graph.get_operation_by_name(name='transducer_training/transducer_hidden_state_new').outputs[0]
 
-        return max_blocks, inputs_full_raw, transducer_list_outputs, start_block, encoder_hidden_init, \
-            trans_hidden_init, logits, encoder_hidden_state_new, transducer_hidden_state_new
 
     def run_inference(self, session, full_inputs, clean_e):
         # Can only process 1 sequence at a time

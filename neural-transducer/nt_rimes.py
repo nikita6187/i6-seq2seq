@@ -43,6 +43,8 @@ def main():
 
     init = tf.global_variables_initializer()
 
+    # TODO: Try loading in prev built model from param 6
+
     # -- Training ---
 
     # TODO: Dev/Test split and inference testing
