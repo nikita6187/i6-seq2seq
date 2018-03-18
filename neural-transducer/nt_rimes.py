@@ -13,6 +13,7 @@ import time
 # Param 4: Max cores to use for TF (e.g. 5)
 # Param 5: Run offline alignments (True) or not (False)
 # Param 6: Path & Prefix of initial model load (e.g. ../model_800)
+# Param 7: Load in pre-computed alignments (True/False)
 
 # To make this work, put the RIMES 'train.0010' file into this directory
 
@@ -87,7 +88,10 @@ def main():
                                    session=sess, online_alignments=False)
 
         if run_offline_alignments is True:
-            data_manager.run_new_alignments()
+            if sys.argv[7].lower() == 'true':
+                data_manager.load_in_alignments()
+            else:
+                data_manager.run_new_alignments()
             print 'Time Needed for Alignments: ' + str(time.time() - init_time)
         else:
             data_manager.set_online_alignment(True)
