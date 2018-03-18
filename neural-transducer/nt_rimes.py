@@ -85,7 +85,7 @@ def main():
         init_time = time.time()
 
         data_manager = DataManager(constants_manager, full_inputs=inputs, full_targets=targets, model=model,
-                                   session=sess, online_alignments=False)
+                                   session=sess, online_alignments=False, use_greedy=True)  # TODO: greedy remove
 
         if run_offline_alignments is True:
             if sys.argv[7].lower() == 'true':
