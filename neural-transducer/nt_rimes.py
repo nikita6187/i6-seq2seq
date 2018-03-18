@@ -12,6 +12,7 @@ import time
 # Param 3: Debug device (True/False)
 # Param 4: Max cores to use for TF (e.g. 5)
 # Param 5: Run offline alignments (True) or not (False)
+# Param 6: Path & Prefix of initial model load (e.g. ../model_800)
 
 # To make this work, put the RIMES 'train.0010' file into this directory
 
@@ -43,8 +44,6 @@ def main():
 
     init = tf.global_variables_initializer()
 
-    # TODO: Try loading in prev built model from param 6
-
     # -- Training ---
 
     # TODO: Dev/Test split and inference testing
@@ -73,6 +72,10 @@ def main():
     with tf.Session(config=config) as sess:
         sess.run(init)
 
+        # Try loading in prev built model from param 6 if it exists
+        if len(sys.argv) >= 7 and os.path.isfile(sys.argv[6] + '.meta') is True:
+            model.load_model(sess, sys.argv[6])
+
         # For benchmarking
         inputs = np.transpose(i, axes=[1, 0, 2])  # Time major
         targets = t.tolist()  # We need batch major lists for targets
@@ -96,7 +99,7 @@ def main():
             print 'Loss: ' + str(loss)
 
             # Switch to offline alignments after 1000 batches & run new alignments
-            if i == 1000:
+            if i == 1000 and run_offline_alignments is False:
                 data_manager.set_online_alignment(False)
                 data_manager.run_new_alignments()
 

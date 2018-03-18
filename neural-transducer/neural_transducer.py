@@ -736,6 +736,7 @@ class Model(object):
             graph.get_operation_by_name(name='transducer_training/encoder_hidden_state_new_bw').outputs[0]
         self.transducer_hidden_state_new = \
             graph.get_operation_by_name(name='transducer_training/transducer_hidden_state_new').outputs[0]
+        print 'Loaded in model from: ' + str(path)
 
 
 class InferenceManager(object):
