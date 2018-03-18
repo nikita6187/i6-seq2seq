@@ -22,7 +22,8 @@ constants_manager = ConstantsManager(input_dimensions=1, input_embedding_size=11
                                      input_block_size=1, beam_width=5, encoder_hidden_layers=1, transducer_max_width=8,
                                      path_to_model=model_save, path_to_inputs=input_save, path_to_targets=target_save,
                                      path_to_alignments=alignments_save, path_to_cons_manager=cons_man_save,
-                                     amount_of_aligners=2)
+                                     debug_devices=False, amount_of_aligners=4,
+                                     device_to_run='CPU:0', max_cores=4, device_soft_placement=True)
 model = Model(cons_manager=constants_manager)
 init = tf.global_variables_initializer()
 
@@ -60,21 +61,28 @@ def get_feed_dic(batch_size):
     return inputs, targets
 
 
-with tf.Session() as sess:
+config = tf.ConfigProto(allow_soft_placement=constants_manager.device_soft_placement,
+                        log_device_placement=constants_manager.debug_devices,
+                        device_count={'CPU': constants_manager.max_cores},
+                        inter_op_parallelism_threads=constants_manager.max_cores,
+                        intra_op_parallelism_threads=constants_manager.max_cores)
+config.gpu_options.allow_growth = True
+
+with tf.Session(config=config) as sess:
     sess.run(init)
 
     avg_loss = 0
     avg_over = 30
 
-    # Generate dummy data
-    inputs, targets = get_feed_dic(100)
+    inputs, targets = get_feed_dic(100000)
 
     # Data manager
-    data_manager = DataManager(constants_manager, full_inputs=inputs, full_targets=targets, model=model, session=sess)
-    data_manager.run_new_alignments()
+    data_manager = DataManager(constants_manager, full_inputs=inputs, full_targets=targets, model=model, session=sess,
+                               online_alignments=True, use_greedy=True)
+    #data_manager.run_new_alignments()
 
     # Apply training step
-    for i in range(0, 40):
+    for i in range(0, 100000):
 
         # Apply training
         temp_loss = model.apply_training_step(session=sess, batch_size=4, data_manager=data_manager)
@@ -91,18 +99,4 @@ with tf.Session() as sess:
 
 
 # -- Inference --
-"""
-with tf.Session() as sess2:
 
-    inference = InferenceManager(session=sess2, beam_search=False, path=model_save,
-                                 transducer_width=transducer_width, model=model, cons_manager=constants_manager)
-
-
-    for x in range(10):
-        i, t = get_feed_dic()
-
-        print 'New inference test: '
-        print np.reshape(i, shape=(-1)).tolist()
-        print inference.run_inference(sess2, model_save, i, clean_e=False)[1]
-        print str(map(lookup, t))
-"""

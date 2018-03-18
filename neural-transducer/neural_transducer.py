@@ -106,7 +106,7 @@ def softmax(x, axis=None):
 
 
 class DataManager(object):
-    def __init__(self, cons_manager, full_inputs, full_targets, model, session, online_alignments):
+    def __init__(self, cons_manager, full_inputs, full_targets, model, session, online_alignments, use_greedy=False):
         """
         Loads the data manager
         :param cons_manager:
@@ -123,6 +123,7 @@ class DataManager(object):
         self.model = model
         self.session = session
         self.online_alignments = online_alignments
+        self.use_greedy = use_greedy
 
         # Save inputs, targets, model & cons_manager
         np.save(self.cons_manager.path_to_inputs, self.inputs)
@@ -163,9 +164,14 @@ class DataManager(object):
     def get_new_sample(self, inputs):
         if self.online_alignments is True:
             (inp, targ, _) = self.data_dic[inputs]
-            al = self.model.get_alignment(session=self.session, inputs=inp, targets=targ,
-                                          input_block_size=self.cons_manager.input_block_size,
-                                          transducer_max_width=self.cons_manager.transducer_max_width)
+            if self.use_greedy is True:
+                al = self.model.get_alignment_greedy(session=self.session, inputs=inp, targets=targ,
+                                              input_block_size=self.cons_manager.input_block_size,
+                                              transducer_max_width=self.cons_manager.transducer_max_width)
+            else:
+                al = self.model.get_alignment(session=self.session, inputs=inp, targets=targ,
+                                              input_block_size=self.cons_manager.input_block_size,
+                                              transducer_max_width=self.cons_manager.transducer_max_width)
         else:
             # Skip None alignments
             (inp, targ, al) = self.data_dic[inputs]
