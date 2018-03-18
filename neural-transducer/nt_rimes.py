@@ -109,7 +109,7 @@ def main():
 
             # Save the model every 20 iterations
             if i % 20 == 0:
-                model.save_model_for_inference(session=sess, path_name=dir + '/checkpoint/rimes_model_chkpt_' + str(i))
+                model.save_model_for_inference(session=sess, path_name=dir + '/checkpoint/rimes_model_reuse_chkpt_' + str(i))
 
         print 'Total Time Needed: ' + str(time.time() - init_time)
 
