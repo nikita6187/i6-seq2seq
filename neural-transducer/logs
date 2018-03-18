@@ -1,9 +1,0 @@
-/home/nikita/.local/lib/python2.7/site-packages/h5py/__init__.py:36: FutureWarning: Conversion of the second argument of issubdtype from `float` to `np.floating` is deprecated. In future, it will be treated as `np.float64 == np.dtype(float).type`.
-  from ._conv import register_converters as _register_converters
-['p', 'r', 'i', 'e', '', 'm', 'o', 'n', 'd', 'c', 't', 'u', 'M', 's', 'B', 'a', 'g', 'x', 'l', 'D', 'q', "'", 'f', 'b', 'j', 'h', '2', '5', 'v', 'z', 'J', 'H', 'L', 'y', '0', '6', 'N', 'C', 'U', 'T', 'E', 'I', 'P', 'O', 'V', 'S', '1', 'Q', '3', '-', 'R', '7', 'X', 'Z', 'A', 'F', 'G', '9', '8', 'Y', '4', 'K', 'W', 'k']
-Traceback (most recent call last):
-  File "/home/nikita/i6-seq2seq/neural-transducer/nt_rimes.py", line 74, in <module>
-    main()
-  File "/home/nikita/i6-seq2seq/neural-transducer/nt_rimes.py", line 32, in main
-    amount_of_aligners=int(sys.argv[2]))
-IndexError: list index out of range
