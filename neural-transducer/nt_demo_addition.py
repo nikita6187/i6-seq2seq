@@ -1,5 +1,5 @@
 import os
-from neural_transducer import ConstantsManager, Model, DataManager
+from neural_transducer import ConstantsManager, Model, DataManager, InferenceManager
 import tensorflow as tf
 import numpy as np
 import dataset_loader
@@ -68,6 +68,7 @@ config = tf.ConfigProto(allow_soft_placement=constants_manager.device_soft_place
                         intra_op_parallelism_threads=constants_manager.max_cores)
 config.gpu_options.allow_growth = True
 
+"""
 with tf.Session(config=config) as sess:
     sess.run(init)
 
@@ -78,11 +79,11 @@ with tf.Session(config=config) as sess:
 
     # Data manager
     data_manager = DataManager(constants_manager, full_inputs=inputs, full_targets=targets, model=model, session=sess,
-                               online_alignments=True, use_greedy=False)
+                               online_alignments=True, use_greedy=True)
     #data_manager.run_new_alignments()
 
     # Apply training step
-    for i in range(0, 100000):
+    for i in range(0, 1000):
 
         # Apply training
         temp_loss = model.apply_training_step(session=sess, batch_size=4, data_manager=data_manager)
@@ -93,10 +94,27 @@ with tf.Session(config=config) as sess:
             print 'Loss: ' + str(avg_loss)
             avg_loss = 0
 
-
     # Save for inference later
-    #model.save_model_for_inference(sess, model_save)
+    model.save_model_for_inference(sess, model_save)
+"""
 
+# Inference
+with tf.Session(config=config) as inf_session:
+    # Load in manager
+    inference_manager = InferenceManager(cons_manager=constants_manager)
 
-# -- Inference --
+    # Rebuild graph
+    inference_manager.build_greedy_inference(path=model_save,
+                                             session=inf_session)
 
+    for _ in range(5):
+        # Try out inference
+        inp, targ = get_feed_dic(1)
+        print '\n'
+        print 'Inference Run: '
+        print 'Inputs: '
+        print str(np.reshape(inp, (-1)))
+        print 'Inferred data:'
+        print inference_manager.run_inference(session=inf_session, full_inputs=inp, clean_e=True)[1]
+        print 'Ground truth: '
+        print targ

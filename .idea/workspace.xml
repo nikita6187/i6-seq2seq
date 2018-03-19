@@ -37,8 +37,8 @@
       <file leaf-file-name="neural_transducer_helpers.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer_helpers.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="224" column="39" lean-forward="false" selection-start-line="224" selection-start-column="39" selection-end-line="224" selection-end-column="39" />
+            <state relative-caret-position="-1739">
+              <caret line="227" column="32" lean-forward="false" selection-start-line="227" selection-start-column="32" selection-end-line="227" selection-end-column="32" />
               <folding>
                 <element signature="e#23#46#0" expanded="true" />
                 <element signature="e#1186#10603#0" expanded="false" />
@@ -50,31 +50,36 @@
       <file leaf-file-name="neural_transducer.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="273">
-              <caret line="594" column="13" lean-forward="false" selection-start-line="594" selection-start-column="13" selection-end-line="594" selection-end-column="13" />
+            <state relative-caret-position="431">
+              <caret line="998" column="16" lean-forward="false" selection-start-line="998" selection-start-column="16" selection-end-line="998" selection-end-column="16" />
               <folding>
                 <element signature="e#0#23#0" expanded="true" />
+                <element signature="e#2736#5441#0" expanded="false" />
                 <element signature="e#4580#5167#1" expanded="false" />
                 <element signature="e#5475#5583#0" expanded="false" />
-                <element signature="e#5617#9814#0" expanded="false" />
-                <element signature="e#10583#24354#0" expanded="false" />
-                <element signature="e#15746#23174#0" expanded="false" />
-                <element signature="e#24399#25296#0" expanded="false" />
-                <element signature="e#25373#25495#0" expanded="false" />
-                <element signature="e#37240#39838#0" expanded="false" />
-                <element signature="e#45281#50890#0" expanded="false" />
-                <element signature="e#55777#56869#0" expanded="false" />
+                <element signature="e#9924#52983#0" expanded="false" />
+                <element signature="e#10597#24368#0" expanded="false" />
+                <element signature="e#15760#23188#0" expanded="false" />
+                <element signature="e#24413#25310#0" expanded="false" />
+                <element signature="e#25387#25509#0" expanded="false" />
+                <element signature="e#25728#35255#0" expanded="false" />
+                <element signature="e#35367#45215#0" expanded="false" />
+                <element signature="e#37254#39852#0" expanded="false" />
+                <element signature="e#45295#50904#0" expanded="false" />
+                <element signature="e#55781#56873#0" expanded="false" />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="nt_rimes.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/neural-transducer/nt_rimes.py">
+      <file leaf-file-name="nt_demo_addition.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/neural-transducer/nt_demo_addition.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="541">
-              <caret line="90" column="95" lean-forward="false" selection-start-line="90" selection-start-column="95" selection-end-line="90" selection-end-column="95" />
-              <folding />
+            <state relative-caret-position="627">
+              <caret line="117" column="96" lean-forward="false" selection-start-line="117" selection-start-column="96" selection-end-line="117" selection-end-column="96" />
+              <folding>
+                <element signature="e#0#9#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -133,9 +138,9 @@
         <option value="$PROJECT_DIR$/rimes/rimes_seq2seq_tf.py" />
         <option value="$PROJECT_DIR$/neural-transducer/neural_transducer_helpers.py" />
         <option value="$PROJECT_DIR$/neural-transducer/visualizations.py" />
-        <option value="$PROJECT_DIR$/neural-transducer/nt_demo_addition.py" />
-        <option value="$PROJECT_DIR$/neural-transducer/neural_transducer.py" />
         <option value="$PROJECT_DIR$/neural-transducer/nt_rimes.py" />
+        <option value="$PROJECT_DIR$/neural-transducer/neural_transducer.py" />
+        <option value="$PROJECT_DIR$/neural-transducer/nt_demo_addition.py" />
       </list>
     </option>
   </component>
@@ -145,7 +150,8 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
-  <component name="ProjectFrameBounds" extendedState="6">
+  <component name="ProjectFrameBounds" extendedState="4">
+    <option name="x" value="960" />
     <option name="y" value="25" />
     <option name="width" value="960" />
     <option name="height" value="984" />
@@ -194,8 +200,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
-      <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -212,6 +216,8 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scratches" />
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -503,23 +509,23 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="25" width="1920" height="984" extended-state="6" />
+    <frame x="960" y="25" width="960" height="984" extended-state="4" />
     <editor active="true" />
     <layout>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3180428" sideWeight="0.5083558" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Documentation" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3296875" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" x="0" y="0" width="411" height="855" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3782857" sideWeight="0.4916442" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3782857" sideWeight="0.4916442" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.18854167" sideWeight="0.49028572" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.37708333" sideWeight="0.49028572" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Docker" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="false" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="SciView" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.18854167" sideWeight="0.5097143" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.45828933" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.18854167" sideWeight="0.5097143" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -553,7 +559,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$USER_HOME$/.local/lib/python2.7/site-packages/tensorflow/python/ops/control_flow_ops.py" />
     <entry file="file://$USER_HOME$/.local/lib/python2.7/site-packages/tensorflow/python/client/session.py" />
     <entry file="file://$PROJECT_DIR$/rimes/tf_seq2seq_bugfixing_2.py" />
     <entry file="file://$PROJECT_DIR$/neural-transducer/TF_bugsearch3.py" />
@@ -643,10 +648,26 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/neural-transducer/nt_rimes.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-779">
+          <caret line="41" column="68" lean-forward="false" selection-start-line="41" selection-start-column="68" selection-end-line="41" selection-end-column="68" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/neural-transducer/tee">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1740">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer_helpers.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="224" column="39" lean-forward="false" selection-start-line="224" selection-start-column="39" selection-end-line="224" selection-end-column="39" />
+        <state relative-caret-position="-1739">
+          <caret line="227" column="32" lean-forward="false" selection-start-line="227" selection-start-column="32" selection-end-line="227" selection-end-column="32" />
           <folding>
             <element signature="e#23#46#0" expanded="true" />
             <element signature="e#1186#10603#0" expanded="false" />
@@ -656,37 +677,34 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="273">
-          <caret line="594" column="13" lean-forward="false" selection-start-line="594" selection-start-column="13" selection-end-line="594" selection-end-column="13" />
+        <state relative-caret-position="431">
+          <caret line="998" column="16" lean-forward="false" selection-start-line="998" selection-start-column="16" selection-end-line="998" selection-end-column="16" />
           <folding>
             <element signature="e#0#23#0" expanded="true" />
+            <element signature="e#2736#5441#0" expanded="false" />
             <element signature="e#4580#5167#1" expanded="false" />
             <element signature="e#5475#5583#0" expanded="false" />
-            <element signature="e#5617#9814#0" expanded="false" />
-            <element signature="e#10583#24354#0" expanded="false" />
-            <element signature="e#15746#23174#0" expanded="false" />
-            <element signature="e#24399#25296#0" expanded="false" />
-            <element signature="e#25373#25495#0" expanded="false" />
-            <element signature="e#37240#39838#0" expanded="false" />
-            <element signature="e#45281#50890#0" expanded="false" />
-            <element signature="e#55777#56869#0" expanded="false" />
+            <element signature="e#9924#52983#0" expanded="false" />
+            <element signature="e#10597#24368#0" expanded="false" />
+            <element signature="e#15760#23188#0" expanded="false" />
+            <element signature="e#24413#25310#0" expanded="false" />
+            <element signature="e#25387#25509#0" expanded="false" />
+            <element signature="e#25728#35255#0" expanded="false" />
+            <element signature="e#35367#45215#0" expanded="false" />
+            <element signature="e#37254#39852#0" expanded="false" />
+            <element signature="e#45295#50904#0" expanded="false" />
+            <element signature="e#55781#56873#0" expanded="false" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/neural-transducer/nt_demo_addition.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="401">
-          <caret line="87" column="56" lean-forward="false" selection-start-line="87" selection-start-column="56" selection-end-line="87" selection-end-column="56" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/neural-transducer/nt_rimes.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="541">
-          <caret line="90" column="95" lean-forward="false" selection-start-line="90" selection-start-column="95" selection-end-line="90" selection-end-column="95" />
-          <folding />
+        <state relative-caret-position="627">
+          <caret line="117" column="96" lean-forward="false" selection-start-line="117" selection-start-column="96" selection-end-line="117" selection-end-column="96" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
