@@ -7,13 +7,19 @@ import sys
 
 def main():
 
-    data = []
+    data1 = []
 
     with open(sys.argv[1]) as f:
         for line in f:
-            data.append(float(line.split(' ')[1].split('\r')[0]))
+            data1.append(float(line.split(' ')[1].split('\r')[0]))
 
-    plt.plot(data)
+    data2 = []
+    with open(sys.argv[2]) as f:
+        for line in f:
+            data2.append(float(line.split(' ')[1].split('\r')[0]))
+
+    plt.plot(data2, 'r')
+    plt.plot(data1, 'b')
     plt.show()
 
 
