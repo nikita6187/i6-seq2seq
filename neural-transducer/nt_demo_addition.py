@@ -27,6 +27,7 @@ constants_manager = ConstantsManager(input_dimensions=1, input_embedding_size=11
 model = Model(cons_manager=constants_manager)
 init = tf.global_variables_initializer()
 
+
 def lookup(i):
     return constants_manager.vocab_ids[i]
 
@@ -68,6 +69,7 @@ config = tf.ConfigProto(allow_soft_placement=constants_manager.device_soft_place
                         intra_op_parallelism_threads=constants_manager.max_cores)
 config.gpu_options.allow_growth = True
 
+# Uncomment for training
 """
 with tf.Session(config=config) as sess:
     sess.run(init)

@@ -12,8 +12,6 @@ import time
 
 # NOTE: Time major
 
-# TODO: inference update [p]
-
 # TODO: documentation
 
 
@@ -59,7 +57,6 @@ class ConstantsManager(object):
         self.debug_devices = debug_devices
         self.max_cores = max_cores
 
-    # TODO: add lookup function for vocab
 
 
 # ---------------- Helper classes -------------------------------
@@ -156,7 +153,7 @@ class DataManager(object):
         os.system('python ./neural_transducer_helpers.py ' + str(self.cons_manager.path_to_cons_manager))
 
         # Waits until new alignments are there, so the alignments file has changed
-        # TODO: something more elegant
+        # TODO: something more elegant, maybe with parallel processing whilst training is running
 
         # Load in new alignments
         self.load_in_alignments()
@@ -311,7 +308,6 @@ class Model(object):
                 else:
                     encoder_inputs = tf.reshape(encoder_inputs, shape=[-1, batch_size])
                     encoder_inputs_embedded = tf.nn.embedding_lookup(embeddings, encoder_inputs)
-                    # TODO: see if encoder_inputs_embedded is time major
 
                 # Build model
                 # Process encoder state
