@@ -14,6 +14,7 @@ import time
 # Param 5: Run offline alignments (True) or not (False)
 # Param 6: Path & Prefix of initial model load (e.g. ../model_800)
 # Param 7: Load in pre-computed alignments (True/False)
+# Param 8: Use greedy for online alignments (True/False)
 
 # To make this work, put the RIMES 'train.0010' file into this directory
 
@@ -84,8 +85,10 @@ def main():
 
         init_time = time.time()
 
+        use_greedy = sys.argv[8].lower() == 'true'
+
         data_manager = DataManager(constants_manager, full_inputs=inputs, full_targets=targets, model=model,
-                                   session=sess, online_alignments=False, use_greedy=True)  # TODO: greedy remove
+                                   session=sess, online_alignments=False, use_greedy=use_greedy)  # TODO: greedy remove
 
         if run_offline_alignments is True:
             if sys.argv[7].lower() == 'true':

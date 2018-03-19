@@ -78,7 +78,7 @@ with tf.Session(config=config) as sess:
 
     # Data manager
     data_manager = DataManager(constants_manager, full_inputs=inputs, full_targets=targets, model=model, session=sess,
-                               online_alignments=True, use_greedy=True)
+                               online_alignments=True, use_greedy=False)
     #data_manager.run_new_alignments()
 
     # Apply training step

@@ -74,11 +74,21 @@ class Alignment(object):
 
     def __compute_sum_probabilities(self, transducer_outputs, targets, transducer_amount_outputs):
         def get_prob_at_timestep(timestep):
-            return np.log(transducer_outputs[timestep][0][targets[start_index + timestep]])
+            if timestep + start_index < len(targets):
+                # For normal operations
+                #print 'H'
+                #print np.log(transducer_outputs[timestep][0][targets[start_index + timestep]])
+                #print np.log(transducer_outputs[timestep][0][self.cons_manager.E_SYMBOL])
+                #print targets[start_index + timestep]
+                return np.log(transducer_outputs[timestep][0][targets[start_index + timestep]])
+            else:
+                # For last timestep, so the <e> symbol
+                return np.log(transducer_outputs[timestep][0][self.cons_manager.E_SYMBOL])
 
+        #print transducer_outputs
         start_index = self.alignment_position[0] - transducer_amount_outputs  # The current position of this alignment
         prob = self.cons_manager.log_prob_init_value
-        for i in range(0, transducer_amount_outputs):  # Do not include e symbol in calculation
+        for i in range(0, transducer_amount_outputs + 1):  # Do not include e symbol in calculation, +1 due to last symbol
             prob += get_prob_at_timestep(i)
         return prob
 
@@ -582,6 +592,9 @@ class Model(object):
                                                                    transducer_max_width=transducer_max_width,
                                                                    targets=targets, total_blocks=amount_of_input_blocks,
                                                                    last_encoder_state=last_encoder_state)
+            #for alignment in current_alignments:
+                #print str(alignment.alignment_locations) + ' ' + str(alignment.log_prob)
+
             #print 'Size of alignments: ' + str(float(asizeof.asizeof(current_alignments))/(1024 * 1024))
 
         # Select first alignment if we have multiple with the same log prob (happens with ~1% probability in training)
@@ -722,12 +735,16 @@ class Model(object):
                                                                    targets=targets, total_blocks=amount_of_input_blocks,
                                                                    last_encoder_state=last_encoder_state)
             # Select the best from current_alignments (Thus we only have the best alignment at every block -> greedy)
+            # TODO: test out as beam search
             max_val = -float('inf')
+            al = None
             for alignment in current_alignments:
-                if alignment.log_prob >= max_val:
+                #print str(alignment.alignment_locations) + ' ' + str(alignment.log_prob)
+                if alignment.log_prob > max_val:
                     max_val = alignment.log_prob
-                else:
-                    current_alignments.remove(alignment)
+                    al = alignment
+            current_alignments = [al]
+            #print current_alignments
 
         # Select first alignment if we have multiple with the same log prob (happens with ~1% probability in training)
 
