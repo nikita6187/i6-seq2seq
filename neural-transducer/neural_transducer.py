@@ -176,8 +176,8 @@ class DataManager(object):
             (inp, targ, _) = self.data_dic[inputs]
             if self.use_greedy is True:
                 al = self.model.get_alignment_greedy(session=self.session, inputs=inp, targets=targ,
-                                              input_block_size=self.cons_manager.input_block_size,
-                                              transducer_max_width=self.cons_manager.transducer_max_width)
+                                                     input_block_size=self.cons_manager.input_block_size,
+                                                     transducer_max_width=self.cons_manager.transducer_max_width)
             else:
                 al = self.model.get_alignment(session=self.session, inputs=inp, targets=targ,
                                               input_block_size=self.cons_manager.input_block_size,
@@ -908,7 +908,7 @@ class Model(object):
 
 class InferenceManager(object):
 
-    def __init__(self, cons_manager, session):
+    def __init__(self, cons_manager):
         self.cons_manager = cons_manager
         # Init the interface for model loading
         self.max_blocks = self.inputs_full_raw = self.transducer_list_outputs = self.start_block = \
@@ -942,7 +942,6 @@ class InferenceManager(object):
         graph.get_operation_by_name(name='transducer_training/encoder_hidden_state_new_bw').outputs[0]
         self.transducer_hidden_state_new = \
         graph.get_operation_by_name(name='transducer_training/transducer_hidden_state_new').outputs[0]
-
 
     def run_inference(self, session, full_inputs, clean_e):
         # Can only process 1 sequence at a time
@@ -981,7 +980,7 @@ class InferenceManager(object):
         # Do a beam type search to find the optimium end
         for current_input_block in range(0, amount_of_input_blocks):
                 max_e = 0
-                new_logits = None  # TODO: see if this works
+                new_logits = None
 
                 for temp_width in range(1, self.cons_manager.transducer_max_width):
                     temp_logits, temp_enc, temp_trans = \
@@ -997,7 +996,6 @@ class InferenceManager(object):
                         last_encoder_state = temp_enc
                         last_transducer_state = temp_trans
                         new_logits = temp_logits
-
                 logits.append(new_logits)
 
         # Post process logits into one np array and transform into list of ids
@@ -1006,11 +1004,12 @@ class InferenceManager(object):
         predict_id = np.reshape(predict_id, newshape=(-1))
         predict_id = predict_id.tolist()
 
+        if clean_e is True:
+            predict_id = [i for i in predict_id if i != self.cons_manager.E_SYMBOL]
+
         def lookup(i):
             return self.cons_manager.vocab_ids[i]
         predicted_chars = map(lookup, predict_id)
-        if clean_e is True:
-            predict_id = [i for i in predict_id if i != self.cons_manager.E_SYMBOL]
 
         return predict_id, predicted_chars
 
