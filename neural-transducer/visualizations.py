@@ -7,19 +7,19 @@ import sys
 
 def main():
 
-    data1 = []
+    data = []
 
-    with open(sys.argv[1]) as f:
-        for line in f:
-            data1.append(float(line.split(' ')[1].split('\r')[0]))
+    for i in range(len(sys.argv) - 1):
+        data1 = []
+        with open(sys.argv[i + 1]) as f:
+            for line in f:
+                data1.append(float(line.split(' ')[1].split('\r')[0]))
+        data.append(data1)
 
-    data2 = []
-    with open(sys.argv[2]) as f:
-        for line in f:
-            data2.append(float(line.split(' ')[1].split('\r')[0]))
+    colours = ['r', 'b', 'g']
 
-    plt.plot(data2, 'r')
-    plt.plot(data1, 'b')
+    for i in range(len(data)):
+        plt.plot(data[i], colours[i])
     plt.show()
 
 

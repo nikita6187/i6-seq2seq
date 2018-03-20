@@ -56,7 +56,7 @@ class ConstantsManager(object):
         self.device_soft_placement = device_soft_placement
         self.debug_devices = debug_devices
         self.max_cores = max_cores
-
+    # TODO: add hashing function
 
 
 # ---------------- Helper classes -------------------------------

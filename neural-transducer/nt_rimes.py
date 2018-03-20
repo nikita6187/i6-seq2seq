@@ -20,6 +20,10 @@ import time
 
 
 def main():
+
+    # TODO: Iterate over training data and load it in together
+    # TODO: Make dev/val/test split (maybe 1 file for val and test)
+
     dir = os.path.dirname(os.path.realpath(__file__))
     i, i_l, t, t_l = dataset_loader.load_from_file('train.0010')
     bm = dataset_loader.BatchManager(i, i_l, t, t_l, pad='PAD')
