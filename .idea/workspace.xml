@@ -6,27 +6,7 @@
     <bookmark url="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py" description="for i in range(0, transducer_amount_outputs + 1): ..." line="87" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d17a6bc1-5a44-454e-8396-d93488e20b4e" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/neural-transducer/benchmarks/alignment_time_needed.txt" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/benchmarks/cluster_bm_cpu_2" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/benchmarks/cluster_bm_cpu_6" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/benchmarks/cluster_bm_cpu_8" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/benchmarks/cluster_cpu_alignment_time_needed.txt" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/benchmarks/cluster_cpu_core_assign_1" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/benchmarks/cluster_cpu_core_assign_1_then_5_cproportional" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/benchmarks/cluster_cpu_core_assign_1_then_5_varcores" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/benchmarks/cluster_cpu_core_assign_5" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/benchmarks/cluster_cpu_core_assign_test" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/benchmarks/cluster_gpu_alignment_time_needed.txt" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/benchmarks/cluster_rimes_training_log_1000" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/benchmarks/cluster_rimes_training_log_1000_losses" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/benchmarks/cluster_rimes_training_log_1000_lossviz.png" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/benchmarks/cluster_rimes_training_log_over1000" afterPath="" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/neural_transducer.py" afterPath="$PROJECT_DIR$/neural-transducer/neural_transducer.py" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/nt_rimes.py" afterPath="$PROJECT_DIR$/neural-transducer/nt_rimes.py" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/train.0010" afterPath="$PROJECT_DIR$/neural-transducer/rimes/training-data/train.0010" />
-      <change beforePath="$PROJECT_DIR$/neural-transducer/visualizations.py" afterPath="$PROJECT_DIR$/neural-transducer/visualizations.py" />
-    </list>
+    <list default="true" id="d17a6bc1-5a44-454e-8396-d93488e20b4e" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -65,7 +45,7 @@
       <file leaf-file-name="neural_transducer.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1620">
+            <state relative-caret-position="2040">
               <caret line="186" column="28" lean-forward="true" selection-start-line="186" selection-start-column="28" selection-end-line="186" selection-end-column="28" />
               <folding>
                 <element signature="e#0#23#0" expanded="true" />
@@ -739,7 +719,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/neural-transducer/neural_transducer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1620">
+        <state relative-caret-position="2040">
           <caret line="186" column="28" lean-forward="true" selection-start-line="186" selection-start-column="28" selection-end-line="186" selection-end-column="28" />
           <folding>
             <element signature="e#0#23#0" expanded="true" />
