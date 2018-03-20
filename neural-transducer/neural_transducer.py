@@ -7,6 +7,7 @@ import random
 import cPickle
 import os
 import time
+import hashlib
 
 # Implementation of the "A Neural Transducer" paper, Navdeep Jaitly et. al (2015): https://arxiv.org/abs/1511.04868
 
@@ -56,7 +57,9 @@ class ConstantsManager(object):
         self.device_soft_placement = device_soft_placement
         self.debug_devices = debug_devices
         self.max_cores = max_cores
-    # TODO: add hashing function
+
+    def hash_string(self, string):
+        return hashlib.md5(string.encode()).hexdigest()
 
 
 # ---------------- Helper classes -------------------------------
@@ -142,6 +145,7 @@ class DataManager(object):
 
         # Init the data dictionary
         for sample_id in range(full_inputs.shape[1]):
+            print self.cons_manager.hash_string(self.inputs[:, sample_id, :].tostring())
             self.data_dic[self.inputs[:, sample_id, :].tostring()] = (np.reshape(self.inputs[:, sample_id, :], newshape=(-1, 1, self.cons_manager.input_dimensions)),
                                                                       self.targets[sample_id],
                                                                       None)

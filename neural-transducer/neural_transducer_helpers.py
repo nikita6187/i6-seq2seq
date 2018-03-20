@@ -227,9 +227,10 @@ class AlignerWorker(object):
                     (inputs, target) = queue_input.get()  # Retrieve new data
                     if inputs is not None and target is not None:
                         init_time = time.time()
-                        new_alignment = self.get_alignment(sess, inputs=inputs, targets=target,
-                                                           input_block_size=self.cons_manager.input_block_size,
-                                                           transducer_max_width=self.cons_manager.transducer_max_width)
+                        #new_alignment = self.get_alignment(sess, inputs=inputs, targets=target,
+                        #                                   input_block_size=self.cons_manager.input_block_size,
+                        #                                   transducer_max_width=self.cons_manager.transducer_max_width)
+                        new_alignment = [0, 1, 2, 3]
                         temp_list.append((inputs.tostring(), new_alignment))
                         print 'Aligner time needed full: ' + str(time.time() - init_time)
                         sys.stdout.flush()

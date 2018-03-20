@@ -70,7 +70,7 @@ config = tf.ConfigProto(allow_soft_placement=constants_manager.device_soft_place
 config.gpu_options.allow_growth = True
 
 # Uncomment for training
-"""
+
 with tf.Session(config=config) as sess:
     sess.run(init)
 
@@ -98,7 +98,7 @@ with tf.Session(config=config) as sess:
 
     # Save for inference later
     model.save_model_for_inference(sess, model_save)
-"""
+
 
 # Inference
 with tf.Session(config=config) as inf_session:
