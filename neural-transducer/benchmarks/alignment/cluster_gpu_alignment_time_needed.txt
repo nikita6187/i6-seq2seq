@@ -1,0 +1,20 @@
+Child process alive.
+Size of alignments: 0.0522613525391
+Size of alignments: 0.0910415649414
+Size of alignments: 0.0524673461914
+Size of alignments: 0.00819396972656
+Full time needed for transducer: 19.1900036335
+Aligner time needed full: 19.4672169685
+Size of alignments: 0.0522613525391
+Size of alignments: 0.0910415649414
+Size of alignments: 0.0524444580078
+Size of alignments: 0.00817108154297
+Full time needed for transducer: 18.443174839
+Aligner time needed full: 18.7144329548
+Size of alignments: 0.0522613525391
+Size of alignments: 0.0910415649414
+Size of alignments: 0.0524444580078
+Size of alignments: 0.00819396972656
+Full time needed for transducer: 18.4647014141
+Aligner time needed full: 18.7280271053
+Size of alignments: 0.0522613525391
