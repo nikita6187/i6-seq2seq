@@ -7,8 +7,6 @@ import random
 import cPickle
 import os
 import time
-import hashlib
-import sys
 import bz2
 
 # Implementation of the "A Neural Transducer" paper, Navdeep Jaitly et. al (2015): https://arxiv.org/abs/1511.04868

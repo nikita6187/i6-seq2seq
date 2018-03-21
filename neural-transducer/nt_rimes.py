@@ -21,15 +21,54 @@ import time
 
 def main():
 
-    # TODO: Iterate over training data and load it in together
-    # TODO: Make dev/val/test split (maybe 1 file for val and test)
-
     dir = os.path.dirname(os.path.realpath(__file__))
-    i, i_l, t, t_l = dataset_loader.load_from_file(dir + '/rimes/training-data/train.0010')
+    i = []
+    i_l = []
+    t = []
+    t_l = []
+
+    # TODO: Test
+    for iteration in range(1, 11):
+        print '/rimes/training-data/train.00{0:02d}'.format(iteration)
+        temp_i, temp_i_l, temp_t, temp_t_l = dataset_loader.load_from_file(
+            dir + '/rimes/training-data/train.00{0:02d}'.format(iteration),
+            max_length_input=502,
+            max_length_target=18)
+        # Remove all sequences above 300 length
+        """
+        to_remove = np.argwhere(temp_i_l >= 300)
+        if len(to_remove) > 0:
+            to_remove = to_remove[0]
+            print 'Removing: ' + str(to_remove)
+            temp_i = np.delete(temp_i, to_remove, axis=0)
+            temp_i_l = np.delete(temp_i_l, to_remove, axis=0)
+            temp_t = np.delete(temp_t, to_remove, axis=0)
+            temp_t_l = np.delete(temp_t_l, to_remove, axis=0)
+        """
+        i.append(temp_i)
+        i_l.append(temp_i_l)
+        t.append(temp_t)
+        t_l.append(temp_t_l)
+        """
+        print '\nShapes:'
+        print temp_i.shape
+        print temp_i_l.shape
+        print temp_t.shape
+        print temp_t_l.shape
+        """
+
+    i = np.concatenate(i, axis=0)
+    i_l = np.concatenate(i_l, axis=0)
+    t = np.concatenate(t, axis=0)
+    t_l = np.concatenate(t_l, axis=0)
+
+    # Get size:
+    print 'Size of inputs: ' + str(sys.getsizeof(i))
+    print 'Total amount of sequences: ' + str(len(i_l))
+    
     bm = dataset_loader.BatchManager(i, i_l, t, t_l, pad='PAD')
     print bm.lookup
 
-    transducer_width = 5
     model_save = dir + '/rimes/model_init'
     input_save = dir + '/rimes/inputs.npy'
     target_save = dir + '/rimes/targets.npy'
@@ -104,6 +143,7 @@ def main():
             data_manager.set_online_alignment(True)
 
         # Run training
+        # TODO: make iteration count correct
         for i in range(5000):
             loss = model.apply_training_step(session=sess, batch_size=8, data_manager=data_manager)
 
@@ -119,6 +159,8 @@ def main():
                 model.save_model_for_inference(session=sess, path_name=dir + '/checkpoint/rimes_model_reuse_chkpt_' + str(i))
 
         print 'Total Time Needed: ' + str(time.time() - init_time)
+
+# TODO: load inference manager and use validation sets to test out
 
 
 if __name__ == '__main__':

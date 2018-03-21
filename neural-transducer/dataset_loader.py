@@ -11,11 +11,12 @@ def handle_ascii(s):
         return ''
 
 
-def load_from_file(file_name):
+def load_from_file(file_name, max_length_input, max_length_target):
     """
     Returns inputs [amount_of_inputs, max_seq_length, input_dim] and targets
     [amounts_of_targets, max_target_seq_length, target_dim] as numpy array.
     :param file_name:
+    :param max_length_input: Max length to use. Set 0 to auto determine max length.
     :return:
     """
     f = h5py.File(file_name, 'r')
@@ -24,7 +25,9 @@ def load_from_file(file_name):
     classes = f['targets']['labels']['classes'].value
     targets_raw = f['targets']['data']['classes'].value
 
-    max_length_input, max_length_target, _ = np.asarray(seq_lengths).max(axis=0)
+    # We now use pre determined lengths
+    if max_length_input == 0:
+        max_length_input, max_length_target, _ = np.asarray(seq_lengths).max(axis=0)
     dims = inputs_raw.shape[1]
 
     inputs_array = np.zeros((len(seq_lengths), max_length_input, dims))
@@ -139,7 +142,7 @@ class BatchManager:
         self._current_pos = 0
         self.lookup = []
         self.init_integer_encoding()
-        self.new_epoch()
+        #self.new_epoch()
         self.pad = pad
 
     def init_integer_encoding(self):

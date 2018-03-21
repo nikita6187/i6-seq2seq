@@ -228,10 +228,9 @@ class AlignerWorker(object):
                     (inputs, target) = queue_input.get()  # Retrieve new data
                     if inputs is not None and target is not None:
                         init_time = time.time()
-                        #new_alignment = self.get_alignment(sess, inputs=inputs, targets=target,
-                        #                                   input_block_size=self.cons_manager.input_block_size,
-                        #                                   transducer_max_width=self.cons_manager.transducer_max_width)
-                        new_alignment = [0, 1, 2, 3]
+                        new_alignment = self.get_alignment(sess, inputs=inputs, targets=target,
+                                                           input_block_size=self.cons_manager.input_block_size,
+                                                           transducer_max_width=self.cons_manager.transducer_max_width)
                         temp_list.append((inputs.tostring(), new_alignment))
                         print 'Aligner time needed full: ' + str(time.time() - init_time)
                         sys.stdout.flush()
@@ -297,7 +296,6 @@ class AlignerManager(object):
                 for p in process_data:
                     mem_usage += p.memory_info().rss
                 for p in self.processes:
-                    # TODO: test if this works on cluster
                     f = open('/proc/{pid}/stat'.format(pid=str(p.pid)), 'rb')
                     print '\n Process running on core: ' + str(f.read().split(' ')[-14])
                     f.close()
@@ -314,8 +312,6 @@ class AlignerManager(object):
             self.retrieve_new_alignments()
 
         # Finally process results into new dictionary
-
-        # TODO: add compression & test
 
         save_dic = {}  # Now: key = inputs.tostring, value = alignment
         for key in self.alignment_dic:
