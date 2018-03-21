@@ -10,6 +10,7 @@ import time
 import psutil
 from pympler import asizeof
 import subprocess
+import bz2
 
 
 def softmax(x, axis=None):
@@ -227,9 +228,10 @@ class AlignerWorker(object):
                     (inputs, target) = queue_input.get()  # Retrieve new data
                     if inputs is not None and target is not None:
                         init_time = time.time()
-                        new_alignment = self.get_alignment(sess, inputs=inputs, targets=target,
-                                                           input_block_size=self.cons_manager.input_block_size,
-                                                           transducer_max_width=self.cons_manager.transducer_max_width)
+                        #new_alignment = self.get_alignment(sess, inputs=inputs, targets=target,
+                        #                                   input_block_size=self.cons_manager.input_block_size,
+                        #                                   transducer_max_width=self.cons_manager.transducer_max_width)
+                        new_alignment = [0, 1, 2, 3]
                         temp_list.append((inputs.tostring(), new_alignment))
                         print 'Aligner time needed full: ' + str(time.time() - init_time)
                         sys.stdout.flush()
@@ -302,8 +304,8 @@ class AlignerManager(object):
 
                 mem_usage = float(mem_usage)/(1024 * 1024 * 1024) * 10
                 sys.stdout.write(
-                    '\n Progress: {0:02.3f}% / Time running: {1:08d} / Memory Usage: {2:.3f}G / Amount of child processes: {3:02d}'.format(
-                        float(i) / batch_size * 100, int(time.time() - init_time), mem_usage, len(self.processes)))
+                    '\n Progress: {0:02.3f}% / Time running: {1:08d} / Memory Usage: {2:.3f}G / Amount of child processes: {3:02d} / Size of dic: {4: 010d}  '.format(
+                        float(i) / batch_size * 100, int(time.time() - init_time), mem_usage, len(self.processes), sys.getsizeof(self.alignment_dic)))
                 sys.stdout.flush()
 
         # Wait for cleanup:
@@ -313,14 +315,17 @@ class AlignerManager(object):
 
         # Finally process results into new dictionary
 
+        # TODO: add compression & test
+
         save_dic = {}  # Now: key = inputs.tostring, value = alignment
         for key in self.alignment_dic:
             # In case of errors
             if self.alignment_dic[key] is not None:
                 save_dic[key] = self.alignment_dic[key]
-        file_alignments = open(self.cons_manager.path_to_alignments, 'wb')
-        cPickle.dump(save_dic, file_alignments)
-        file_alignments.close()
+        print 'Size of save dic: ' + str(sys.getsizeof(self.alignment_dic))
+
+        with bz2.BZ2File(self.cons_manager.path_to_alignments, 'w') as file_alignments:
+            cPickle.dump(save_dic, file_alignments)
 
     def retrieve_new_alignments(self):
         while self.output_queue.empty() is False:

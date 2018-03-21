@@ -7,6 +7,9 @@ import random
 import cPickle
 import os
 import time
+import hashlib
+import sys
+import bz2
 
 # Implementation of the "A Neural Transducer" paper, Navdeep Jaitly et. al (2015): https://arxiv.org/abs/1511.04868
 
@@ -56,7 +59,6 @@ class ConstantsManager(object):
         self.device_soft_placement = device_soft_placement
         self.debug_devices = debug_devices
         self.max_cores = max_cores
-    # TODO: add hashing function
 
 
 # ---------------- Helper classes -------------------------------
@@ -159,9 +161,8 @@ class DataManager(object):
         self.load_in_alignments()
 
     def load_in_alignments(self):
-        new_al_file = open(self.cons_manager.path_to_alignments, 'rb')
-        new_alignments = cPickle.load(new_al_file)
-        new_al_file.close()
+        with bz2.BZ2File(self.cons_manager.path_to_alignments, 'r') as new_al_file:
+            new_alignments = cPickle.load(new_al_file)
 
         # Apply new alignments to internal dictionary
         for input_key in new_alignments:
