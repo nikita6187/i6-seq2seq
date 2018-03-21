@@ -65,7 +65,7 @@ def main():
     # Get size:
     print 'Size of inputs: ' + str(sys.getsizeof(i))
     print 'Total amount of sequences: ' + str(len(i_l))
-    
+
     bm = dataset_loader.BatchManager(i, i_l, t, t_l, pad='PAD')
     print bm.lookup
 
