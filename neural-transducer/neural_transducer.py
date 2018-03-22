@@ -743,7 +743,7 @@ class Model(object):
 
         # Select first alignment if we have multiple with the same log prob (happens with ~1% probability in training)
 
-        print 'Full time needed for transducer: ' + str(self.full_time_needed_transducer)
+        print 'Greedy Full time needed for transducer: ' + str(self.full_time_needed_transducer)
 
         return current_alignments[0].alignment_locations
 
