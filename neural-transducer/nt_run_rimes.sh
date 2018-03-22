@@ -2,5 +2,5 @@
 echo "Running RIMES training"
 source ../env/bin/activate
 # Using greedy alignments
-python nt_rimes.py CPU:0 8 False 8 False . False True
+python nt_rimes.py CPU:0 15 False 15 False . False True
 

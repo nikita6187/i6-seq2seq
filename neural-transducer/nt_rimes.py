@@ -28,7 +28,7 @@ def main():
     t_l = []
 
     # We remove very long sequences (over 300 in length)
-    for iteration in range(1, 2):
+    for iteration in range(1, 11):
         print '/rimes/training-data/train.00{0:02d}'.format(iteration)
         temp_i, temp_i_l, temp_t, temp_t_l = dataset_loader.load_from_file(
             dir + '/rimes/training-data/train.00{0:02d}'.format(iteration),
@@ -85,7 +85,7 @@ def main():
 
     constants_manager = ConstantsManager(input_dimensions=i.shape[2], input_embedding_size=i.shape[2], inputs_embedded=True,
                                          encoder_hidden_units=512, transducer_hidden_units=1024, vocab_ids=bm.lookup,
-                                         input_block_size=75, beam_width=5, encoder_hidden_layers=3, transducer_max_width=8,
+                                         input_block_size=100, beam_width=5, encoder_hidden_layers=3, transducer_max_width=8,
                                          path_to_model=model_save, path_to_inputs=input_save, path_to_targets=target_save,
                                          path_to_alignments=alignments_save, path_to_cons_manager=cons_man_save,
                                          amount_of_aligners=int(sys.argv[2]), device_to_run=str(sys.argv[1]),
@@ -152,13 +152,17 @@ def main():
 
         # Run training
         # TODO: make iteration count correct
+        t__1 = time.time()
+
         for i in range(5000):
             loss = model.apply_training_step(session=sess, batch_size=8, data_manager=data_manager)
-
+            t_0 = time.time() - t__1
+            t__1 = time.time()
             print 'Loss: ' + str(loss)
 
             with open(dir + '/output.txt', 'a') as myfile:
-                myfile.write('\n' + str(loss))
+                myfile.write('\nLoss: ' + str(loss))
+                myfile.write('\nTime: ' + str(t_0))
 
             # Switch to offline alignments after 1000 batches & run new alignments
             if i == 1000 and run_offline_alignments is False and use_greedy is False:
