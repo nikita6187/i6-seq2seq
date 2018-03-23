@@ -154,7 +154,7 @@ def main():
         # TODO: make iteration count correct
         t__1 = time.time()
 
-        for i in range(5000):
+        for i in range(10000):
             loss = model.apply_training_step(session=sess, batch_size=8, data_manager=data_manager)
             t_0 = time.time() - t__1
             t__1 = time.time()
