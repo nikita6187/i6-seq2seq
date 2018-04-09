@@ -1,0 +1,26 @@
++------- PROLOGUE SCRIPT -----------------------------------------------
+|
+| Job ID ...........: 3809480
+| Started at .......: Thu Mar 22 16:31:13 CET 2018
+| Execution host ...: cluster-cn-193
+| Cluster queue ....: 24C-64G
+| Script ...........: /var/spool/sge/cluster-cn-193/job_scripts/3809480
+| > #!/bin/bash
+| > echo "Running RIMES training"
+| > source ../env/bin/activate
+| > # Using greedy alignments
+| > python nt_rimes.py CPU:0 8 False 8 False . False True
+| > 
+|
++------- PROLOGUE SCRIPT -----------------------------------------------
+Running RIMES training
++------- EPILOGUE SCRIPT -----------------------------------------------
+|
+| Job ID ..............: 3809480
+| Stopped at ..........: Thu Mar 22 16:44:09 CET 2018
+| Resources requested .: num_proc=8,h_rt=86400,qname=!*GPU*,scratch_free=5G,h_rss=20G,s_core=0,pxe=ubuntu_16.04,h_fsize=20G,h_vmem=512G
+| Resources used ......: cpu=00:57:26, mem=7072.55626 GB s, io=0.45192 GB, vmem=2.042G, maxvmem=2.355G, last_file_cache=627M, last_rss=4M, max-cache=2.338G
+| Memory used .........: 2.950G / 20.000G (14.8%)
+| Total time used .....: 0:12:55
+|
++------- EPILOGUE SCRIPT -----------------------------------------------
