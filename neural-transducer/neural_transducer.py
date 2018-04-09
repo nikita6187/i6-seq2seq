@@ -1,5 +1,6 @@
 import tensorflow as tf
 from tensorflow.contrib.rnn import LSTMCell, LSTMStateTuple
+from tensorflow.contrib.signal.python.ops.shape_ops import _infer_frame_shape
 from tensorflow.python.layers import core as layers_core
 import numpy as np
 import copy
@@ -278,7 +279,7 @@ class Model(object):
             #inputs_full = tf.Print(inputs_full, [inputs_full], message='Inputs', summarize=10)
 
             # Outputs
-            outputs_ta = tf.TensorArray(dtype=tf.float32, size=max_blocks)
+            outputs_ta = tf.TensorArray(dtype=tf.float32, size=max_blocks, infer_shape=False)
             init_state = (start_block, outputs_ta, encoder_hidden_init_fw, encoder_hidden_init_bw, trans_hidden_init,
                           0)
 
@@ -437,13 +438,14 @@ class Model(object):
         # All targets should be the same lengths, and be adjusted for this in preprocessing
         # Of shape [max_time, batch_size]
         targets = tf.placeholder(shape=(None, None), dtype=tf.int32, name='targets')
-        targets_one_hot = tf.one_hot(targets, depth=self.cons_manager.vocab_size, dtype=tf.float32, name='targets_one_hot')
+        targets_one_hot = tf.one_hot(targets, depth=self.cons_manager.vocab_size, dtype=tf.int32, name='targets_one_hot')
 
         targets_one_hot = tf.Print(targets_one_hot, [targets], message='Targets: ', summarize=100)
         targets_one_hot = tf.Print(targets_one_hot, [tf.argmax(self.logits, axis=2)], message='Argmax: ', summarize=100)
 
         self.logits = tf.identity(self.logits, name='training_logits')
-        stepwise_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=targets_one_hot, logits=self.logits)
+        # stepwise_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=targets_one_hot, logits=self.logits)
+        stepwise_cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=targets, logits=self.logits)
 
         loss = tf.reduce_mean(stepwise_cross_entropy)
         train_op = tf.train.AdamOptimizer().minimize(loss)

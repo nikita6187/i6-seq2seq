@@ -110,14 +110,14 @@ def sort_based_on_b(a, b):
         shuffled_b[old_index] = b[new_index]
     return shuffled_a, shuffled_b
 
-
+"""
 def sparse_tuple_from(sequences, dtype=np.int32):
-    """Create a sparse representention of x.
+    """"""Create a sparse representention of x.
     Args:
         sequences: a list of lists of type dtype where each element is a sequence
     Returns:
         A tuple with (indices, values, shape)
-    """
+    """"""
     indices = []
     values = []
 
@@ -130,7 +130,7 @@ def sparse_tuple_from(sequences, dtype=np.int32):
     shape = np.asarray([len(sequences), np.asarray(indices).max(0)[1]+1], dtype=np.int64)
 
     return indices, values, shape
-
+"""
 
 class BatchManager:
     def __init__(self, inputs, inputs_lengths, targets, targets_lengths, pad):

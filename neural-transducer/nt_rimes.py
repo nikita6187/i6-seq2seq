@@ -5,6 +5,7 @@ import numpy as np
 import dataset_loader
 import sys
 import time
+import datetime
 
 # USAGE:
 # Param 1: Device (e.g. CPU:0)
@@ -21,6 +22,7 @@ import time
 
 def main():
 
+    init_time_str = str(datetime.datetime.now())
     dir = os.path.dirname(os.path.realpath(__file__))
     i = []
     i_l = []
@@ -28,7 +30,7 @@ def main():
     t_l = []
 
     # We remove very long sequences (over 300 in length)
-    for iteration in range(1, 11):
+    for iteration in range(1, 2):  # 11
         print '/rimes/training-data/train.00{0:02d}'.format(iteration)
         temp_i, temp_i_l, temp_t, temp_t_l = dataset_loader.load_from_file(
             dir + '/rimes/training-data/train.00{0:02d}'.format(iteration),
@@ -160,7 +162,7 @@ def main():
             t__1 = time.time()
             print 'Loss: ' + str(loss)
 
-            with open(dir + '/output.txt', 'a') as myfile:
+            with open(dir + '/rimes/output_' + init_time_str + '.txt', 'a') as myfile:
                 myfile.write('\nLoss: ' + str(loss))
                 myfile.write('\nTime: ' + str(t_0))
 
