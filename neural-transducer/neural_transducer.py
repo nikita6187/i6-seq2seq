@@ -9,6 +9,7 @@ import cPickle
 import os
 import time
 import bz2
+from scipy import spatial
 
 # Implementation of the "A Neural Transducer" paper, Navdeep Jaitly et. al (2015): https://arxiv.org/abs/1511.04868
 
@@ -113,6 +114,16 @@ def softmax(x, axis=None):
     return e_x / np.sum(e_x, axis=axis, keepdims=True)
 
 
+
+
+def print_rel_distance(inputs):
+    np.set_printoptions(edgeitems=10, precision=3, suppress=True, linewidth=300)
+    print 'Cosine Distance: '
+    for i in range(0, inputs.shape[0] - 1):
+        print str(i) + ': ' + str(np.asarray([spatial.distance.cosine(inputs[i], inputs[i + 1])])) + ' :' + str(
+            inputs[i])
+
+
 class DataManager(object):
     def __init__(self, cons_manager, full_inputs, full_targets, model, session, online_alignments, use_greedy=False):
         """
@@ -184,6 +195,7 @@ class DataManager(object):
             (inp, targ, al) = self.data_dic[inputs]
             if al is None:
                 (inp, targ, al) = self.get_new_random_sample()  # This could go bad
+        print_rel_distance(inp)
         return inp, targ, al
 
     def get_new_random_sample(self):
@@ -749,6 +761,36 @@ class Model(object):
 
         return current_alignments[0].alignment_locations
 
+    def get_alignment_cosine_distance(self, inputs, targets, input_block_size, transducer_max_width, correlation_param):
+        amount_of_input_blocks = int(np.ceil(inputs.shape[0] / input_block_size))
+        # Get summed distance within blocks
+        blocks = [[0] * input_block_size] * amount_of_input_blocks
+        for block in range(0, amount_of_input_blocks):
+            dist = []
+            for input_index in range(0, input_block_size - 1):
+                dist.append(abs(spatial.distance.cosine(inputs[block + input_index], inputs[block + input_index + 1])))
+            blocks[block] = dist
+
+        # Calculate max
+        max_dist = max([max(x) for x in blocks])
+
+        # TODO: maybe linear regression based on sampling from exact to determine correlation_param
+
+        avg_targets_per_block = int(len(targets) / amount_of_input_blocks)
+        block_lengths = [avg_targets_per_block] * amount_of_input_blocks
+        for i in range(0, len(block_lengths)):
+            block_lengths[i] = block_lengths[i] * correlation_param / max_dist
+
+        normalization = len(targets) / sum(block_lengths)
+        block_lengths = [min(round(block * normalization), transducer_max_width) for block in block_lengths]
+        # TODO: check rounding so that total length is equal to target length
+        alignment = []
+        loc = 0
+        for i in range(len(block_lengths)):
+            alignment.append(loc + block_lengths[i])
+            loc += block_lengths[i]
+        return alignment
+
     def apply_training_step(self, session, batch_size, data_manager):
         """
         Applies a training step to the transducer model. This method can be called multiple times from e.g. a loop.
@@ -856,6 +898,8 @@ class Model(object):
                                np.zeros(shape=(self.cons_manager.encoder_hidden_layers, 2, batch_size, self.cons_manager.encoder_hidden_units)))
         trans_hidden_init = np.zeros(shape=(2, batch_size, self.cons_manager.transducer_hidden_units))
 
+        init_time = time.time()
+
         # Run training step
         _, loss = session.run([self.train_op, self.loss], feed_dict={
             self.max_blocks: len(lengths),
@@ -869,6 +913,8 @@ class Model(object):
             self.inference_mode: 0.0,
             self.teacher_forcing_targets: teacher_forcing,
         })
+
+        print 'Training time: ' + str(time.time() - init_time)
 
         return loss
 
