@@ -771,15 +771,15 @@ class Model(object):
                 dist.append(abs(spatial.distance.cosine(inputs[block + input_index], inputs[block + input_index + 1])))
             blocks[block] = dist
 
-        # Calculate max
-        max_dist = max([max(x) for x in blocks])
+        # Calculate mean
+        mean = max([max(x) for x in blocks]) / (input_block_size * amount_of_input_blocks)
 
         # TODO: maybe linear regression based on sampling from exact to determine correlation_param
 
         avg_targets_per_block = int(len(targets) / amount_of_input_blocks)
         block_lengths = [avg_targets_per_block] * amount_of_input_blocks
         for i in range(0, len(block_lengths)):
-            block_lengths[i] = block_lengths[i] * correlation_param / max_dist
+            block_lengths[i] = block_lengths[i] * correlation_param * ((sum(blocks[i])/input_block_size) - mean + 1)
 
         normalization = len(targets) / sum(block_lengths)
         block_lengths = [min(round(block * normalization), transducer_max_width) for block in block_lengths]
