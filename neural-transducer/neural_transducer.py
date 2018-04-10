@@ -779,10 +779,11 @@ class Model(object):
         avg_targets_per_block = int(len(targets) / amount_of_input_blocks)
         block_lengths = [avg_targets_per_block] * amount_of_input_blocks
         for i in range(0, len(block_lengths)):
-            block_lengths[i] = block_lengths[i] * correlation_param * ((sum(blocks[i])/input_block_size) - mean + 1)
+            # Apply change
+            block_lengths[i] += block_lengths[i] * correlation_param * ((sum(blocks[i])/input_block_size) - mean)
 
         normalization = len(targets) / sum(block_lengths)
-        block_lengths = [min(round(block * normalization), transducer_max_width) for block in block_lengths]
+        block_lengths = [max(0.0, min(round(block * normalization), transducer_max_width)) for block in block_lengths]
         # TODO: check rounding so that total length is equal to target length
         alignment = []
         loc = 0
