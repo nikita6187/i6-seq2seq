@@ -59,6 +59,8 @@ class ConstantsManager(object):
         self.device_soft_placement = device_soft_placement
         self.debug_devices = debug_devices
         self.max_cores = max_cores
+        # Research correlation
+        self.alc_correlation_data = []
 
 
 # ---------------- Helper classes -------------------------------
@@ -605,6 +607,20 @@ class Model(object):
                 #print str(alignment.alignment_locations) + ' ' + str(alignment.log_prob)
 
             #print 'Size of alignments: ' + str(float(asizeof.asizeof(current_alignments))/(1024 * 1024))
+
+        # ---- Save for discussion -----
+        amount_of_input_blocks = int(np.ceil(inputs.shape[0] / input_block_size))
+        blocks = [[0] * input_block_size] * amount_of_input_blocks
+        block_full = [0] * amount_of_input_blocks
+        for block in range(0, amount_of_input_blocks):
+            dist = []
+            for input_index in range(0, input_block_size - 1):
+                dist.append(abs(spatial.distance.cosine(inputs[block + input_index], inputs[block + input_index + 1])))
+            blocks[block] = dist
+            block_full[block] = sum(dist)/amount_of_input_blocks
+        for block in range(len(block_full)):
+            self.cons_manager.alc_correlation_data.append(
+                (block_full[block], current_alignments[0].alignment_locations[block]))
 
         # Select first alignment if we have multiple with the same log prob (happens with ~1% probability in training)
 

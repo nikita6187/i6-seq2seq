@@ -6,6 +6,7 @@ import dataset_loader
 import sys
 import time
 import datetime
+import matplotlib.pyplot as plt
 
 # USAGE:
 # Param 1: Device (e.g. CPU:0)
@@ -156,7 +157,7 @@ def main():
         # TODO: make iteration count correct
         t__1 = time.time()
 
-        for i in range(10000):
+        for i in range(2):
             loss = model.apply_training_step(session=sess, batch_size=8, data_manager=data_manager)
             t_0 = time.time() - t__1
             t__1 = time.time()
@@ -174,6 +175,12 @@ def main():
             # Save the model every 20 iterations
             if i % 20 == 0:
                 model.save_model_for_inference(session=sess, path_name=dir + '/checkpoint/rimes_full_e1_chkpt_' + str(i))
+
+        # Display correlation
+        x_data = [x[0] for x in constants_manager.alc_correlation_data]
+        y_data = [x[1] for x in constants_manager.alc_correlation_data]
+        plt.plot(x_data, y_data, 'r')
+        plt.show()
 
         print 'Total Time Needed: ' + str(time.time() - init_time)
 
