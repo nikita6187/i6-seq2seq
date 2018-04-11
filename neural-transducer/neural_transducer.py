@@ -10,6 +10,7 @@ import os
 import time
 import bz2
 from scipy import spatial
+import math
 
 # Implementation of the "A Neural Transducer" paper, Navdeep Jaitly et. al (2015): https://arxiv.org/abs/1511.04868
 
@@ -197,7 +198,7 @@ class DataManager(object):
             (inp, targ, al) = self.data_dic[inputs]
             if al is None:
                 (inp, targ, al) = self.get_new_random_sample()  # This could go bad
-        print_rel_distance(inp)
+        #print_rel_distance(inp)
         return inp, targ, al
 
     def get_new_random_sample(self):
@@ -612,16 +613,28 @@ class Model(object):
         amount_of_input_blocks = int(np.ceil(inputs.shape[0] / input_block_size))
         blocks = [[0] * input_block_size] * amount_of_input_blocks
         block_full = [0] * amount_of_input_blocks
+        total_amount = 0
         for block in range(0, amount_of_input_blocks):
             dist = []
+            # TODO: catch NaN
             for input_index in range(0, input_block_size - 1):
-                dist.append(abs(spatial.distance.cosine(inputs[block + input_index], inputs[block + input_index + 1])))
+                newdist = abs(spatial.distance.cosine(inputs[block * input_block_size + input_index], inputs[block * input_block_size + input_index + 1]))
+                if math.isnan(newdist) is False:
+                    total_amount += 1
+                    dist.append(newdist)
+                    print inputs[block * input_block_size + input_index]
+                    print (block * input_block_size + input_index)
             blocks[block] = dist
-            block_full[block] = sum(dist)/amount_of_input_blocks
-        for block in range(len(block_full)):
+            if len(dist) > 0:
+                block_full[block] = sum(dist)/len(dist)
+        mean = sum([sum(x) for x in blocks]) / total_amount
+        for block in range(1, len(block_full)):
             self.cons_manager.alc_correlation_data.append(
-                (block_full[block], current_alignments[0].alignment_locations[block]))
+                (block_full[block]/mean,
+                 current_alignments[0].alignment_locations[block] - current_alignments[0].alignment_locations[
+                     block - 1]))
 
+            print 'New data: ' + str(self.cons_manager.alc_correlation_data[-1])
         # Select first alignment if we have multiple with the same log prob (happens with ~1% probability in training)
 
         print 'Full time needed for transducer: ' + str(self.full_time_needed_transducer)
@@ -788,7 +801,7 @@ class Model(object):
             blocks[block] = dist
 
         # Calculate mean
-        mean = max([max(x) for x in blocks]) / (input_block_size * amount_of_input_blocks)
+        mean = sum([sum(x) for x in blocks]) / (input_block_size * amount_of_input_blocks)
 
         # TODO: maybe linear regression based on sampling from exact to determine correlation_param
 

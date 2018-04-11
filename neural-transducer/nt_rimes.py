@@ -87,8 +87,8 @@ def main():
     cons_man_save = dir + '/rimes/cons_manager'
 
     constants_manager = ConstantsManager(input_dimensions=i.shape[2], input_embedding_size=i.shape[2], inputs_embedded=True,
-                                         encoder_hidden_units=512, transducer_hidden_units=1024, vocab_ids=bm.lookup,
-                                         input_block_size=100, beam_width=5, encoder_hidden_layers=1, transducer_max_width=8,
+                                         encoder_hidden_units=256, transducer_hidden_units=512, vocab_ids=bm.lookup,
+                                         input_block_size=25, beam_width=5, encoder_hidden_layers=1, transducer_max_width=8,
                                          path_to_model=model_save, path_to_inputs=input_save, path_to_targets=target_save,
                                          path_to_alignments=alignments_save, path_to_cons_manager=cons_man_save,
                                          amount_of_aligners=int(sys.argv[2]), device_to_run=str(sys.argv[1]),
@@ -157,8 +157,8 @@ def main():
         # TODO: make iteration count correct
         t__1 = time.time()
 
-        for i in range(2):
-            loss = model.apply_training_step(session=sess, batch_size=8, data_manager=data_manager)
+        for i in range(300):
+            loss = model.apply_training_step(session=sess, batch_size=1, data_manager=data_manager)
             t_0 = time.time() - t__1
             t__1 = time.time()
             print 'Loss: ' + str(loss)
@@ -167,7 +167,7 @@ def main():
                 myfile.write('\nLoss: ' + str(loss))
                 myfile.write('\nTime: ' + str(t_0))
 
-            # Switch to offline alignments after 1000 batches & run new alignments
+            # Switch to offline alignments after 1000 batches & run new alignmentsinput_block_size
             if i == 1000 and run_offline_alignments is False and use_greedy is False:
                 data_manager.set_online_alignment(False)
                 data_manager.run_new_alignments()
@@ -177,9 +177,10 @@ def main():
                 model.save_model_for_inference(session=sess, path_name=dir + '/checkpoint/rimes_full_e1_chkpt_' + str(i))
 
         # Display correlation
+        print constants_manager.alc_correlation_data
         x_data = [x[0] for x in constants_manager.alc_correlation_data]
         y_data = [x[1] for x in constants_manager.alc_correlation_data]
-        plt.plot(x_data, y_data, 'r')
+        plt.plot(x_data, y_data, 'go')
         plt.show()
 
         print 'Total Time Needed: ' + str(time.time() - init_time)
