@@ -616,25 +616,42 @@ class Model(object):
         total_amount = 0
         for block in range(0, amount_of_input_blocks):
             dist = []
-            # TODO: catch NaN
             for input_index in range(0, input_block_size - 1):
                 newdist = abs(spatial.distance.cosine(inputs[block * input_block_size + input_index], inputs[block * input_block_size + input_index + 1]))
                 if math.isnan(newdist) is False:
                     total_amount += 1
                     dist.append(newdist)
-                    print inputs[block * input_block_size + input_index]
-                    print (block * input_block_size + input_index)
+                    #print inputs[block * input_block_size + input_index]
+                    #print (block * input_block_size + input_index)
             blocks[block] = dist
             if len(dist) > 0:
                 block_full[block] = sum(dist)/len(dist)
         mean = sum([sum(x) for x in blocks]) / total_amount
-        for block in range(1, len(block_full)):
-            self.cons_manager.alc_correlation_data.append(
-                (block_full[block]/mean,
-                 current_alignments[0].alignment_locations[block] - current_alignments[0].alignment_locations[
-                     block - 1]))
 
-            print 'New data: ' + str(self.cons_manager.alc_correlation_data[-1])
+        # Only look at part without padding, ie symbol with id 3
+        print 'Targets: ' + str(targets)
+        true_t_length = len([x for x in targets if x != 3])
+        print 'Targets true length: ' + str(true_t_length)
+        accumulating = 0
+
+        # Do first round explicitly
+        self.cons_manager.alc_correlation_data.append(
+            (block_full[0] / mean, current_alignments[0].alignment_locations[0]))
+        with open('/home/nikita/Desktop/correlation_output.txt', 'a') as myfile:
+            myfile.write(str(self.cons_manager.alc_correlation_data[-1]))
+        print 'New data: ' + str(self.cons_manager.alc_correlation_data[-1])
+        accumulating += self.cons_manager.alc_correlation_data[-1][1]
+
+        for block in range(1, len(block_full)):
+            if accumulating < true_t_length:
+                self.cons_manager.alc_correlation_data.append(
+                    (block_full[block]/mean,
+                     current_alignments[0].alignment_locations[block] - current_alignments[0].alignment_locations[
+                         block - 1]))
+                accumulating += self.cons_manager.alc_correlation_data[-1][1]
+                with open('/home/nikita/Desktop/correlation_output.txt', 'a') as myfile:
+                    myfile.write(str(self.cons_manager.alc_correlation_data[-1]))
+                print 'New data: ' + str(self.cons_manager.alc_correlation_data[-1])
         # Select first alignment if we have multiple with the same log prob (happens with ~1% probability in training)
 
         print 'Full time needed for transducer: ' + str(self.full_time_needed_transducer)
