@@ -455,12 +455,12 @@ class Model(object):
         targets = tf.placeholder(shape=(None, None), dtype=tf.int32, name='targets')
         targets_one_hot = tf.one_hot(targets, depth=self.cons_manager.vocab_size, dtype=tf.int32, name='targets_one_hot')
 
-        targets_one_hot = tf.Print(targets_one_hot, [targets], message='Targets: ', summarize=100)
-        targets_one_hot = tf.Print(targets_one_hot, [tf.argmax(self.logits, axis=2)], message='Argmax: ', summarize=100)
-
         self.logits = tf.identity(self.logits, name='training_logits')
         # stepwise_cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=targets_one_hot, logits=self.logits)
         stepwise_cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=targets, logits=self.logits)
+
+        stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [targets], message='Targets: ', summarize=100)
+        stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [tf.argmax(self.logits, axis=2)], message='Argmax: ', summarize=100)
 
         loss = tf.reduce_mean(stepwise_cross_entropy)
         train_op = tf.train.AdamOptimizer().minimize(loss)
@@ -637,7 +637,7 @@ class Model(object):
         # Do first round explicitly
         self.cons_manager.alc_correlation_data.append(
             (block_full[0] / mean, current_alignments[0].alignment_locations[0]))
-        with open('/home/nikita/Desktop/correlation_output.txt', 'a') as myfile:
+        with open(os.getcwd() + '/correlation_output.txt', 'a') as myfile:
             myfile.write(str(self.cons_manager.alc_correlation_data[-1]))
         print 'New data: ' + str(self.cons_manager.alc_correlation_data[-1])
         accumulating += self.cons_manager.alc_correlation_data[-1][1]
@@ -993,7 +993,7 @@ class Model(object):
             graph.get_operation_by_name(name='transducer_training/encoder_hidden_state_new_bw').outputs[0]
         self.transducer_hidden_state_new = \
             graph.get_operation_by_name(name='transducer_training/transducer_hidden_state_new').outputs[0]
-        
+
         #print session.run(tf.get_default_graph().get_tensor_by_name('transducer_training/bidirectional_rnn/bw/multi_rnn_cell/cell_0/lstm_cell/bias:0'))
         print 'Loaded in model from: ' + str(path)
 

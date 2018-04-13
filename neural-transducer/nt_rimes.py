@@ -31,7 +31,7 @@ def main():
     t_l = []
 
     # We remove very long sequences (over 300 in length)
-    for iteration in range(1, 2):  # TODO: 11
+    for iteration in range(1, 11):  # TODO: 11
         print '/rimes/training-data/train.00{0:02d}'.format(iteration)
         temp_i, temp_i_l, temp_t, temp_t_l = dataset_loader.load_from_file(
             dir + '/rimes/training-data/train.00{0:02d}'.format(iteration),
@@ -87,8 +87,8 @@ def main():
     cons_man_save = dir + '/rimes/cons_manager'
 
     constants_manager = ConstantsManager(input_dimensions=i.shape[2], input_embedding_size=i.shape[2], inputs_embedded=True,
-                                         encoder_hidden_units=256, transducer_hidden_units=512, vocab_ids=bm.lookup,
-                                         input_block_size=25, beam_width=5, encoder_hidden_layers=1, transducer_max_width=8,
+                                         encoder_hidden_units=512, transducer_hidden_units=1024, vocab_ids=bm.lookup,
+                                         input_block_size=25, beam_width=5, encoder_hidden_layers=3, transducer_max_width=8,
                                          path_to_model=model_save, path_to_inputs=input_save, path_to_targets=target_save,
                                          path_to_alignments=alignments_save, path_to_cons_manager=cons_man_save,
                                          amount_of_aligners=int(sys.argv[2]), device_to_run=str(sys.argv[1]),
@@ -157,13 +157,13 @@ def main():
         # TODO: make iteration count correct
         t__1 = time.time()
 
-        for i in range(22):
-            loss = model.apply_training_step(session=sess, batch_size=1, data_manager=data_manager)
+        for i in range(20000):
+            loss = model.apply_training_step(session=sess, batch_size=8, data_manager=data_manager)
             t_0 = time.time() - t__1
             t__1 = time.time()
             print 'Loss: ' + str(loss)
 
-            with open(dir + '/rimes/output_' + init_time_str + '.txt', 'a') as myfile:
+            with open(dir + '/rimes/rimes_2nd_full_run/output_' + init_time_str + '.txt', 'a') as myfile:
                 myfile.write('\nLoss: ' + str(loss))
                 myfile.write('\nTime: ' + str(t_0))
 
@@ -174,7 +174,7 @@ def main():
 
             # Save the model every 20 iterations
             if i % 20 == 0:
-                model.save_model_for_inference(session=sess, path_name=dir + '/checkpoint/test_rimes_' + str(i))
+                model.save_model_for_inference(session=sess, path_name=dir + '/checkpoint/2nd_full_run/rimes_2_full_' + str(i))
 
         # Display correlation
         print constants_manager.alc_correlation_data
