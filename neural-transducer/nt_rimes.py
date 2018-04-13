@@ -6,7 +6,7 @@ import dataset_loader
 import sys
 import time
 import datetime
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 # USAGE:
 # Param 1: Device (e.g. CPU:0)
@@ -177,11 +177,13 @@ def main():
                 model.save_model_for_inference(session=sess, path_name=dir + '/checkpoint/2nd_full_run/rimes_2_full_' + str(i))
 
         # Display correlation
+        """
         print constants_manager.alc_correlation_data
         x_data = [x[0] for x in constants_manager.alc_correlation_data]
         y_data = [x[1] for x in constants_manager.alc_correlation_data]
         plt.plot(x_data, y_data, 'go')
         plt.show()
+        """
 
         print 'Total Time Needed: ' + str(time.time() - init_time)
 
