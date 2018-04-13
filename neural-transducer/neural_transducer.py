@@ -649,7 +649,7 @@ class Model(object):
                      current_alignments[0].alignment_locations[block] - current_alignments[0].alignment_locations[
                          block - 1]))
                 accumulating += self.cons_manager.alc_correlation_data[-1][1]
-                with open('/home/nikita/Desktop/correlation_output.txt', 'a') as myfile:
+                with open('~/correlation_output.txt', 'a') as myfile:
                     myfile.write(str(self.cons_manager.alc_correlation_data[-1]))
                 print 'New data: ' + str(self.cons_manager.alc_correlation_data[-1])
         # Select first alignment if we have multiple with the same log prob (happens with ~1% probability in training)
@@ -966,7 +966,7 @@ class Model(object):
         return loss
 
     def save_model_for_inference(self, session, path_name):
-        self.train_saver.save(session, path_name)
+        self.train_saver.save(session, path_name, write_meta_graph=True)
         print 'Model saved to ' + str(path_name)
 
     def load_model(self, session, path):
@@ -993,6 +993,8 @@ class Model(object):
             graph.get_operation_by_name(name='transducer_training/encoder_hidden_state_new_bw').outputs[0]
         self.transducer_hidden_state_new = \
             graph.get_operation_by_name(name='transducer_training/transducer_hidden_state_new').outputs[0]
+        
+        #print session.run(tf.get_default_graph().get_tensor_by_name('transducer_training/bidirectional_rnn/bw/multi_rnn_cell/cell_0/lstm_cell/bias:0'))
         print 'Loaded in model from: ' + str(path)
 
 

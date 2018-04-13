@@ -157,7 +157,7 @@ def main():
         # TODO: make iteration count correct
         t__1 = time.time()
 
-        for i in range(320):
+        for i in range(22):
             loss = model.apply_training_step(session=sess, batch_size=1, data_manager=data_manager)
             t_0 = time.time() - t__1
             t__1 = time.time()
@@ -174,7 +174,7 @@ def main():
 
             # Save the model every 20 iterations
             if i % 20 == 0:
-                model.save_model_for_inference(session=sess, path_name=dir + '/checkpoint/rimes_full_e1_chkpt_' + str(i))
+                model.save_model_for_inference(session=sess, path_name=dir + '/checkpoint/test_rimes_' + str(i))
 
         # Display correlation
         print constants_manager.alc_correlation_data
