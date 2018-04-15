@@ -86,9 +86,10 @@ def main():
     alignments_save = dir + '/rimes/alignments'
     cons_man_save = dir + '/rimes/cons_manager'
 
+    # Note: set input_block_size correctly
     constants_manager = ConstantsManager(input_dimensions=i.shape[2], input_embedding_size=i.shape[2], inputs_embedded=True,
                                          encoder_hidden_units=512, transducer_hidden_units=1024, vocab_ids=bm.lookup,
-                                         input_block_size=25, beam_width=5, encoder_hidden_layers=3, transducer_max_width=8,
+                                         input_block_size=100, beam_width=5, encoder_hidden_layers=3, transducer_max_width=8,
                                          path_to_model=model_save, path_to_inputs=input_save, path_to_targets=target_save,
                                          path_to_alignments=alignments_save, path_to_cons_manager=cons_man_save,
                                          amount_of_aligners=int(sys.argv[2]), device_to_run=str(sys.argv[1]),
