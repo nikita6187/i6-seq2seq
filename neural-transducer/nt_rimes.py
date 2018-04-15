@@ -164,7 +164,7 @@ def main():
             t__1 = time.time()
             print 'Loss: ' + str(loss)
 
-            with open(dir + '/rimes/rimes_2nd_full_run/output_' + init_time_str + '.txt', 'a') as myfile:
+            with open(dir + '/rimes/rimes_2nd_full_run/output_rough_' + init_time_str + '.txt', 'a') as myfile:
                 myfile.write('\nLoss: ' + str(loss))
                 myfile.write('\nTime: ' + str(t_0))
 
@@ -175,7 +175,7 @@ def main():
 
             # Save the model every 20 iterations
             if i % 20 == 0:
-                model.save_model_for_inference(session=sess, path_name=dir + '/checkpoint/2nd_full_run/rimes_2_full_' + str(i))
+                model.save_model_for_inference(session=sess, path_name=dir + '/checkpoint/2nd_full_run/rimes_2_full_rough_' + str(i))
 
         # Display correlation
         """
