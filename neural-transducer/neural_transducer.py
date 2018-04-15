@@ -148,12 +148,13 @@ class DataManager(object):
         self.use_greedy = use_greedy
 
         # Save inputs, targets, model & cons_manager
-        np.save(self.cons_manager.path_to_inputs, self.inputs)
-        np.save(self.cons_manager.path_to_targets, np.asarray(self.targets))
-        model.save_model_for_inference(session, path_name=self.cons_manager.path_to_model)
-        cons_man_file = open(self.cons_manager.path_to_cons_manager, 'wb')
-        cPickle.dump(self.cons_manager, cons_man_file)
-        cons_man_file.close()
+        if online_alignments is False:
+            np.save(self.cons_manager.path_to_inputs, self.inputs)
+            np.save(self.cons_manager.path_to_targets, np.asarray(self.targets))
+            model.save_model_for_inference(session, path_name=self.cons_manager.path_to_model)
+            cons_man_file = open(self.cons_manager.path_to_cons_manager, 'wb')
+            cPickle.dump(self.cons_manager, cons_man_file)
+            cons_man_file.close()
 
         # Init the data dictionary
         for sample_id in range(full_inputs.shape[1]):
