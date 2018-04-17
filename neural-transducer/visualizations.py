@@ -12,15 +12,19 @@ def main():
 
     average_over = int(sys.argv[1])
 
-    for i in range(2, len(sys.argv) - 1):
+    for i in range(1, len(sys.argv) - 1):
         data1 = []
+        data2 = []
         with open(sys.argv[i + 1]) as f:
+            for line in f:
+                data1.append(float(line.split(' ')[1].split('\r')[0]))
             new_data = 0
-            for i in range(average_over):
-                for line in f:
-                    new_data += float(line.split(' ')[1].split('\r')[0])
-            new_data /= average_over
-            data.append(new_data)
+            for i in range(len(data1)):
+                new_data += data1[i]/average_over
+                if i % average_over == 0:
+                    data2.append(new_data)
+                    new_data = 0
+        data.append(data2)
 
     colours = ['r', 'b', 'g']
 
