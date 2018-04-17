@@ -22,3 +22,6 @@ python nt_rimes.py CPU:0 15 False 15 False . False True
 # - correct NT model
 # - batch size correct
 # - qsub output file correctly set
+# - check if there is enough memory
+#qsub -cwd -l h_vmem=40G -l h_rt=150:00:00 -l num_proc=16 -m abe -o ./rimes/rimes_2
+
