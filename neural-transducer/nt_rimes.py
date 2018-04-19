@@ -6,7 +6,7 @@ import dataset_loader
 import sys
 import time
 import datetime
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 # USAGE:
 # Param 1: Device (e.g. CPU:0)
@@ -87,9 +87,10 @@ def main():
     cons_man_save = dir + '/rimes/cons_manager'
 
     # Note: set input_block_size correctly
+    # TODO: note input block size!
     constants_manager = ConstantsManager(input_dimensions=i.shape[2], input_embedding_size=i.shape[2], inputs_embedded=True,
                                          encoder_hidden_units=512, transducer_hidden_units=1024, vocab_ids=bm.lookup,
-                                         input_block_size=100, beam_width=5, encoder_hidden_layers=3, transducer_max_width=8,
+                                         input_block_size=25, beam_width=5, encoder_hidden_layers=3, transducer_max_width=8,
                                          path_to_model=model_save, path_to_inputs=input_save, path_to_targets=target_save,
                                          path_to_alignments=alignments_save, path_to_cons_manager=cons_man_save,
                                          amount_of_aligners=int(sys.argv[2]), device_to_run=str(sys.argv[1]),
@@ -158,13 +159,13 @@ def main():
         # TODO: make iteration count correct
         t__1 = time.time()
 
-        for i in range(20000):
-            loss = model.apply_training_step(session=sess, batch_size=8, data_manager=data_manager)
+        for i in range(100):
+            loss = model.apply_training_step(session=sess, batch_size=1, data_manager=data_manager)
             t_0 = time.time() - t__1
             t__1 = time.time()
             print 'Loss: ' + str(loss)
 
-            with open(dir + '/rimes/rimes_2nd_full_run/output_rough_' + init_time_str + '.txt', 'a') as myfile:
+            with open(dir + '/rimes/output_correlation_' + init_time_str + '.txt', 'a') as myfile:
                 myfile.write('\nLoss: ' + str(loss))
                 myfile.write('\nTime: ' + str(t_0))
 
@@ -175,16 +176,14 @@ def main():
 
             # Save the model every 20 iterations
             if i % 20 == 0:
-                model.save_model_for_inference(session=sess, path_name=dir + '/checkpoint/2nd_full_run/rimes_2_full_rough_' + str(i))
+                model.save_model_for_inference(session=sess, path_name=dir + '/checkpoint/2nd_full_run/rimes_2_full_corr_' + str(i))
 
         # Display correlation
-        """
         print constants_manager.alc_correlation_data
         x_data = [x[0] for x in constants_manager.alc_correlation_data]
         y_data = [x[1] for x in constants_manager.alc_correlation_data]
         plt.plot(x_data, y_data, 'go')
         plt.show()
-        """
 
         print 'Total Time Needed: ' + str(time.time() - init_time)
 

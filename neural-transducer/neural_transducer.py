@@ -650,7 +650,7 @@ class Model(object):
                      current_alignments[0].alignment_locations[block] - current_alignments[0].alignment_locations[
                          block - 1]))
                 accumulating += self.cons_manager.alc_correlation_data[-1][1]
-                with open('~/correlation_output.txt', 'a') as myfile:
+                with open(os.getcwd() + '/correlation_output.txt', 'a') as myfile:
                     myfile.write(str(self.cons_manager.alc_correlation_data[-1]))
                 print 'New data: ' + str(self.cons_manager.alc_correlation_data[-1])
         # Select first alignment if we have multiple with the same log prob (happens with ~1% probability in training)
