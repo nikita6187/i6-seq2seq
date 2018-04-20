@@ -6,7 +6,7 @@ import dataset_loader
 import sys
 import time
 import datetime
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 # USAGE:
 # Param 1: Device (e.g. CPU:0)
