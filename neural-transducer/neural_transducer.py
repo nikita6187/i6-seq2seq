@@ -128,7 +128,8 @@ def print_rel_distance(inputs):
 
 
 class DataManager(object):
-    def __init__(self, cons_manager, full_inputs, full_targets, model, session, online_alignments, use_greedy=False):
+    def __init__(self, cons_manager, full_inputs, full_targets, model, session, online_alignments, use_greedy=False,
+                 inference=False):
         """
         Loads the data manager
         :param cons_manager:
@@ -146,6 +147,7 @@ class DataManager(object):
         self.session = session
         self.online_alignments = online_alignments
         self.use_greedy = use_greedy
+        self.inference = inference
 
         # Save inputs, targets, model & cons_manager
         if online_alignments is False:
@@ -184,22 +186,24 @@ class DataManager(object):
         print 'New alignments loaded'
 
     def get_new_sample(self, inputs):
-        if self.online_alignments is True:
-            (inp, targ, _) = self.data_dic[inputs]
-            if self.use_greedy is True:
-                al = self.model.get_alignment_greedy(session=self.session, inputs=inp, targets=targ,
-                                                     input_block_size=self.cons_manager.input_block_size,
-                                                     transducer_max_width=self.cons_manager.transducer_max_width)
+        if self.inference is False:
+            if self.online_alignments is True:
+                (inp, targ, _) = self.data_dic[inputs]
+                if self.use_greedy is True:
+                    al = self.model.get_alignment_greedy(session=self.session, inputs=inp, targets=targ,
+                                                         input_block_size=self.cons_manager.input_block_size,
+                                                         transducer_max_width=self.cons_manager.transducer_max_width)
+                else:
+                    al = self.model.get_alignment(session=self.session, inputs=inp, targets=targ,
+                                                  input_block_size=self.cons_manager.input_block_size,
+                                                  transducer_max_width=self.cons_manager.transducer_max_width)
             else:
-                al = self.model.get_alignment(session=self.session, inputs=inp, targets=targ,
-                                              input_block_size=self.cons_manager.input_block_size,
-                                              transducer_max_width=self.cons_manager.transducer_max_width)
+                # Skip None alignments
+                (inp, targ, al) = self.data_dic[inputs]
+                if al is None:
+                    (inp, targ, al) = self.get_new_random_sample()  # This could go bad
         else:
-            # Skip None alignments
             (inp, targ, al) = self.data_dic[inputs]
-            if al is None:
-                (inp, targ, al) = self.get_new_random_sample()  # This could go bad
-        #print_rel_distance(inp)
         return inp, targ, al
 
     def get_new_random_sample(self):
@@ -958,7 +962,7 @@ class Model(object):
             self.encoder_hidden_init_fw: encoder_hidden_init[0],
             self.encoder_hidden_init_bw: encoder_hidden_init[1],
             self.trans_hidden_init: trans_hidden_init,
-            self.inference_mode: 0.0,
+            self.inference_mode: 0.7,  # TODO: Set this back to 0
             self.teacher_forcing_targets: teacher_forcing,
         })
 

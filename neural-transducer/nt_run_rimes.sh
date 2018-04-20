@@ -4,8 +4,7 @@ source ../env/bin/activate
 # Using greedy alignments
 # TODO: set back
 #python nt_rimes.py CPU:0 15 False 15 False . False True
-#python nt_rimes.py CPU:0 15 False 15 False /home/nikita/i6-seq2seq/neural-transducer/checkpoint/rimes_full_e1_chkpt_3440 False False
-python nt_rimes.py CPU:0 15 False 15 False /home/nikita/Desktop/backup/rimes_2_full_7080 False False
+python nt_rimes.py CPU:0 15 False 15 False ~/i6-seq2seq/neural-transducer/checkpoint/2nd_full_run/rimes_2_full_rough_18360 False True
 
 # Checklist for deployment:
 # - (Greedy) alignments

@@ -85,7 +85,7 @@ with tf.Session(config=config) as sess:
     #data_manager.run_new_alignments()
 
     # Apply training step
-    for i in range(0, 1000):
+    for i in range(0, 10000):
 
         # Apply training
         temp_loss = model.apply_training_step(session=sess, batch_size=4, data_manager=data_manager)
