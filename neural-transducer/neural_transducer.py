@@ -188,15 +188,19 @@ class DataManager(object):
     def get_new_sample(self, inputs):
         if self.inference is False:
             if self.online_alignments is True:
-                (inp, targ, _) = self.data_dic[inputs]
-                if self.use_greedy is True:
-                    al = self.model.get_alignment_greedy(session=self.session, inputs=inp, targets=targ,
-                                                         input_block_size=self.cons_manager.input_block_size,
-                                                         transducer_max_width=self.cons_manager.transducer_max_width)
-                else:
-                    al = self.model.get_alignment(session=self.session, inputs=inp, targets=targ,
-                                                  input_block_size=self.cons_manager.input_block_size,
-                                                  transducer_max_width=self.cons_manager.transducer_max_width)
+                try:
+                    (inp, targ, _) = self.data_dic[inputs]
+                    if self.use_greedy is True:
+                        al = self.model.get_alignment_greedy(session=self.session, inputs=inp, targets=targ,
+                                                             input_block_size=self.cons_manager.input_block_size,
+                                                             transducer_max_width=self.cons_manager.transducer_max_width)
+                    else:
+                        al = self.model.get_alignment(session=self.session, inputs=inp, targets=targ,
+                                                      input_block_size=self.cons_manager.input_block_size,
+                                                      transducer_max_width=self.cons_manager.transducer_max_width)
+                except Exception:
+                    print 'ERROR HERE'
+                    (inp, targ, al) = self.get_new_random_sample()
             else:
                 # Skip None alignments
                 (inp, targ, al) = self.data_dic[inputs]
@@ -673,6 +677,7 @@ class Model(object):
         :param transducer_max_width: The max width of one transducer block.
         :return: Returns a list of indices where <e>'s need to be inserted into the target sequence. (see paper)
         """
+
         model = self
         self.full_time_needed_transducer = 0
 
@@ -723,6 +728,7 @@ class Model(object):
                                                                  model.inference_mode: 1.0,
                                                                  model.teacher_forcing_targets: teacher_targets_empty,
                                                              })
+
                 model.full_time_needed_transducer += time.time() - temp_init_time
 
                 # apply softmax on the outputs
@@ -762,6 +768,7 @@ class Model(object):
                     new_alignments.append(new_alignment)
 
             # Delete all overlapping alignments, keeping the highest log prob
+            # TODO: Some very rare error probably here
             for a in reversed(new_alignments):
                 for o in new_alignments:
                     if o is not a and a.alignment_position == o.alignment_position and o.log_prob > a.log_prob:

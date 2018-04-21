@@ -179,13 +179,14 @@ def main():
             if i % 20 == 0:
                 model.save_model_for_inference(session=sess, path_name=dir + '/checkpoint/2nd_full_run/rimes_2_rough_fine' + str(i))
 
+        """
         # Display correlation
         print constants_manager.alc_correlation_data
         x_data = [x[0] for x in constants_manager.alc_correlation_data]
         y_data = [x[1] for x in constants_manager.alc_correlation_data]
         plt.plot(x_data, y_data, 'go')
         plt.show()
-
+        """
         print 'Total Time Needed: ' + str(time.time() - init_time)
 
 
