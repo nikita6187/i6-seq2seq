@@ -14,10 +14,6 @@ import matplotlib.pyplot as plt
 # Param 3: Max cores to use for TF (e.g. 5)
 # Param 4: Path & Prefix of initial model load (e.g. ../model_800)
 
-# To make this work, put the RIMES 'train.0010' file into this directory
-
-# TODO: Load in alphabet from training data! Or else order is incorrect; using batch manager
-
 
 def get_correct_alphabet():
     dir = os.path.dirname(os.path.realpath(__file__))
@@ -172,20 +168,44 @@ def main():
         inference_manager.build_greedy_inference(path=sys.argv[4],
                                                  session=sess)
 
-        for _ in range(20):
+        # For data
+        totalCharacters = 0
+        totalCorrectCharacters = 0
+
+        for i in range(7464):
             # Try out inference
-            inp, targ, _ = data_manager.get_new_random_sample()
+            inp, targ, _ = data_manager.get_sample_by_index(i)
 
             def lookup(i):
                 return constants_manager.vocab_ids[i]
-            targ = map(lookup, targ)
+            targReadable = map(lookup, targ)
+            inferred = inference_manager.run_inference(session=sess, full_inputs=inp, clean_e=True)
+
+            targ = [x for x in targ if x != 3]
+
+            # Check statistics
+            localLen = len(targ)
+            localCorrect = 0
+
+            totalCharacters += len(targ)
+            for i in range(len(targ)):
+                if targ[i] == inferred[0][i]:
+                    totalCorrectCharacters += 1
+                    localCorrect += 1
+
+            # TODO: Find out which label is pad [3]
+            # TODO: get true length
+            # TODO: compare how well inferred performed vs targ
+            # TODO: save data
+
             print '\n'
             print 'Inference Run: '
             print 'Inferred data:'
-            print inference_manager.run_inference(session=sess, full_inputs=inp, clean_e=True)[1]
+            print inferred[1]
             print 'Ground truth: '
-            print targ
-
+            print targReadable
+            print 'Current total accuracy: ' + str(float(totalCorrectCharacters)/totalCharacters)
+            print 'Local accuracy: ' + str(float(localCorrect)/localLen)
 
 if __name__ == '__main__':
     main()

@@ -214,6 +214,10 @@ class DataManager(object):
         key = random.choice(self.data_dic.keys())
         return self.get_new_sample(key)
 
+    def get_sample_by_index(self, index):
+        key = self.data_dic.keys()[index]
+        return self.get_new_sample(key)
+
     def set_online_alignment(self, mode):
         """
         Sets either to use pre-calculated alignments or to calculate them on the fly (uses more processing time,
