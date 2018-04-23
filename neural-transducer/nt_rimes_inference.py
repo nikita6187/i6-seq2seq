@@ -183,29 +183,31 @@ def main():
 
             targ = [x for x in targ if x != 3]
 
-            # Check statistics
-            localLen = len(targ)
-            localCorrect = 0
+            if len(targ) > 0 and len(inferred[0]) > 0:
 
-            totalCharacters += len(targ)
-            for i in range(len(targ)):
-                if targ[i] == inferred[0][i]:
-                    totalCorrectCharacters += 1
-                    localCorrect += 1
+                # Check statistics
+                localLen = len(targ)
+                localCorrect = 0
 
-            # TODO: Find out which label is pad [3]
-            # TODO: get true length
-            # TODO: compare how well inferred performed vs targ
-            # TODO: save data
+                totalCharacters += len(targ)
+                for i in range(inferred[0]):
+                    if targ[i] == inferred[0][i]:
+                        totalCorrectCharacters += 1
+                        localCorrect += 1
 
-            print '\n'
-            print 'Inference Run: '
-            print 'Inferred data:'
-            print inferred[1]
-            print 'Ground truth: '
-            print targReadable
-            print 'Current total accuracy: ' + str(float(totalCorrectCharacters)/totalCharacters)
-            print 'Local accuracy: ' + str(float(localCorrect)/localLen)
+                # TODO: Find out which label is pad [3]
+                # TODO: get true length
+                # TODO: compare how well inferred performed vs targ
+                # TODO: save data
+
+                print '\n'
+                print 'Inference Run: '
+                print 'Inferred data:'
+                print inferred[1]
+                print 'Ground truth: '
+                print targReadable
+                print 'Current total accuracy: ' + str(float(totalCorrectCharacters)/totalCharacters)
+                print 'Local accuracy: ' + str(float(localCorrect)/localLen)
 
 if __name__ == '__main__':
     main()
