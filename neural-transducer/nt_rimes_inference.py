@@ -183,17 +183,19 @@ def main():
 
             targ = [x for x in targ if x != 3]
 
-            if len(targ) > 0 and len(inferred[0]) > 0:
+            if len(inferred[0]) >= len(targ) > 0:
 
                 # Check statistics
                 localLen = len(targ)
                 localCorrect = 0
 
                 totalCharacters += len(targ)
-                for i in range(inferred[0]):
+                for i in range(len(targ)):
                     if targ[i] == inferred[0][i]:
                         totalCorrectCharacters += 1
                         localCorrect += 1
+                totalCharacters += len([x for x in inferred[0][len(targ):-1] if x != 3])
+                localLen += len([x for x in inferred[0][len(targ):-1] if x != 3])
 
                 # TODO: Find out which label is pad [3]
                 # TODO: get true length
