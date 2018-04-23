@@ -3,7 +3,7 @@ echo "Running RIMES training"
 source ../env/bin/activate
 # Using greedy alignments
 #python nt_rimes.py CPU:0 15 False 15 False . False True
-python nt_rimes.py CPU:0 15 False 15 False ~/i6-seq2seq/neural-transducer/checkpoint/2nd_full_run/rimes_2_rough_fine3140 False True
+python nt_rimes.py CPU:0 15 False 15 False ~/i6-seq2seq/neural-transducer/checkpoint/2nd_full_run/rimes_2_rough_fine6720 False True
 
 # Checklist for deployment:
 # - (Greedy) alignments
