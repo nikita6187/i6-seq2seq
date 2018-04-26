@@ -23,13 +23,17 @@ class NeuralTransducerLayer(_ConcatInputLayer):
         self.output.size_placeholder = [max_output_time, batch_size, vocab_size], \
                                        [2, batch_size, transducer_hidden_units]
 
-    def build_full_transducer(self, transducer_hidden_units, embeddings, batch_size, vocab_size):
+    def build_full_transducer(self, transducer_hidden_units, embeddings, batch_size, vocab_size, input_block_size,
+                              transducer_list_outputs, max_blocks, trans_hidden_init, teacher_forcing_targets,
+                              inference_mode, encoder_outputs):
 
         # TODO: Get the following variables
-        # - embeddings [vocab_size, embedding_size] (static)
+        # - transducer_hidden_units (int32, static
         # - batch_size (int32, static)
         # - vocab_size (int32, static)
+        # - input_block_size (int32, static)
 
+        # - embeddings [vocab_size, embedding_size]
         # - transducer_list_outputs amount to output per block, [max_blocks, batch_size]
         # - max_blocks (int32) total amount of blocks to go through
         # - trans_hidden_init [2, batch_size, transducer_hidden_units] transducer init state
@@ -37,6 +41,7 @@ class NeuralTransducerLayer(_ConcatInputLayer):
         #                   should be padded (PAD) so that each example has the same amount of target
         #                   inputs per transducer block
         # - inference_mode (float32) 1 for inference (no teacher forcing) or 0 (or in between)
+        # - encoder_outputs [max_times, batch_size, encoder_hidden]
 
         with tf.variable_scope('transducer_training'):
 
@@ -59,7 +64,8 @@ class NeuralTransducerLayer(_ConcatInputLayer):
 
                 # TODO: get encoder outputs
 
-                encoder_raw_outputs = encoder_outputs[]
+                encoder_raw_outputs = encoder_outputs[input_block_size * current_block:input_block_size * (current_block + 1)]
+
                 # Save/load the state as one tensor, use top encoder layer state as init if this is the first block
                 trans_hidden_state = trans_hidden
                 transducer_amount_outputs = transducer_list_outputs[current_block]
