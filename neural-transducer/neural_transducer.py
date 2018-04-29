@@ -78,10 +78,6 @@ class Alignment(object):
         def get_prob_at_timestep(timestep):
             if timestep + start_index < len(targets):
                 # For normal operations
-                #print 'H'
-                #print np.log(transducer_outputs[timestep][0][targets[start_index + timestep]])
-                #print np.log(transducer_outputs[timestep][0][self.cons_manager.E_SYMBOL])
-                #print targets[start_index + timestep]
                 return np.log(transducer_outputs[timestep][0][targets[start_index + timestep]])
             else:
                 # For last timestep, so the <e> symbol
@@ -490,7 +486,7 @@ class Model(object):
         new_targets, mask = tf.py_func(func=self.get_alignment_from_logits_manager, inp=[self.logits, targets],
                                        Tout=(tf.int64, tf.bool), stateful=False)
 
-        # Apply padding, det loss and apply gradient
+        # Apply padding, get loss and apply gradient
         padding = tf.ones_like(new_targets) * self.cons_manager.PAD
         new_targets = tf.where(mask, new_targets, padding)
         stepwise_cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=new_targets, logits=self.logits)
@@ -506,7 +502,7 @@ class Model(object):
         #zeros = tf.zeros_like(stepwise_cross_entropy)
         #stepwise_cross_entropy = tf.where(mask, stepwise_cross_entropy, zeros)
 
-        # stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [stepwise_cross_entropy], message='CE POST: ', summarize=1000)
+        #stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [stepwise_cross_entropy], message='CE POST: ', summarize=1000)
 
         loss = tf.reduce_mean(stepwise_cross_entropy)
         train_op = tf.train.AdamOptimizer().minimize(loss)
@@ -550,12 +546,9 @@ class Model(object):
             """
 
             def run_transducer(current_block, transducer_width):
-
-                # TODO: Check if transducer_width even possible
-                # TODO: Apply transducer width extraction
                 # apply softmax on the correct outputs
+                # TODO: recheck indexing here
                 transducer_out = softmax(split_logits[current_block][0:transducer_width], axis=2)
-
                 return transducer_out
 
             # Look into every existing alignment
@@ -582,6 +575,7 @@ class Model(object):
 
                     new_alignment.insert_alignment(new_alignment_index, block_index, trans_out, targets,
                                                    new_alignment_width, None)
+                    # print str(new_alignment.alignment_locations) + ': ' + str(new_alignment.log_prob)
                     new_alignments.append(new_alignment)
 
             # Delete all overlapping alignments, keeping the highest log prob
@@ -719,7 +713,7 @@ class Model(object):
             inputs.append(temp_inputs)
 
         inputs = np.concatenate(inputs, axis=1)
-        targets = np.asarray(targets)  # TODO: Check if batch or time major
+        targets = np.asarray(targets)
         targets = np.transpose(targets, axes=[1, 0])
 
         amount_of_blocks = int(np.ceil(inputs.shape[0] / self.cons_manager.input_block_size))
@@ -730,14 +724,13 @@ class Model(object):
         trans_hidden_init = np.zeros(shape=(2, batch_size, self.cons_manager.transducer_hidden_units))
         teacher_targets_empty = np.ones([self.cons_manager.transducer_max_width * amount_of_blocks, batch_size]) * self.cons_manager.GO_SYMBOL  # Only use go, rest is greedy
 
-
         init_time = time.time()
 
         # Run training step
         _, loss = session.run([self.direct_train_op, self.direct_loss], feed_dict={
             self.max_blocks: amount_of_blocks,
             self.inputs_full_raw: inputs,
-            self.transducer_list_outputs: [[self.cons_manager.transducer_max_width] * batch_size] * amount_of_blocks,  # TODO: Check if this is correct
+            self.transducer_list_outputs: [[self.cons_manager.transducer_max_width] * batch_size] * amount_of_blocks,
             self.direct_targets: targets,
             self.start_block: 0,
             self.encoder_hidden_init_fw: encoder_hidden_init[0],
