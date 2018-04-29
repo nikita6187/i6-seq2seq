@@ -482,24 +482,28 @@ class Model(object):
 
     def build_training_step_direct_logits(self):
         # Targets of shape [max_time, batch_size]
-        targets = tf.placeholder(shape=(None, None), dtype=tf.int32, name='targets')
+        targets = tf.placeholder(shape=(None, None), dtype=tf.int32, name='direct_targets')
 
         self.logits = tf.identity(self.logits, name='training_logits')
 
-        # TODO: Make mask be of shape [max_time, batch_size]
+        # Targets & mask fo shape [max_time, batch_size]
         new_targets, mask = tf.py_func(func=self.get_alignment_from_logits_manager, inp=[self.logits, targets],
-                                       Tout=(tf.int32, tf.bool), stateful=False)
+                                       Tout=(tf.int64, tf.bool), stateful=False)
 
         # Get loss and apply gradient
-        stepwise_cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=new_targets, logits=logits)
-
-        stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [targets], message='Targets: ', summarize=100)
+        stepwise_cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=new_targets, logits=self.logits)
+        """
+        stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [new_targets], message='Targets: ', summarize=100)
         stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [tf.argmax(self.logits, axis=2)], message='Argmax: ',
-                                          summarize=100)
-
-        # TODO: Apply training step AFTER cross entropy
+                                         summarize=100)
+        stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [stepwise_cross_entropy], message='CE PRE: ',
+                                          summarize=1000)
+        """
+        # Apply masking step AFTER cross entropy
         zeros = tf.zeros_like(stepwise_cross_entropy)
-        stepwise_cross_entropy = tf.where(mask, stepwise_cross_entropy, mask)
+        stepwise_cross_entropy = tf.where(mask, stepwise_cross_entropy, zeros)
+
+        # stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [stepwise_cross_entropy], message='CE POST: ', summarize=1000)
 
         loss = tf.reduce_mean(stepwise_cross_entropy)
         train_op = tf.train.AdamOptimizer().minimize(loss)
@@ -518,15 +522,17 @@ class Model(object):
         :param targets: The target sequence of shape [time] where each entry is an index.
         :param amount_of_blocks: Amount of blocks in Neural Transducer.
         :param transducer_max_width: The max width of one transducer block.
-        :return: Returns a list of indices where <e>'s need to be inserted into the target sequence. (see paper)
-        and a boolean mask for use with a loss function. #TODO: better explanation & size info
+        :return: Returns a list of indices where <e>'s need to be inserted into the target sequence, shape: [max_time, 1]
+        (see paper) and a boolean mask for use with a loss function of shape [max_time, 1].
         """
 
         # Split logits into list of arrays with each array being one block
         # of shape [transducer_max_width, 1, vocab_size]
+        logits = np.reshape(logits, newshape=[logits.shape[0], 1, logits.shape[1]])
+        # print 'Logits init shape: ' + str(logits.shape)
         split_logits = np.split(logits, amount_of_blocks)
 
-        # TODO: Finish working on this
+        # print 'Raw logits: ' + str(softmax(split_logits[0][0:transducer_max_width], axis=2))
 
         def run_new_block(previous_alignments, block_index, transducer_max_width, targets,
                           total_blocks):
@@ -546,7 +552,7 @@ class Model(object):
                 # TODO: Apply transducer width extraction
                 # apply softmax on the correct outputs
                 transducer_out = softmax(split_logits[current_block][0:transducer_width], axis=2)
-                
+
                 return transducer_out
 
             # Look into every existing alignment
@@ -570,7 +576,6 @@ class Model(object):
                     new_alignment = copy.deepcopy(alignment)
                     new_alignment_width = new_alignment_index - new_alignment.alignment_position[0]
                     trans_out = run_transducer(transducer_width=new_alignment_width + 1, current_block=block_index - 1)
-                    # last_encoder_state_new being set every time again -> not relevant
 
                     new_alignment.insert_alignment(new_alignment_index, block_index, trans_out, targets,
                                                    new_alignment_width, None)
@@ -604,9 +609,9 @@ class Model(object):
 
         # Select first alignment if we have multiple with the same log prob (happens with ~1% probability in training)
 
-        def modify_targets(targets, alignment):
-            # TODO: Debug this
+        print 'Alignment:' + str(current_alignments[0].alignment_locations)
 
+        def modify_targets(targets, alignment):
             # Calc lengths for each transducer block
             lengths_temp = []
             alignment.insert(0, 0)  # This is so that the length calculation is done correctly
@@ -621,36 +626,36 @@ class Model(object):
                 targets.insert(e + offset, self.cons_manager.E_SYMBOL)
                 offset += 1
 
-            # Modify so that all targets have same lengths in each transducer block using -1 (will be masked away)
+            # Modify so that all targets have same lengths in each transducer block using 0 (will be masked away)
             offset = 0
             for i in range(len(alignment)):
                 for app in range(transducer_max_width - lengths[i]):
-                    targets.insert(offset + lengths[i], -1)
+                    targets.insert(offset + lengths[i], 0)
                 offset += transducer_max_width
 
             # Process targets back to time major
-            targets = np.asarray(targets)
+            targets = np.asarray([targets])
             targets = np.transpose(targets, axes=[1, 0])
-
-            # TODO: maybe make targets pad so that each block is of size transducer_max_width
 
             return targets, lengths
 
-        m_targets, lengths = modify_targets(targets, current_alignments[0].alignment_locations)
-        # m_targets now of shape: [max_time, vocab_size] = [transducer_max_width * number_of_blocks, vocab_size]
+        m_targets, lengths = modify_targets(targets.tolist(), current_alignments[0].alignment_locations)
+        # m_targets now of shape: [max_time, 1 (batch_size)] = [transducer_max_width * number_of_blocks, 1]
 
         # Create boolean mask for TF so that unnecessary logits are not used for the loss function
-        # Of shape [max_time, 1, vocab_size]
+        # Of shape [max_time, batch_size], True where gradient data is kept, False where not
 
         def create_mask(lengths):
-            # TODO: Debug this
-            mask = np.full(logits.shape, False)
+            mask = np.full(m_targets.shape, False)
             for i in range(amount_of_blocks):
                 for j in range(lengths[i]):
-                    mask[i*transducer_max_width:i*transducer_max_width + j, :, :] = True
+                    mask[i*transducer_max_width:i*transducer_max_width + j + 1, 0] = True
             return mask
 
         mask = create_mask(lengths)
+
+        # print 'Modified targets: ' + str(m_targets.T)
+        # print 'Mask: ' + str(mask.T)
 
         return m_targets, mask
 
@@ -660,11 +665,12 @@ class Model(object):
         :param logits: Logits of shape [max_time, batch_size, vocab_size]
         :param targets: Targets of shape [max_time, batch_size]. Each entry denotes the index of the correct target.
         :return: modified targets of shape [max_time, batch_size, vocab_size]
-        & mask of shape [max_time, batch_size, vocab_size]
+        & mask of shape [max_time, batch_size]
         """
-        # TODO: manage logits for entire batch
         logits = np.copy(logits)
         targets = np.copy(targets)
+
+        print 'Manager: Logits init shape: ' + str(logits.shape)
 
         m_targets = []
         masks = []
@@ -710,7 +716,8 @@ class Model(object):
             inputs.append(temp_inputs)
 
         inputs = np.concatenate(inputs, axis=1)
-        targets = np.concatenate(targets, axis=0)  # TODO: Check if batch or time major
+        targets = np.asarray(targets)  # TODO: Check if batch or time major
+        targets = np.transpose(targets, axes=[1, 0])
 
         amount_of_blocks = int(np.ceil(inputs.shape[0] / self.cons_manager.input_block_size))
 
@@ -720,14 +727,15 @@ class Model(object):
         trans_hidden_init = np.zeros(shape=(2, batch_size, self.cons_manager.transducer_hidden_units))
         teacher_targets_empty = np.ones([self.cons_manager.transducer_max_width * amount_of_blocks, batch_size]) * self.cons_manager.GO_SYMBOL  # Only use go, rest is greedy
 
+
         init_time = time.time()
 
         # Run training step
-        _, loss = session.run([self.train_op, self.loss], feed_dict={
+        _, loss = session.run([self.direct_train_op, self.direct_loss], feed_dict={
             self.max_blocks: amount_of_blocks,
             self.inputs_full_raw: inputs,
             self.transducer_list_outputs: [[self.cons_manager.transducer_max_width] * batch_size] * amount_of_blocks,  # TODO: Check if this is correct
-            self.targets: targets,
+            self.direct_targets: targets,
             self.start_block: 0,
             self.encoder_hidden_init_fw: encoder_hidden_init[0],
             self.encoder_hidden_init_bw: encoder_hidden_init[1],

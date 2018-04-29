@@ -4,6 +4,8 @@ import tensorflow as tf
 import numpy as np
 import dataset_loader
 
+np.set_printoptions(precision=3)
+
 # Remaking the toy addition testing example from the paper
 
 dir = os.path.dirname(os.path.realpath(__file__))
@@ -75,7 +77,7 @@ with tf.Session(config=config) as sess:
     sess.run(init)
 
     avg_loss = 0
-    avg_over = 30
+    avg_over = 5
 
     inputs, targets = get_feed_dic(100000)
 
@@ -83,13 +85,14 @@ with tf.Session(config=config) as sess:
     data_manager = DataManager(constants_manager, full_inputs=inputs, full_targets=targets, model=model, session=sess,
                                online_alignments=True, use_greedy=True)
     #data_manager.run_new_alignments()
+    data_manager.inference = True
 
     # Apply training step
     for i in range(0, 10000):
 
         # Apply training
-        #temp_loss = model.apply_training_step(session=sess, batch_size=4, data_manager=data_manager)
-        temp_loss = model.apply_training_step_direct_logits(session=sess, batch_size=1, data_manager=data_manager)
+        # temp_loss = model.apply_training_step(session=sess, batch_size=4, data_manager=data_manager)
+        temp_loss = model.apply_training_step_direct_logits(session=sess, batch_size=2, data_manager=data_manager)
         avg_loss += temp_loss
         if i % avg_over == 0:
             avg_loss /= avg_over
