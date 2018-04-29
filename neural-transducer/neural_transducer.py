@@ -490,18 +490,21 @@ class Model(object):
         new_targets, mask = tf.py_func(func=self.get_alignment_from_logits_manager, inp=[self.logits, targets],
                                        Tout=(tf.int64, tf.bool), stateful=False)
 
-        # Get loss and apply gradient
+        # Apply padding, det loss and apply gradient
+        padding = tf.ones_like(new_targets) * self.cons_manager.PAD
+        new_targets = tf.where(mask, new_targets, padding)
         stepwise_cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=new_targets, logits=self.logits)
-        """
+
+        # Debugging
         stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [new_targets], message='Targets: ', summarize=100)
         stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [tf.argmax(self.logits, axis=2)], message='Argmax: ',
                                          summarize=100)
         stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [stepwise_cross_entropy], message='CE PRE: ',
                                           summarize=1000)
-        """
-        # Apply masking step AFTER cross entropy
-        zeros = tf.zeros_like(stepwise_cross_entropy)
-        stepwise_cross_entropy = tf.where(mask, stepwise_cross_entropy, zeros)
+
+        # Apply masking step AFTER cross entropy: Doesn't converge?
+        #zeros = tf.zeros_like(stepwise_cross_entropy)
+        #stepwise_cross_entropy = tf.where(mask, stepwise_cross_entropy, zeros)
 
         # stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [stepwise_cross_entropy], message='CE POST: ', summarize=1000)
 
@@ -670,7 +673,7 @@ class Model(object):
         logits = np.copy(logits)
         targets = np.copy(targets)
 
-        print 'Manager: Logits init shape: ' + str(logits.shape)
+        # print 'Manager: Logits init shape: ' + str(logits.shape)
 
         m_targets = []
         masks = []
