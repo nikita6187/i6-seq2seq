@@ -244,6 +244,7 @@ class Model(object):
             self.transducer_hidden_state_new, self.train_saver = self.build_full_transducer()
 
         self.targets, self.train_op, self.loss = self.build_training_step()
+        self.direct_targets, self.direct_train_op, self.direct_loss = self.build_training_step_direct_logits()
 
     def build_full_transducer(self):
         with tf.variable_scope('transducer_training'):
@@ -479,13 +480,266 @@ class Model(object):
         train_op = tf.train.AdamOptimizer().minimize(loss)
         return targets, train_op, loss
 
+    def build_training_step_direct_logits(self):
+        # Targets of shape [max_time, batch_size]
+        targets = tf.placeholder(shape=(None, None), dtype=tf.int32, name='targets')
+
+        self.logits = tf.identity(self.logits, name='training_logits')
+
+        # TODO: Make mask be of shape [max_time, batch_size]
+        new_targets, mask = tf.py_func(func=self.get_alignment_from_logits_manager, inp=[self.logits, targets],
+                                       Tout=(tf.int32, tf.bool), stateful=False)
+
+        # Get loss and apply gradient
+        stepwise_cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=new_targets, logits=logits)
+
+        stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [targets], message='Targets: ', summarize=100)
+        stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [tf.argmax(self.logits, axis=2)], message='Argmax: ',
+                                          summarize=100)
+
+        # TODO: Apply training step AFTER cross entropy
+        zeros = tf.zeros_like(stepwise_cross_entropy)
+        stepwise_cross_entropy = tf.where(mask, stepwise_cross_entropy, mask)
+
+        loss = tf.reduce_mean(stepwise_cross_entropy)
+        train_op = tf.train.AdamOptimizer().minimize(loss)
+        return targets, train_op, loss
+
     def __create_loading_dic(self, list_vars, old_name, new_name):
         dic = {}
         for var in list_vars:
             dic[var.name] = var.name.replace(old_name, new_name)
         return dic
 
-    # TODO: This is identical to the function in neural_transducer_helpers.py:AlignerWorker, used for hybrid mode
+    def get_alignment_from_logits(self, logits, targets, amount_of_blocks, transducer_max_width):
+        """
+        Finds the alignment of the target sequence to the actual output.
+        :param logits: Logits from transducer, of size [transducer_max_width * amount_of_blocks, 1, vocab_size]
+        :param targets: The target sequence of shape [time] where each entry is an index.
+        :param amount_of_blocks: Amount of blocks in Neural Transducer.
+        :param transducer_max_width: The max width of one transducer block.
+        :return: Returns a list of indices where <e>'s need to be inserted into the target sequence. (see paper)
+        and a boolean mask for use with a loss function. #TODO: better explanation & size info
+        """
+
+        # Split logits into list of arrays with each array being one block
+        # of shape [transducer_max_width, 1, vocab_size]
+        split_logits = np.split(logits, amount_of_blocks)
+
+        # TODO: Finish working on this
+
+        def run_new_block(previous_alignments, block_index, transducer_max_width, targets,
+                          total_blocks):
+            """
+            Runs one block of the alignment process.
+            :param previous_alignments: List of alignment objects from previous block step.
+            :param block_index: The index of the current new block.
+            :param transducer_max_width: The max width of the transducer block.
+            :param targets: The full target array of shape [time]
+            :param total_blocks: The total amount of blocks.
+            :return: new_alignments as list of Alignment objects
+            """
+
+            def run_transducer(current_block, transducer_width):
+
+                # TODO: Check if transducer_width even possible
+                # TODO: Apply transducer width extraction
+                # apply softmax on the correct outputs
+                transducer_out = softmax(split_logits[current_block][0:transducer_width], axis=2)
+                
+                return transducer_out
+
+            # Look into every existing alignment
+            new_alignments = []
+            for i in range(len(previous_alignments)):
+                alignment = previous_alignments[i]
+
+                # Expand the alignment for each transducer width, only look at valid options
+                targets_length = len(targets)
+                min_index = alignment.alignment_position[0] + transducer_max_width + \
+                            max(-transducer_max_width,
+                                targets_length - ((total_blocks - block_index + 1) * transducer_max_width
+                                                  + alignment.alignment_position[0]))
+                max_index = alignment.alignment_position[0] + transducer_max_width + min(0, targets_length - (
+                    alignment.alignment_position[0] + transducer_max_width))
+
+                # new_alignment_index's value is equal to the index of y~ for that computation
+                for new_alignment_index in range(min_index, max_index + 1):  # +1 so that the max_index is also used
+                    # print 'Alignment index: ' + str(new_alignment_index)
+                    # Create new alignment
+                    new_alignment = copy.deepcopy(alignment)
+                    new_alignment_width = new_alignment_index - new_alignment.alignment_position[0]
+                    trans_out = run_transducer(transducer_width=new_alignment_width + 1, current_block=block_index - 1)
+                    # last_encoder_state_new being set every time again -> not relevant
+
+                    new_alignment.insert_alignment(new_alignment_index, block_index, trans_out, targets,
+                                                   new_alignment_width, None)
+                    new_alignments.append(new_alignment)
+
+            # Delete all overlapping alignments, keeping the highest log prob
+            for a in reversed(new_alignments):
+                for o in new_alignments:
+                    if o is not a and a.alignment_position == o.alignment_position and o.log_prob > a.log_prob:
+                        if a in new_alignments:
+                            new_alignments.remove(a)
+
+            return new_alignments
+
+        # Manage variables
+        current_block_index = 1
+        current_alignments = [Alignment(cons_manager=self.cons_manager)]
+
+        # Do assertions to check whether everything was correctly set up.
+        assert transducer_max_width * amount_of_blocks >= len(
+            targets), 'transducer_max_width to small for targets'
+
+        for block in range(current_block_index, amount_of_blocks + 1):
+            # Run all blocks
+            current_alignments = run_new_block(previous_alignments=current_alignments,
+                                               block_index=block,
+                                               transducer_max_width=transducer_max_width,
+                                               targets=targets, total_blocks=amount_of_blocks)
+            # for alignment in current_alignments:
+            # print str(alignment.alignment_locations) + ' ' + str(alignment.log_prob)
+
+        # Select first alignment if we have multiple with the same log prob (happens with ~1% probability in training)
+
+        def modify_targets(targets, alignment):
+            # TODO: Debug this
+
+            # Calc lengths for each transducer block
+            lengths_temp = []
+            alignment.insert(0, 0)  # This is so that the length calculation is done correctly
+            for i in range(1, len(alignment)):
+                lengths_temp.append(alignment[i] - alignment[i - 1] + 1)
+            del alignment[0]  # Remove alignment index that we added
+            lengths = lengths_temp
+
+            # Modify targets so that it has the appropriate alignment
+            offset = 0
+            for e in alignment:
+                targets.insert(e + offset, self.cons_manager.E_SYMBOL)
+                offset += 1
+
+            # Modify so that all targets have same lengths in each transducer block using -1 (will be masked away)
+            offset = 0
+            for i in range(len(alignment)):
+                for app in range(transducer_max_width - lengths[i]):
+                    targets.insert(offset + lengths[i], -1)
+                offset += transducer_max_width
+
+            # Process targets back to time major
+            targets = np.asarray(targets)
+            targets = np.transpose(targets, axes=[1, 0])
+
+            # TODO: maybe make targets pad so that each block is of size transducer_max_width
+
+            return targets, lengths
+
+        m_targets, lengths = modify_targets(targets, current_alignments[0].alignment_locations)
+        # m_targets now of shape: [max_time, vocab_size] = [transducer_max_width * number_of_blocks, vocab_size]
+
+        # Create boolean mask for TF so that unnecessary logits are not used for the loss function
+        # Of shape [max_time, 1, vocab_size]
+
+        def create_mask(lengths):
+            # TODO: Debug this
+            mask = np.full(logits.shape, False)
+            for i in range(amount_of_blocks):
+                for j in range(lengths[i]):
+                    mask[i*transducer_max_width:i*transducer_max_width + j, :, :] = True
+            return mask
+
+        mask = create_mask(lengths)
+
+        return m_targets, mask
+
+    def get_alignment_from_logits_manager(self, logits, targets):
+        """
+        Get the modified targets & mask.
+        :param logits: Logits of shape [max_time, batch_size, vocab_size]
+        :param targets: Targets of shape [max_time, batch_size]. Each entry denotes the index of the correct target.
+        :return: modified targets of shape [max_time, batch_size, vocab_size]
+        & mask of shape [max_time, batch_size, vocab_size]
+        """
+        # TODO: manage logits for entire batch
+        logits = np.copy(logits)
+        targets = np.copy(targets)
+
+        m_targets = []
+        masks = []
+
+        amount_of_blocks = logits.shape[0]/self.cons_manager.transducer_max_width
+
+        # Go over every sequence in batch
+        for batch_index in range(logits.shape[1]):
+            temp_target, temp_mask = self.get_alignment_from_logits(logits=logits[:, batch_index, :],
+                                                                    targets=targets[:, batch_index],
+                                                                    amount_of_blocks=amount_of_blocks,
+                                                                    transducer_max_width=self.cons_manager.transducer_max_width)
+            m_targets.append(temp_target)
+            masks.append(temp_mask)
+
+        # Concatenate the targets & masks on the time axis; due to padding m_targets are all the same
+        m_targets = np.concatenate(m_targets, axis=1)
+        masks = np.concatenate(masks, axis=1)
+
+        return m_targets, masks
+
+    def apply_training_step_direct_logits(self, session, batch_size, data_manager):
+        """
+        Applies a training step to the transducer model. This method can be called multiple times from e.g. a loop.
+        :param session: The current session.
+        :param inputs: The full inputs. Shape: [max_time, batch_size, input_dimensions]
+        :param targets: The full targets. Shape: [batch_size, time]. Each entry is an index. Use lists.
+        All targets have to have the same length. (tl;dr: A list containing a list for each target, same lengths).
+        :param input_block_size: The block width for the inputs.
+        :param transducer_max_width: The max width for the transducer. Not including the output symbol <e>
+        :param training_steps_per_alignment: The amount of times to repeat the training step whilst caching the same
+        alignment.
+        :return: Average loss of this training step.
+        """
+
+        inputs = []
+        targets = []
+
+        # Get batch size amount of data
+        for i in range(batch_size):
+            (temp_inputs, target, _) = data_manager.get_new_random_sample()
+            targets.append(list(target))
+            inputs.append(temp_inputs)
+
+        inputs = np.concatenate(inputs, axis=1)
+        targets = np.concatenate(targets, axis=0)  # TODO: Check if batch or time major
+
+        amount_of_blocks = int(np.ceil(inputs.shape[0] / self.cons_manager.input_block_size))
+
+        # Init values
+        encoder_hidden_init = (np.zeros(shape=(self.cons_manager.encoder_hidden_layers, 2, batch_size, self.cons_manager.encoder_hidden_units)),
+                               np.zeros(shape=(self.cons_manager.encoder_hidden_layers, 2, batch_size, self.cons_manager.encoder_hidden_units)))
+        trans_hidden_init = np.zeros(shape=(2, batch_size, self.cons_manager.transducer_hidden_units))
+        teacher_targets_empty = np.ones([self.cons_manager.transducer_max_width * amount_of_blocks, batch_size]) * self.cons_manager.GO_SYMBOL  # Only use go, rest is greedy
+
+        init_time = time.time()
+
+        # Run training step
+        _, loss = session.run([self.train_op, self.loss], feed_dict={
+            self.max_blocks: amount_of_blocks,
+            self.inputs_full_raw: inputs,
+            self.transducer_list_outputs: [[self.cons_manager.transducer_max_width] * batch_size] * amount_of_blocks,  # TODO: Check if this is correct
+            self.targets: targets,
+            self.start_block: 0,
+            self.encoder_hidden_init_fw: encoder_hidden_init[0],
+            self.encoder_hidden_init_bw: encoder_hidden_init[1],
+            self.trans_hidden_init: trans_hidden_init,
+            self.inference_mode: 1.0,
+            self.teacher_forcing_targets: teacher_targets_empty,
+        })
+
+        print 'Training time: ' + str(time.time() - init_time)
+
+        return loss
+
     def get_alignment(self, session, inputs, targets, input_block_size, transducer_max_width):
         """
         Finds the alignment of the target sequence to the actual output.

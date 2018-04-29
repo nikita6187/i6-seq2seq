@@ -9,7 +9,7 @@ import time
 class NeuralTransducerLayer(_ConcatInputLayer):
     """
     Performs a neural transducer based on the paper "A Neural Transducer": https://arxiv.org/abs/1511.04868.
-    NOTE: Requires that the targets be modified, for example using the [INSERT HERE CORRECT NAME] aligner.
+    NOTE: Requires that the targets be modified, for example using the Neural Transducer aligner.
     """
     layer_class = "neural_transducer_layer"
 
@@ -20,6 +20,8 @@ class NeuralTransducerLayer(_ConcatInputLayer):
         super(NeuralTransducerLayer, self).__init__(**kwargs)
 
         self.output.placeholder = self.build_full_transducer()
+
+
         self.output.size_placeholder = [max_output_time, batch_size, vocab_size], \
                                        [2, batch_size, transducer_hidden_units]
 
@@ -28,7 +30,7 @@ class NeuralTransducerLayer(_ConcatInputLayer):
                               inference_mode, encoder_outputs):
 
         # TODO: Get the following variables
-        # - transducer_hidden_units (int32, static
+        # - transducer_hidden_units (int32, static)
         # - batch_size (int32, static)
         # - vocab_size (int32, static)
         # - input_block_size (int32, static)
@@ -41,7 +43,7 @@ class NeuralTransducerLayer(_ConcatInputLayer):
         #                   should be padded (PAD) so that each example has the same amount of target
         #                   inputs per transducer block
         # - inference_mode (float32) 1 for inference (no teacher forcing) or 0 (or in between)
-        # - encoder_outputs [max_times, batch_size, encoder_hidden]
+        # - encoder_outputs [max_time, batch_size, encoder_hidden]
 
         with tf.variable_scope('transducer_training'):
 
@@ -107,7 +109,6 @@ class NeuralTransducerLayer(_ConcatInputLayer):
                                                                                             output_time_major=True,
                                                                                             maximum_iterations=transducer_max_output)
                 logits = outputs.rnn_output  # logits of shape [max_time,batch_size,vocab_size]
-                decoder_prediction = outputs.sample_id  # For debugging
 
                 # Modify output of transducer_hidden_state_new so that it can be fed back in again without problems.
 
@@ -192,11 +193,12 @@ class Alignment(object):
         self.log_prob += self.__compute_sum_probabilities(transducer_outputs, targets, transducer_amount_outputs)
         self.last_state_transducer = new_transducer_state
 
-class NeuralTransducerAligner():
 
+class NeuralTransducerAligner(object):
+    
     def __init__(self):
 
-    def get_alignment(self, session, encoder_outputs, targets, input_block_size, transducer_max_width, transducer_hidden_units,
+    def _get_alignment(self, session, encoder_outputs, targets, input_block_size, transducer_max_width, transducer_hidden_units,
                       E_SYMBOL, GO_SYMBOL):
 
         """
@@ -340,19 +342,18 @@ class NeuralTransducerAligner():
         # encoder_outputs of shape [max_time, batch_size, encoder_hidden]
         # targets of shape [batch_size, max_target_time]
 
-        # Using lists for now for easyness
+        # Using lists for now for easiness
         targets = targets.tolist()
 
         # Get vars
         alignments = []
-        targets = []
         batch_size = encoder_outputs.shape[0]
 
         init_time = time.time()
 
         # Get batch size amount of data
         for i in range(batch_size):
-            alignment = self.get_alignment(session=session, encoder_outputs=encoder_outputs[:,i,:],
+            alignment = self._get_alignment(session=session, encoder_outputs=encoder_outputs[:,i,:],
                                                                   targets=targets[i],
                                                                   input_block_size=input_block_size,
                                                                   transducer_max_width=transducer_max_width,
@@ -360,7 +361,6 @@ class NeuralTransducerAligner():
                                                                   E_SYMBOL=E_SYMBOL, GO_SYMBOL=GO_SYMBOL)
 
             alignments.append(alignment)
-            targets.append()
 
         print 'Alignment time: ' + str(time.time() - init_time)
         print 'Alignment: \n' + str(alignments)
@@ -428,4 +428,5 @@ class NeuralTransducerAligner():
 
         return targets, teacher_forcing
 
+class NeuralTransducer
 

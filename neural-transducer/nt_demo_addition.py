@@ -88,7 +88,8 @@ with tf.Session(config=config) as sess:
     for i in range(0, 10000):
 
         # Apply training
-        temp_loss = model.apply_training_step(session=sess, batch_size=4, data_manager=data_manager)
+        #temp_loss = model.apply_training_step(session=sess, batch_size=4, data_manager=data_manager)
+        temp_loss = model.apply_training_step_direct_logits(session=sess, batch_size=1, data_manager=data_manager)
         avg_loss += temp_loss
         if i % avg_over == 0:
             avg_loss /= avg_over
