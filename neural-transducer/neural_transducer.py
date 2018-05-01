@@ -113,8 +113,6 @@ def softmax(x, axis=None):
     return e_x / np.sum(e_x, axis=axis, keepdims=True)
 
 
-
-
 def print_rel_distance(inputs):
     np.set_printoptions(edgeitems=10, precision=3, suppress=True, linewidth=300)
     print 'Cosine Distance: '
@@ -194,7 +192,7 @@ class DataManager(object):
                         al = self.model.get_alignment(session=self.session, inputs=inp, targets=targ,
                                                       input_block_size=self.cons_manager.input_block_size,
                                                       transducer_max_width=self.cons_manager.transducer_max_width)
-                except Exception:
+                except Exception as e:
                     print 'ERROR HERE'
                     (inp, targ, al) = self.get_new_random_sample()
             else:
@@ -389,6 +387,7 @@ class Model(object):
                 transducer_amount_outputs = transducer_list_outputs[current_block - start_block]
                 transducer_max_output = tf.reduce_max(transducer_amount_outputs)
 
+                # TODO: Check if using greedy embedding helps
                 # Model building
                 helper = tf.contrib.seq2seq.ScheduledEmbeddingTrainingHelper(
                     inputs=teacher_forcing_targets_emb[total_output:total_output + transducer_max_output],  # Get the current target inputs
@@ -575,7 +574,7 @@ class Model(object):
 
                     new_alignment.insert_alignment(new_alignment_index, block_index, trans_out, targets,
                                                    new_alignment_width, None)
-                    # print str(new_alignment.alignment_locations) + ': ' + str(new_alignment.log_prob)
+                    #print str(new_alignment.alignment_locations) + ': ' + str(new_alignment.log_prob)
                     new_alignments.append(new_alignment)
 
             # Delete all overlapping alignments, keeping the highest log prob
@@ -879,50 +878,6 @@ class Model(object):
                 #print str(alignment.alignment_locations) + ' ' + str(alignment.log_prob)
 
             #print 'Size of alignments: ' + str(float(asizeof.asizeof(current_alignments))/(1024 * 1024))
-
-        # ---- Save for discussion -----
-        amount_of_input_blocks = int(np.ceil(inputs.shape[0] / input_block_size))
-        blocks = [[0] * input_block_size] * amount_of_input_blocks
-        block_full = [0] * amount_of_input_blocks
-        total_amount = 0
-        for block in range(0, amount_of_input_blocks):
-            dist = []
-            for input_index in range(0, input_block_size - 1):
-                newdist = abs(spatial.distance.cosine(inputs[block * input_block_size + input_index], inputs[block * input_block_size + input_index + 1]))
-                if math.isnan(newdist) is False:
-                    total_amount += 1
-                    dist.append(newdist)
-                    #print inputs[block * input_block_size + input_index]
-                    #print (block * input_block_size + input_index)
-            blocks[block] = dist
-            if len(dist) > 0:
-                block_full[block] = sum(dist)/len(dist)
-        mean = sum([sum(x) for x in blocks]) / total_amount
-
-        # Only look at part without padding, ie symbol with id 3
-        print 'Targets: ' + str(targets)
-        true_t_length = len([x for x in targets if x != 3])
-        print 'Targets true length: ' + str(true_t_length)
-        accumulating = 0
-
-        # Do first round explicitly
-        self.cons_manager.alc_correlation_data.append(
-            (block_full[0] / mean, current_alignments[0].alignment_locations[0]))
-        with open(os.getcwd() + '/correlation_output.txt', 'a') as myfile:
-            myfile.write(str(self.cons_manager.alc_correlation_data[-1]))
-        print 'New data: ' + str(self.cons_manager.alc_correlation_data[-1])
-        accumulating += self.cons_manager.alc_correlation_data[-1][1]
-
-        for block in range(1, len(block_full)):
-            if accumulating < true_t_length:
-                self.cons_manager.alc_correlation_data.append(
-                    (block_full[block]/mean,
-                     current_alignments[0].alignment_locations[block] - current_alignments[0].alignment_locations[
-                         block - 1]))
-                accumulating += self.cons_manager.alc_correlation_data[-1][1]
-                with open(os.getcwd() + '/correlation_output.txt', 'a') as myfile:
-                    myfile.write(str(self.cons_manager.alc_correlation_data[-1]))
-                print 'New data: ' + str(self.cons_manager.alc_correlation_data[-1])
         # Select first alignment if we have multiple with the same log prob (happens with ~1% probability in training)
 
         print 'Full time needed for transducer: ' + str(self.full_time_needed_transducer)
@@ -1231,7 +1186,7 @@ class Model(object):
             self.encoder_hidden_init_fw: encoder_hidden_init[0],
             self.encoder_hidden_init_bw: encoder_hidden_init[1],
             self.trans_hidden_init: trans_hidden_init,
-            self.inference_mode: 0.7,  # TODO: Set this back to 0
+            self.inference_mode: 0,  # TODO: Set this back to 0
             self.teacher_forcing_targets: teacher_forcing,
         })
 
