@@ -84,7 +84,7 @@ with tf.Session(config=config) as sess:
     # Data manager
     # TODO: check whether inputs/targets are working correctly
     data_manager = DataManager(constants_manager, full_inputs=inputs, full_targets=targets, model=model, session=sess,
-                               online_alignments=True, use_greedy=True)
+                               online_alignments=True, use_greedy=False)
     #data_manager.run_new_alignments()
     #data_manager.inference = True
 
