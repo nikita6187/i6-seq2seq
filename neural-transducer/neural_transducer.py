@@ -478,7 +478,7 @@ class Model(object):
         stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [tf.argmax(self.logits, axis=2)], message='Argmax: ', summarize=100)
 
         loss = tf.reduce_mean(stepwise_cross_entropy)
-        train_op = tf.train.AdamOptimizer().minimize(loss)
+        train_op = tf.train.AdamOptimizer(epsilon=0.1).minimize(loss)
         return targets, train_op, loss
 
     def build_training_step_direct_logits(self):
