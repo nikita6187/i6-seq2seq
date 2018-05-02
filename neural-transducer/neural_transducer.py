@@ -128,6 +128,7 @@ def print_rel_distance(inputs):
 
 
 class DataManager(object):
+
     def __init__(self, cons_manager, full_inputs, full_targets, model, session, online_alignments, use_greedy=False,
                  inference=False):
         """
@@ -186,10 +187,44 @@ class DataManager(object):
         print 'New alignments loaded'
 
     def get_new_sample(self, inputs):
+
+        def get_feed_dic(batch_size):
+            def get_random_numbers():
+                a = np.random.randint(100, 499)  # That way any 2 sequences are always the same length
+                b = np.random.randint(100, 499)
+                c = a + b
+
+                c *= 10  # TODO: 10 slightly works for alignment
+                # TODO: Check on teacher forcing
+
+                inputs = [int(d) for d in str(a)]
+                inputs.append(10)  # Space
+                inputs += list(reversed([int(d) for d in str(b)]))
+                targets = list(reversed([int(d) for d in str(c)]))
+                return inputs, targets
+
+            inputs = []
+            targets = []
+
+            for i in range(batch_size):
+                temp_inputs, temp_targets = get_random_numbers()
+                inputs.append(temp_inputs)
+                targets.append(temp_targets)
+
+            inputs = np.asarray(inputs)
+            inputs = np.transpose(inputs, axes=[1, 0])
+            inputs = np.reshape(inputs, newshape=(-1, batch_size, 1))
+
+            return inputs, targets
+
         if self.inference is False:
             if self.online_alignments is True:
                 #try:
-                (inp, targ, _) = self.data_dic[inputs]
+                #(inp, targ, _) = self.data_dic[inputs]
+                # TODO: Put testing away
+                inp, targ = get_feed_dic(1)
+                targ = targ[0]
+
                 if self.use_greedy is True:
                     al = self.model.get_alignment_greedy(session=self.session, inputs=inp, targets=targ,
                                                          input_block_size=self.cons_manager.input_block_size,
@@ -1088,6 +1123,8 @@ class Model(object):
         alignment.
         :return: Average loss of this training step.
         """
+
+
 
         # Get vars
         alignments = []
