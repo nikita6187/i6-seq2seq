@@ -78,10 +78,16 @@ class Alignment(object):
         def get_prob_at_timestep(timestep):
             if timestep + start_index < len(targets):
                 # For normal operations
-                return np.log(transducer_outputs[timestep][0][targets[start_index + timestep]])
+                if transducer_outputs[timestep][0][targets[start_index + timestep]] <= 0:
+                    return -10000000.0  # Some large negative number
+                else:
+                    return np.log(transducer_outputs[timestep][0][targets[start_index + timestep]])
             else:
                 # For last timestep, so the <e> symbol
-                return np.log(transducer_outputs[timestep][0][self.cons_manager.E_SYMBOL])
+                if transducer_outputs[timestep][0][self.cons_manager.E_SYMBOL] <= 0:
+                    return -10000000.0  # Some large negative number
+                else:
+                    return np.log(transducer_outputs[timestep][0][self.cons_manager.E_SYMBOL])
 
         #print transducer_outputs
         start_index = self.alignment_position[0] - transducer_amount_outputs  # The current position of this alignment
@@ -182,19 +188,19 @@ class DataManager(object):
     def get_new_sample(self, inputs):
         if self.inference is False:
             if self.online_alignments is True:
-                try:
-                    (inp, targ, _) = self.data_dic[inputs]
-                    if self.use_greedy is True:
-                        al = self.model.get_alignment_greedy(session=self.session, inputs=inp, targets=targ,
-                                                             input_block_size=self.cons_manager.input_block_size,
-                                                             transducer_max_width=self.cons_manager.transducer_max_width)
-                    else:
-                        al = self.model.get_alignment(session=self.session, inputs=inp, targets=targ,
-                                                      input_block_size=self.cons_manager.input_block_size,
-                                                      transducer_max_width=self.cons_manager.transducer_max_width)
-                except Exception as e:
-                    print 'ERROR HERE'
-                    (inp, targ, al) = self.get_new_random_sample()
+                #try:
+                (inp, targ, _) = self.data_dic[inputs]
+                if self.use_greedy is True:
+                    al = self.model.get_alignment_greedy(session=self.session, inputs=inp, targets=targ,
+                                                         input_block_size=self.cons_manager.input_block_size,
+                                                         transducer_max_width=self.cons_manager.transducer_max_width)
+                else:
+                    al = self.model.get_alignment(session=self.session, inputs=inp, targets=targ,
+                                                  input_block_size=self.cons_manager.input_block_size,
+                                                  transducer_max_width=self.cons_manager.transducer_max_width)
+                #except Exception as e:
+                #    print 'ERROR HERE: ' + str(e)
+                #    (inp, targ, al) = self.get_new_random_sample()
             else:
                 # Skip None alignments
                 (inp, targ, al) = self.data_dic[inputs]
@@ -991,6 +997,8 @@ class Model(object):
                     if o is not a and a.alignment_position == o.alignment_position and o.log_prob > a.log_prob:
                         if a in new_alignments:
                             new_alignments.remove(a)
+            assert len(new_alignments) > 0, 'All alignments removed.'
+            assert len(new_alignments) > 0 or new_alignments[0] is not None, 'First alignment None.'
 
             return new_alignments, last_encoder_state_new
 
