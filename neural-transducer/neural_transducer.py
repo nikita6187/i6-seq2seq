@@ -572,6 +572,8 @@ class Model(object):
         # Split logits into list of arrays with each array being one block
         # of shape [transducer_max_width, 1, vocab_size]
         logits = np.reshape(logits, newshape=[logits.shape[0], 1, logits.shape[1]])
+        print 'Input shape: ' + str(logits.shape)
+        print 'Amount of blocks: ' + str(amount_of_blocks)
         # print 'Logits init shape: ' + str(logits.shape)
         split_logits = np.split(logits, amount_of_blocks)
 
@@ -609,13 +611,12 @@ class Model(object):
                                                   + alignment.alignment_position[0]))
                 max_index = alignment.alignment_position[0] + transducer_max_width + min(0, targets_length - (
                     alignment.alignment_position[0] + transducer_max_width))
-                # TODO: Finish debugging this! The equations at the top are failing apparantly
                 print '----------- New Alignment ------------'
                 print 'Min index: ' + str(min_index)
                 print 'Max index: ' + str(max_index)
 
                 # new_alignment_index's value is equal to the index of y~ for that computation
-                for new_alignment_index in range(min_index, max_index + 1):  # +1 so that the max_index is also used
+                for new_alignment_index in range(min_index, max_index + 1):  # 1 so that the max_index is also used
                     print '---- New Index ----'
                     print 'Alignment index: ' + str(new_alignment_index)
                     # Create new alignment
@@ -651,7 +652,7 @@ class Model(object):
             # Run all blocks
             current_alignments = run_new_block(previous_alignments=current_alignments,
                                                block_index=block,
-                                               transducer_max_width=transducer_max_width,
+                                               transducer_max_width=transducer_max_width - 1,  # -1 due to offset for e
                                                targets=targets, total_blocks=amount_of_blocks)
             # for alignment in current_alignments:
             # print str(alignment.alignment_locations) + ' ' + str(alignment.log_prob)
@@ -815,6 +816,7 @@ class Model(object):
             self.max_blocks: amount_of_blocks,
             self.inputs_full_raw: inputs,
             self.transducer_list_outputs: [[self.cons_manager.transducer_max_width] * batch_size] * amount_of_blocks,
+            # +1 for the last <e> symbol
             self.direct_targets: targets,
             self.start_block: 0,
             self.encoder_hidden_init_fw: encoder_hidden_init[0],
@@ -921,7 +923,8 @@ class Model(object):
                                                                                     transducer_state=alignment.last_state_transducer,
                                                                                     transducer_width=new_alignment_width + 1)
                     # last_encoder_state_new being set every time again -> not relevant
-                    print 'Alignment width: ' + str(new_alignment_width)
+                    #print 'Alignment width: ' + str(new_alignment_width)
+                    #print targets
                     new_alignment.insert_alignment(new_alignment_index, block_index, trans_out, targets,
                                                    new_alignment_width, trans_state)
                     new_alignments.append(new_alignment)

@@ -24,7 +24,7 @@ vocab_ids = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'SPACE']
 # TODO: DIRECT LOGIT ALIGNER IS SCREWING UP GOING THROUGH ALL POSSIBLE LENGTHS
 constants_manager = ConstantsManager(input_dimensions=1, input_embedding_size=13, inputs_embedded=False,
                                      encoder_hidden_units=100, transducer_hidden_units=200, vocab_ids=vocab_ids,
-                                     input_block_size=1, beam_width=5, encoder_hidden_layers=1, transducer_max_width=8,
+                                     input_block_size=1, beam_width=5, encoder_hidden_layers=1, transducer_max_width=5,
                                      path_to_model=model_save, path_to_inputs=input_save, path_to_targets=target_save,
                                      path_to_alignments=alignments_save, path_to_cons_manager=cons_man_save,
                                      debug_devices=False, amount_of_aligners=4,
@@ -80,7 +80,7 @@ with tf.Session(config=config) as sess:
     sess.run(init)
 
     avg_loss = 0
-    avg_over = 5
+    avg_over = 1
 
     inputs, targets = get_feed_dic(100000)
 
