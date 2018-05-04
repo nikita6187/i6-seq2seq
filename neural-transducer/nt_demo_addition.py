@@ -17,8 +17,11 @@ cons_man_save = dir + '/addition/cons_manager'
 
 vocab_ids = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'SPACE']
 
-transducer_width = 8
+#transducer_width = 5
 
+# TODO: Put transducer_max_width back to 8
+# TODO: Some error in using direct logits with transducer_max_width when under 6!!!
+# TODO: DIRECT LOGIT ALIGNER IS SCREWING UP GOING THROUGH ALL POSSIBLE LENGTHS
 constants_manager = ConstantsManager(input_dimensions=1, input_embedding_size=13, inputs_embedded=False,
                                      encoder_hidden_units=100, transducer_hidden_units=200, vocab_ids=vocab_ids,
                                      input_block_size=1, beam_width=5, encoder_hidden_layers=1, transducer_max_width=8,
@@ -82,18 +85,17 @@ with tf.Session(config=config) as sess:
     inputs, targets = get_feed_dic(100000)
 
     # Data manager
-    # TODO: check whether inputs/targets are working correctly
     data_manager = DataManager(constants_manager, full_inputs=inputs, full_targets=targets, model=model, session=sess,
                                online_alignments=True, use_greedy=False)
     #data_manager.run_new_alignments()
-    #data_manager.inference = True
+    data_manager.inference = True
 
     # Apply training step
     for i in range(0, 500000):
         
         # Apply training
-        temp_loss = model.apply_training_step(session=sess, batch_size=1, data_manager=data_manager)
-        #temp_loss = model.apply_training_step_direct_logits(session=sess, batch_size=4, data_manager=data_manager)
+        #temp_loss = model.apply_training_step(session=sess, batch_size=1, data_manager=data_manager)
+        temp_loss = model.apply_training_step_direct_logits(session=sess, batch_size=1, data_manager=data_manager)
         avg_loss += temp_loss
         if i % avg_over == 0:
             avg_loss /= avg_over

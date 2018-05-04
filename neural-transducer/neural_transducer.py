@@ -84,6 +84,8 @@ class Alignment(object):
                     return np.log(transducer_outputs[timestep][0][targets[start_index + timestep]])
             else:
                 # For last timestep, so the <e> symbol
+                #print transducer_outputs
+                #print transducer_outputs.shape
                 if transducer_outputs[timestep][0][self.cons_manager.E_SYMBOL] <= 0:
                     return -10000000.0  # Some large negative number
                 else:
@@ -194,7 +196,7 @@ class DataManager(object):
                 b = np.random.randint(100, 499)
                 c = a + b
 
-                c *= 10  # TODO: 10 slightly works for alignment
+                c *= 100  # TODO: 10 slightly works for alignment
                 # TODO: Check on teacher forcing
 
                 inputs = [int(d) for d in str(a)]
@@ -339,7 +341,6 @@ class Model(object):
             inputs_full = tf.reshape(inputs_full_raw, shape=[-1, self.cons_manager.input_block_size,
                                                              batch_size,
                                                              self.cons_manager.input_dimensions])
-
             #inputs_full = tf.Print(inputs_full, [inputs_full], message='Inputs', summarize=10)
 
             # Outputs
@@ -519,32 +520,35 @@ class Model(object):
     def build_training_step_direct_logits(self):
         # Targets of shape [max_time, batch_size]
         targets = tf.placeholder(shape=(None, None), dtype=tf.int32, name='direct_targets')
-
+        batch_size = tf.shape(targets)[1]
         self.logits = tf.identity(self.logits, name='training_logits')
 
         # Targets & mask fo shape [max_time, batch_size]
         new_targets, mask = tf.py_func(func=self.get_alignment_from_logits_manager, inp=[self.logits, targets],
                                        Tout=(tf.int64, tf.bool), stateful=False)
 
-        # Apply padding, get loss and apply gradient
-        padding = tf.ones_like(new_targets) * self.cons_manager.PAD
-        new_targets = tf.where(mask, new_targets, padding)
+        # Apply padding (convergence?), get loss and apply gradient
+        #padding = tf.ones_like(new_targets) * self.cons_manager.PAD
+        #new_targets = tf.where(mask, new_targets, padding)
         stepwise_cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=new_targets, logits=self.logits)
 
         # Debugging
         stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [new_targets], message='Targets: ', summarize=100)
         stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [tf.argmax(self.logits, axis=2)], message='Argmax: ',
                                          summarize=100)
-        stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [stepwise_cross_entropy], message='CE PRE: ',
-                                          summarize=1000)
+        #stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [stepwise_cross_entropy], message='CE PRE: ',
+        #                                  summarize=1000)
 
-        # Apply masking step AFTER cross entropy: Doesn't converge?
-        #zeros = tf.zeros_like(stepwise_cross_entropy)
-        #stepwise_cross_entropy = tf.where(mask, stepwise_cross_entropy, zeros)
+        # Apply masking step AFTER cross entropy:
+        zeros = tf.zeros_like(stepwise_cross_entropy)
+        stepwise_cross_entropy = tf.where(mask, stepwise_cross_entropy, zeros)
 
         #stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [stepwise_cross_entropy], message='CE POST: ', summarize=1000)
 
-        loss = tf.reduce_mean(stepwise_cross_entropy)
+        # TODO: Test with older version of TF
+        # TODO: Test with smaller max_transducer_width parameter
+        # Normalize CE based on amount of True (relevant) elements in the mask
+        loss = tf.reduce_sum(stepwise_cross_entropy)/tf.to_float(tf.reduce_sum(tf.cast(mask, tf.float32)))
         train_op = tf.train.AdamOptimizer().minimize(loss)
         return targets, train_op, loss
 
@@ -589,6 +593,7 @@ class Model(object):
                 # apply softmax on the correct outputs
                 # TODO: recheck indexing here
                 transducer_out = softmax(split_logits[current_block][0:transducer_width], axis=2)
+                print 'Transducer width: ' + str(transducer_width)
                 return transducer_out
 
             # Look into every existing alignment
@@ -604,13 +609,20 @@ class Model(object):
                                                   + alignment.alignment_position[0]))
                 max_index = alignment.alignment_position[0] + transducer_max_width + min(0, targets_length - (
                     alignment.alignment_position[0] + transducer_max_width))
+                # TODO: Finish debugging this! The equations at the top are failing apparantly
+                print '----------- New Alignment ------------'
+                print 'Min index: ' + str(min_index)
+                print 'Max index: ' + str(max_index)
 
                 # new_alignment_index's value is equal to the index of y~ for that computation
                 for new_alignment_index in range(min_index, max_index + 1):  # +1 so that the max_index is also used
-                    # print 'Alignment index: ' + str(new_alignment_index)
+                    print '---- New Index ----'
+                    print 'Alignment index: ' + str(new_alignment_index)
                     # Create new alignment
                     new_alignment = copy.deepcopy(alignment)
+                    print 'Alignment positions: ' + str(new_alignment.alignment_position)
                     new_alignment_width = new_alignment_index - new_alignment.alignment_position[0]
+                    print 'New alignment width: ' + str(new_alignment_width)
                     trans_out = run_transducer(transducer_width=new_alignment_width + 1, current_block=block_index - 1)
 
                     new_alignment.insert_alignment(new_alignment_index, block_index, trans_out, targets,
@@ -746,9 +758,41 @@ class Model(object):
         inputs = []
         targets = []
 
+        def get_feed_dic(batch_size):
+            def get_random_numbers():
+                a = np.random.randint(100, 499)  # That way any 2 sequences are always the same length
+                b = np.random.randint(100, 499)
+                c = a + b
+
+                c *= 100  # TODO: 100 slightly works for alignment
+                # TODO: Check on teacher forcing
+
+                inputs = [int(d) for d in str(a)]
+                inputs.append(10)  # Space
+                inputs += list(reversed([int(d) for d in str(b)]))
+                targets = list(reversed([int(d) for d in str(c)]))
+                return inputs, targets
+
+            inputs = []
+            targets = []
+
+            for i in range(batch_size):
+                temp_inputs, temp_targets = get_random_numbers()
+                inputs.append(temp_inputs)
+                targets.append(temp_targets)
+
+            inputs = np.asarray(inputs)
+            inputs = np.transpose(inputs, axes=[1, 0])
+            inputs = np.reshape(inputs, newshape=(-1, batch_size, 1))
+
+            return inputs, targets
+
         # Get batch size amount of data
         for i in range(batch_size):
-            (temp_inputs, target, _) = data_manager.get_new_random_sample()
+            # TODO: Put this back
+            #(temp_inputs, target, _) = data_manager
+            temp_inputs, target = get_feed_dic(batch_size=1)
+            target = target[0]
             targets.append(list(target))
             inputs.append(temp_inputs)
 
@@ -877,7 +921,7 @@ class Model(object):
                                                                                     transducer_state=alignment.last_state_transducer,
                                                                                     transducer_width=new_alignment_width + 1)
                     # last_encoder_state_new being set every time again -> not relevant
-
+                    print 'Alignment width: ' + str(new_alignment_width)
                     new_alignment.insert_alignment(new_alignment_index, block_index, trans_out, targets,
                                                    new_alignment_width, trans_state)
                     new_alignments.append(new_alignment)
