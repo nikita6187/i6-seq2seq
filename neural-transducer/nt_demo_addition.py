@@ -24,7 +24,7 @@ vocab_ids = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'SPACE']
 # TODO: DIRECT LOGIT ALIGNER IS SCREWING UP GOING THROUGH ALL POSSIBLE LENGTHS
 constants_manager = ConstantsManager(input_dimensions=1, input_embedding_size=13, inputs_embedded=False,
                                      encoder_hidden_units=100, transducer_hidden_units=200, vocab_ids=vocab_ids,
-                                     input_block_size=1, beam_width=5, encoder_hidden_layers=1, transducer_max_width=5,
+                                     input_block_size=1, beam_width=5, encoder_hidden_layers=1, transducer_max_width=8,
                                      path_to_model=model_save, path_to_inputs=input_save, path_to_targets=target_save,
                                      path_to_alignments=alignments_save, path_to_cons_manager=cons_man_save,
                                      debug_devices=False, amount_of_aligners=4,
@@ -88,14 +88,14 @@ with tf.Session(config=config) as sess:
     data_manager = DataManager(constants_manager, full_inputs=inputs, full_targets=targets, model=model, session=sess,
                                online_alignments=True, use_greedy=False)
     #data_manager.run_new_alignments()
-    data_manager.inference = True
+    #data_manager.inference = True
 
     # Apply training step
     for i in range(0, 500000):
         
         # Apply training
-        #temp_loss = model.apply_training_step(session=sess, batch_size=1, data_manager=data_manager)
-        temp_loss = model.apply_training_step_direct_logits(session=sess, batch_size=1, data_manager=data_manager)
+        temp_loss = model.apply_training_step(session=sess, batch_size=1, data_manager=data_manager)
+        #temp_loss = model.apply_training_step_direct_logits(session=sess, batch_size=1, data_manager=data_manager)
         avg_loss += temp_loss
         if i % avg_over == 0:
             avg_loss /= avg_over
