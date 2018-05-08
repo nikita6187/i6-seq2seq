@@ -545,8 +545,6 @@ class Model(object):
 
         #stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [stepwise_cross_entropy], message='CE POST: ', summarize=1000)
 
-        # TODO: Test with older version of TF
-        # TODO: Test with smaller max_transducer_width parameter
         # Normalize CE based on amount of True (relevant) elements in the mask
         loss = tf.reduce_sum(stepwise_cross_entropy)/tf.to_float(tf.reduce_sum(tf.cast(mask, tf.float32)))
         train_op = tf.train.AdamOptimizer().minimize(loss)

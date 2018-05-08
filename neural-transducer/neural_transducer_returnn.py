@@ -9,26 +9,46 @@ import time
 class NeuralTransducerLayer(_ConcatInputLayer):
     """
     Performs a neural transducer based on the paper "A Neural Transducer": https://arxiv.org/abs/1511.04868.
-    NOTE: Requires that the targets be modified, for example using the Neural Transducer aligner.
+    NOTE: Requires that the loss be NeuralTransducerLoss.
     """
     layer_class = "neural_transducer_layer"
 
-    def __init__(self, ):
+    def __init__(self, transducer_hidden_units, num_outputs, transducer_max_width, input_block_size, go_symbol_index,
+                 embedding_size, e_symbol_index, **kwargs):
         " docstring, document the args! "
 
-        # TODO: set everything correctly here
         super(NeuralTransducerLayer, self).__init__(**kwargs)
 
-        self.output.placeholder = self.build_full_transducer()
+        # TODO: Debug everything
+        # TODO: Optimize
 
+        # Get embedding & go symbol
+        embeddings = tf.Variable(tf.random_uniform([num_outputs, embedding_size], -1.0, 1.0), dtype=tf.float32,
+                                 name='nt_embedding')
 
-        self.output.size_placeholder = [max_output_time, batch_size, vocab_size], \
-                                       [2, batch_size, transducer_hidden_units]
+        # Ensure encoder is time major
+        encoder_outputs = self.input_data.copy_as_time_major()
 
-    def build_full_transducer(self, transducer_hidden_units, embeddings, batch_size, vocab_size, input_block_size,
-                              transducer_list_outputs, max_blocks, trans_hidden_init, teacher_forcing_targets,
-                              inference_mode, encoder_outputs):
+        # Do assertions
+        assert 0 <= go_symbol_index <= num_outputs, 'NT: Go symbol outside possible outputs!'
+        assert 0 <= e_symbol_index <= num_outputs, 'NT: E symbol outside possible outputs!'
+        assert encoder_outputs.size_placeholder[0] % input_block_size == 0, 'NT: Input shape not corresponding to ' \
+                                                                            'input block size (add padding or see if ' \
+                                                                            'batch first).'
 
+        self.output.placeholder = self.build_full_transducer(transducer_hidden_units=transducer_hidden_units,
+                                                             embeddings=embeddings,
+                                                             num_outputs=num_outputs,
+                                                             input_block_size=input_block_size,
+                                                             go_symbol_index=go_symbol_index,
+                                                             transducer_max_width=transducer_max_width,
+                                                             encoder_outputs=encoder_outputs)
+
+        # TODO: Check if this is the correct format
+        self.output.size_placeholder = tf.shape(self.output.placeholder)
+
+    def build_full_transducer(self, transducer_hidden_units, embeddings, num_outputs, input_block_size,
+                              go_symbol_index, transducer_max_width, encoder_outputs):
         # TODO: Get the following variables
         # - transducer_hidden_units (int32, static)
         # - batch_size (int32, static)
@@ -45,7 +65,15 @@ class NeuralTransducerLayer(_ConcatInputLayer):
         # - inference_mode (float32) 1 for inference (no teacher forcing) or 0 (or in between)
         # - encoder_outputs [max_time, batch_size, encoder_hidden]
 
-        with tf.variable_scope('transducer_training'):
+        with tf.variable_scope('transducer_model'):
+
+            # Get meta variables
+            batch_size = tf.shape(encoder_outputs)[1]
+            trans_hidden_init = tf.zeros([2, batch_size, transducer_hidden_units], dtype=tf.float32)
+            max_blocks = tf.to_int32(tf.shape(encoder_outputs)[0]/input_block_size)
+            transducer_list_outputs = tf.ones([max_blocks, batch_size]) * transducer_max_width
+            inference_mode = 1.0
+            teacher_forcing_targets = tf.ones([transducer_max_width * max_blocks, batch_size]) * go_symbol_index
 
             # Process teacher forcing targets
             teacher_forcing_targets_emb = tf.nn.embedding_lookup(embeddings, teacher_forcing_targets)
@@ -63,8 +91,6 @@ class NeuralTransducerLayer(_ConcatInputLayer):
 
                 # --------------------- TRANSDUCER --------------------------------------------------------------------
                 # Each transducer block runs for the max transducer outputs in its respective block
-
-                # TODO: get encoder outputs
 
                 encoder_raw_outputs = encoder_outputs[input_block_size * current_block:input_block_size * (current_block + 1)]
 
@@ -93,7 +119,7 @@ class NeuralTransducerLayer(_ConcatInputLayer):
                     attention_mechanism,
                     attention_layer_size=transducer_hidden_units)
 
-                projection_layer = layers_core.Dense(vocab_size, use_bias=False)
+                projection_layer = layers_core.Dense(num_outputs, use_bias=False)
 
                 # Build previous state
                 trans_hidden_c, trans_hidden_h = tf.split(trans_hidden_state, num_or_size_splits=2, axis=0)
@@ -141,7 +167,7 @@ class NeuralTransducerLayer(_ConcatInputLayer):
         " This is supposed to return a :class:`Data` instance as a template, given the arguments. "
         # TODO: make this correct
         # example, just the same as the input:
-        return get_concat_sources_data_template(kwargs["sources"], name="%s_output" % kwargs["name"])
+        return get_concat_sources_data_template()
 
 
 class Alignment(object):
@@ -194,83 +220,77 @@ class Alignment(object):
         self.last_state_transducer = new_transducer_state
 
 
-class NeuralTransducerAligner(object):
-    
-    def __init__(self):
+class NeuralTransducerLoss(Loss):
+    # TODO: Finish
+    def __init__(self, **kwargs):
+        super(NeuralTransducerLoss, self).__init__(**kwargs)
 
-    def _get_alignment(self, session, encoder_outputs, targets, input_block_size, transducer_max_width, transducer_hidden_units,
-                      E_SYMBOL, GO_SYMBOL):
+    def get_value(self):
+        new_targets, mask = tf.py_func(func=self.get_alignment_from_logits_manager, inp=[self.logits, targets],
+                                       Tout=(tf.int64, tf.bool), stateful=False)
 
+        # Apply padding (convergence?), get loss and apply gradient
+        # padding = tf.ones_like(new_targets) * self.cons_manager.PAD
+        # new_targets = tf.where(mask, new_targets, padding)
+        stepwise_cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=new_targets, logits=self.logits)
+
+        # Debugging
+        stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [new_targets], message='Targets: ', summarize=100)
+        stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [tf.argmax(self.logits, axis=2)], message='Argmax: ',
+                                          summarize=100)
+        # stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [stepwise_cross_entropy], message='CE PRE: ',
+        #                                  summarize=1000)
+
+        # Apply masking step AFTER cross entropy:
+        zeros = tf.zeros_like(stepwise_cross_entropy)
+        stepwise_cross_entropy = tf.where(mask, stepwise_cross_entropy, zeros)
+
+        # stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [stepwise_cross_entropy], message='CE POST: ', summarize=1000)
+
+        # Normalize CE based on amount of True (relevant) elements in the mask
+        loss = tf.reduce_sum(stepwise_cross_entropy) / tf.to_float(tf.reduce_sum(tf.cast(mask, tf.float32)))
+        return loss
+
+    # TODO: modify so that cons_manager isn't used
+    def get_alignment_from_logits(self, logits, targets, amount_of_blocks, transducer_max_width):
         """
         Finds the alignment of the target sequence to the actual output.
-        :param session: The current session.
-        :param inputs: The complete inputs for the encoder of shape [max_time, 1, input_dimensions], note padding if needed
-        :param targets: The target sequence of shape [time] where each enty is an index.
-        :param input_block_size: The width of one encoder block.
+        :param logits: Logits from transducer, of size [transducer_max_width * amount_of_blocks, 1, vocab_size]
+        :param targets: The target sequence of shape [time] where each entry is an index.
+        :param amount_of_blocks: Amount of blocks in Neural Transducer.
         :param transducer_max_width: The max width of one transducer block.
-        :return: Returns a list of indices where <e>'s need to be inserted into the target sequence. (see paper)
+        :return: Returns a list of indices where <e>'s need to be inserted into the target sequence, shape: [max_time, 1]
+        (see paper) and a boolean mask for use with a loss function of shape [max_time, 1].
         """
-        model = self
-        self.full_time_needed_transducer = 0
 
-        def run_new_block(session, encoder_outputs, previous_alignments, block_index, transducer_max_width, targets,
-                          total_blocks, last_encoder_state):
+        # Split logits into list of arrays with each array being one block
+        # of shape [transducer_max_width, 1, vocab_size]
+        logits = np.reshape(logits, newshape=[logits.shape[0], 1, logits.shape[1]])
+        print 'Input shape: ' + str(logits.shape)
+        print 'Amount of blocks: ' + str(amount_of_blocks)
+        # print 'Logits init shape: ' + str(logits.shape)
+        split_logits = np.split(logits, amount_of_blocks)
+
+        # print 'Raw logits: ' + str(softmax(split_logits[0][0:transducer_max_width], axis=2))
+
+        def run_new_block(previous_alignments, block_index, transducer_max_width, targets,
+                          total_blocks):
             """
             Runs one block of the alignment process.
-            :param session: The current TF session.
-            :param full_inputs: The full inputs. Shape: [max_time, 1, input_dimensions]
             :param previous_alignments: List of alignment objects from previous block step.
             :param block_index: The index of the current new block.
             :param transducer_max_width: The max width of the transducer block.
             :param targets: The full target array of shape [time]
             :param total_blocks: The total amount of blocks.
-            :param last_encoder_state: The encoder state of the previous step. Shape [2, 1, encoder_hidden_units]
-            :return: new_alignments as list of Alignment objects,
-            last_encoder_state_new in shape of [2, 1, encoder_hidden_units]
+            :return: new_alignments as list of Alignment objects
             """
 
-            last_encoder_state_new = last_encoder_state  # fallback value
-
-            def run_transducer(session, encoder_outputs, encoder_state, transducer_state, transducer_width):
-                """
-                Runs a transducer on one block of inputs for transducer_amount_outputs.
-                :param session: Current session.
-                :param inputs_full: The full inputs. Shape: [max_time, 1, input_dimensions]
-                :param encoder_state: Tuple containing (encoder_state_fw, encoder_state_bw). Each state of size [encoder
-                layers, 2, 1, encoder_hidden_units]
-                :param transducer_state: The last transducer state as [2, 1, transducer_hidden_units] tensor.
-                :param transducer_width: The amount of outputs the transducer should produce.
-                :return: transducer outputs [max_output_time, 1, vocab], transducer_state [2, 1, transducer_hidden_units],
-                encoder_state [2, 1, encoder_hidden_units]
-                """
-                """"""
-                teacher_targets_empty = np.ones(
-                    [transducer_width, 1]) * GO_SYMBOL  # Only use go, rest is greedy
-
-                temp_init_time = time.time()
-                # TODO: make this
-
-                """
-                logits, trans_state, enc_state_fw, enc_state_bw = session.run(
-                    [model.logits, model.transducer_hidden_state_new,
-                     model.encoder_hidden_state_new_fw, model.encoder_hidden_state_new_bw],
-                    feed_dict={
-                        model.inputs_full_raw: inputs_full,
-                        model.max_blocks: 1,
-                        model.transducer_list_outputs: [[transducer_width]],
-                        model.start_block: block_index - 1,
-                        model.encoder_hidden_init_fw: encoder_state[0],
-                        model.encoder_hidden_init_bw: encoder_state[1],
-                        model.trans_hidden_init: transducer_state,
-                        model.inference_mode: 1.0,
-                        model.teacher_forcing_targets: teacher_targets_empty,
-                    })
-                model.full_time_needed_transducer += time.time() - temp_init_time
-
-                # apply softmax on the outputs
-                trans_out = softmax(logits, axis=2)
-                """
-                return trans_out, trans_state, (enc_state_fw, enc_state_bw)
+            def run_transducer(current_block, transducer_width):
+                # apply softmax on the correct outputs
+                # TODO: recheck indexing here
+                transducer_out = softmax(split_logits[current_block][0:transducer_width], axis=2)
+                print 'Transducer width: ' + str(transducer_width)
+                return transducer_out
 
             # Look into every existing alignment
             new_alignments = []
@@ -284,23 +304,25 @@ class NeuralTransducerAligner(object):
                                 targets_length - ((total_blocks - block_index + 1) * transducer_max_width
                                                   + alignment.alignment_position[0]))
                 max_index = alignment.alignment_position[0] + transducer_max_width + min(0, targets_length - (
-                        alignment.alignment_position[0] + transducer_max_width))
+                    alignment.alignment_position[0] + transducer_max_width))
+                print '----------- New Alignment ------------'
+                print 'Min index: ' + str(min_index)
+                print 'Max index: ' + str(max_index)
 
                 # new_alignment_index's value is equal to the index of y~ for that computation
-                for new_alignment_index in range(min_index, max_index + 1):  # +1 so that the max_index is also used
-                    # print 'Alignment index: ' + str(new_alignment_index)
+                for new_alignment_index in range(min_index, max_index + 1):  # 1 so that the max_index is also used
+                    print '---- New Index ----'
+                    print 'Alignment index: ' + str(new_alignment_index)
                     # Create new alignment
                     new_alignment = copy.deepcopy(alignment)
+                    print 'Alignment positions: ' + str(new_alignment.alignment_position)
                     new_alignment_width = new_alignment_index - new_alignment.alignment_position[0]
-                    trans_out, trans_state, last_encoder_state_new = run_transducer(session=session,
-                                                                                    encoder_outputs=encoder_outputs,
-                                                                                    encoder_state=last_encoder_state,
-                                                                                    transducer_state=alignment.last_state_transducer,
-                                                                                    transducer_width=new_alignment_width + 1)
-                    # last_encoder_state_new being set every time again -> not relevant
+                    print 'New alignment width: ' + str(new_alignment_width)
+                    trans_out = run_transducer(transducer_width=new_alignment_width + 1, current_block=block_index - 1)
 
                     new_alignment.insert_alignment(new_alignment_index, block_index, trans_out, targets,
-                                                   new_alignment_width, trans_state)
+                                                   new_alignment_width, None)
+                    #print str(new_alignment.alignment_locations) + ': ' + str(new_alignment.log_prob)
                     new_alignments.append(new_alignment)
 
             # Delete all overlapping alignments, keeping the highest log prob
@@ -310,123 +332,73 @@ class NeuralTransducerAligner(object):
                         if a in new_alignments:
                             new_alignments.remove(a)
 
-            return new_alignments, last_encoder_state_new
+            return new_alignments
 
         # Manage variables
-        amount_of_input_blocks = int(np.ceil(encoder_outputs.shape[0] / input_block_size))
         current_block_index = 1
-        current_alignments = [Alignment(transducer_hidden_units=transducer_hidden_units, E_SYMBOL=E_SYMBOL)]
+        current_alignments = [Alignment(cons_manager=self.cons_manager)]
 
         # Do assertions to check whether everything was correctly set up.
-        assert transducer_max_width * amount_of_input_blocks >= len(
+        assert transducer_max_width * amount_of_blocks >= len(
             targets), 'transducer_max_width to small for targets'
 
-        for block in range(current_block_index, amount_of_input_blocks + 1):
+        for block in range(current_block_index, amount_of_blocks + 1):
             # Run all blocks
-            current_alignments, last_encoder_state = run_new_block(session=session, encoder_outputs=encoder_outputs,
-                                                                   previous_alignments=current_alignments,
-                                                                   block_index=block,
-                                                                   transducer_max_width=transducer_max_width,
-                                                                   targets=targets, total_blocks=amount_of_input_blocks)
+            current_alignments = run_new_block(previous_alignments=current_alignments,
+                                               block_index=block,
+                                               transducer_max_width=transducer_max_width - 1,  # -1 due to offset for e
+                                               targets=targets, total_blocks=amount_of_blocks)
             # for alignment in current_alignments:
             # print str(alignment.alignment_locations) + ' ' + str(alignment.log_prob)
 
-            # print 'Size of alignments: ' + str(float(asizeof.asizeof(current_alignments))/(1024 * 1024))
+        # Select first alignment if we have multiple with the same log prob (happens with ~1% probability in training)
 
-        print 'Full time needed for transducer: ' + str(self.full_time_needed_transducer)
+        print 'Alignment:' + str(current_alignments[0].alignment_locations)
 
-        return current_alignments[0].alignment_locations
-
-    def get_all_alignments(self, session, encoder_outputs, targets, input_block_size, transducer_max_width, transducer_hidden_units,
-                      E_SYMBOL, GO_SYMBOL, PAD_SYMBOL):
-        # encoder_outputs of shape [max_time, batch_size, encoder_hidden]
-        # targets of shape [batch_size, max_target_time]
-
-        # Using lists for now for easiness
-        targets = targets.tolist()
-
-        # Get vars
-        alignments = []
-        batch_size = encoder_outputs.shape[0]
-
-        init_time = time.time()
-
-        # Get batch size amount of data
-        for i in range(batch_size):
-            alignment = self._get_alignment(session=session, encoder_outputs=encoder_outputs[:,i,:],
-                                                                  targets=targets[i],
-                                                                  input_block_size=input_block_size,
-                                                                  transducer_max_width=transducer_max_width,
-                                                                  transducer_hidden_units=transducer_hidden_units,
-                                                                  E_SYMBOL=E_SYMBOL, GO_SYMBOL=GO_SYMBOL)
-
-            alignments.append(alignment)
-
-        print 'Alignment time: ' + str(time.time() - init_time)
-        print 'Alignment: \n' + str(alignments)
-
-
-        # Set vars
-        teacher_forcing = []
-        lengths = []
-        max_lengths = [0] * len(alignments[0])
-
-        # First calculate (max) lengths for all sequences
-        for batch_index in range(batch_size):
-            alignment = alignments[batch_index]
-
-            # Calc temp true & max lengths for each transducer block
+        def modify_targets(targets, alignment):
+            # Calc lengths for each transducer block
             lengths_temp = []
             alignment.insert(0, 0)  # This is so that the length calculation is done correctly
             for i in range(1, len(alignment)):
                 lengths_temp.append(alignment[i] - alignment[i - 1] + 1)
-                max_lengths[i - 1] = max(max_lengths[i - 1],
-                                         lengths_temp[i - 1])  # For later use; how long each block is
             del alignment[0]  # Remove alignment index that we added
-            lengths.append(lengths_temp)
-
-        # Next modify so that each sequence is of equal length in each transducer block & targets have alignments
-        for batch_index in range(batch_size):
-            alignment = alignments[batch_index]
+            lengths = lengths_temp
 
             # Modify targets so that it has the appropriate alignment
             offset = 0
             for e in alignment:
-                targets[batch_index].insert(e + offset, E_SYMBOL)
+                targets.insert(e + offset, self.cons_manager.E_SYMBOL)
                 offset += 1
 
-            # Modify so that all targets have same lengths in each transducer using PAD
+            # Modify so that all targets have same lengths in each transducer block using 0 (will be masked away)
             offset = 0
             for i in range(len(alignment)):
-                for app in range(max_lengths[i] - lengths[batch_index][i]):
-                    targets[batch_index].insert(offset + lengths[batch_index][i], PAD_SYMBOL)
-                offset += max_lengths[i]
+                for app in range(transducer_max_width - lengths[i]):
+                    targets.insert(offset + lengths[i], 0)
+                offset += transducer_max_width
 
-            # Modify targets for teacher forcing
-            teacher_forcing_temp = list(targets[batch_index])
-            teacher_forcing_temp.insert(0, GO_SYMBOL)
-            teacher_forcing_temp.pop(len(teacher_forcing_temp) - 1)
-            for i in range(len(teacher_forcing_temp)):
-                if teacher_forcing_temp[i] == E_SYMBOL \
-                        and targets[batch_index][i] != PAD_SYMBOL:
-                    teacher_forcing_temp[i] = GO_SYMBOL
+            # Process targets back to time major
+            targets = np.asarray([targets])
+            targets = np.transpose(targets, axes=[1, 0])
 
-                if i + 1 < len(teacher_forcing_temp) and \
-                        teacher_forcing_temp[i] == PAD_SYMBOL and \
-                        teacher_forcing_temp[i + 1] != PAD_SYMBOL:
-                    teacher_forcing_temp[i] = GO_SYMBOL
+            return targets, lengths
 
-            teacher_forcing.append(teacher_forcing_temp)
+        m_targets, lengths = modify_targets(targets.tolist(), current_alignments[0].alignment_locations)
+        # m_targets now of shape: [max_time, 1 (batch_size)] = [transducer_max_width * number_of_blocks, 1]
 
-        # Process targets back to time major
-        targets = np.asarray(targets)
-        targets = np.transpose(targets, axes=[1, 0])
+        # Create boolean mask for TF so that unnecessary logits are not used for the loss function
+        # Of shape [max_time, batch_size], True where gradient data is kept, False where not
 
-        # See that teacher forcing are of correct format
-        teacher_forcing = np.asarray(teacher_forcing)
-        teacher_forcing = np.transpose(teacher_forcing, axes=[1, 0])
+        def create_mask(lengths):
+            mask = np.full(m_targets.shape, False)
+            for i in range(amount_of_blocks):
+                for j in range(lengths[i]):
+                    mask[i*transducer_max_width:i*transducer_max_width + j + 1, 0] = True
+            return mask
 
-        return targets, teacher_forcing
+        mask = create_mask(lengths)
 
-class NeuralTransducer
+        # print 'Modified targets: ' + str(m_targets.T)
+        # print 'Mask: ' + str(mask.T)
 
+        return m_targets, mask
