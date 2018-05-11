@@ -236,7 +236,10 @@ def softmax(x, axis=None):
 
 
 class NeuralTransducerLoss(Loss):
-
+    """
+    The loss function that should be used with the NeuralTransducer layer. This loss function has the built in
+    alignment algorithm from the original paper.
+    """
     class_name = "NeuralTransducerLoss"
 
     def __init__(self, transducer_hidden_units, num_outputs, transducer_max_width, input_block_size, go_symbol_index,
