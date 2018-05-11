@@ -46,6 +46,8 @@ class NeuralTransducerLayer(_ConcatInputLayer):
 
         # TODO: Check if this is the correct format
         self.output.size_placeholder = tf.shape(self.output.placeholder)
+        self.output.time_dim_axis = 0
+        self.output.batch_dim_axis = 1
 
     def build_full_transducer(self, transducer_hidden_units, embeddings, num_outputs, input_block_size,
                               go_symbol_index, transducer_max_width, encoder_outputs):
@@ -163,11 +165,15 @@ class NeuralTransducerLayer(_ConcatInputLayer):
         return logits, transducer_hidden_state_new
 
     @classmethod
-    def get_out_data_from_opts(cls, **kwargs):
+    def get_out_data_from_opts(cls, num_outputs, transducer_max_width, input_block_size, **kwargs):
         " This is supposed to return a :class:`Data` instance as a template, given the arguments. "
         # TODO: make this correct
-        # example, just the same as the input:
-        return get_concat_sources_data_template()
+        data = get_concat_sources_data_template(sources)
+        data = data.copy_as_time_major()
+        batch_size = data.get_batch_dim()
+        output_blocks = int(data.time_dimension()/input_block_size)
+        data.shape = (transducer_max_width * output_blocks, batch_size, num_outputs)
+        return data
 
 
 class Alignment(object):
@@ -184,14 +190,18 @@ class Alignment(object):
         def get_prob_at_timestep(timestep):
             if timestep + start_index < len(targets):
                 # For normal operations
-                # print 'H'
-                # print np.log(transducer_outputs[timestep][0][targets[start_index + timestep]])
-                # print np.log(transducer_outputs[timestep][0][self.cons_manager.E_SYMBOL])
-                # print targets[start_index + timestep]
-                return np.log(transducer_outputs[timestep][0][targets[start_index + timestep]])
+                if transducer_outputs[timestep][0][targets[start_index + timestep]] <= 0:
+                    return -10000000.0  # Some large negative number
+                else:
+                    return np.log(transducer_outputs[timestep][0][targets[start_index + timestep]])
             else:
                 # For last timestep, so the <e> symbol
-                return np.log(transducer_outputs[timestep][0][self.E_SYMBOL])
+                #print transducer_outputs
+                #print transducer_outputs.shape
+                if transducer_outputs[timestep][0][self.E_SYMBOL] <= 0:
+                    return -10000000.0  # Some large negative number
+                else:
+                    return np.log(transducer_outputs[timestep][0][self.E_SYMBOL])
 
         # print transducer_outputs
         start_index = self.alignment_position[
@@ -220,23 +230,40 @@ class Alignment(object):
         self.last_state_transducer = new_transducer_state
 
 
+def softmax(x, axis=None):
+    e_x = np.exp(x - np.max(x, axis=axis, keepdims=True))
+    return e_x / np.sum(e_x, axis=axis, keepdims=True)
+
+
 class NeuralTransducerLoss(Loss):
-    # TODO: Finish
-    def __init__(self, **kwargs):
+
+    class_name = "NeuralTransducerLoss"
+
+    def __init__(self, transducer_hidden_units, num_outputs, transducer_max_width, input_block_size, go_symbol_index,
+                 e_symbol_index, **kwargs):
         super(NeuralTransducerLoss, self).__init__(**kwargs)
+        self.transducer_hidden_units = transducer_hidden_units
+        self.num_outputs = num_outputs
+        self.transducer_max_width = transducer_max_width
+        self.input_block_size = input_block_size
+        self.go_symbol_index = go_symbol_index
+        self.e_symbol_index = e_symbol_index
 
     def get_value(self):
-        new_targets, mask = tf.py_func(func=self.get_alignment_from_logits_manager, inp=[self.logits, targets],
+        logits = self.output
+        targets = self.target
+
+        new_targets, mask = tf.py_func(func=self.get_alignment_from_logits_manager, inp=[logits, targets],
                                        Tout=(tf.int64, tf.bool), stateful=False)
 
         # Apply padding (convergence?), get loss and apply gradient
         # padding = tf.ones_like(new_targets) * self.cons_manager.PAD
         # new_targets = tf.where(mask, new_targets, padding)
-        stepwise_cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=new_targets, logits=self.logits)
+        stepwise_cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(labels=new_targets, logits=logits)
 
         # Debugging
         stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [new_targets], message='Targets: ', summarize=100)
-        stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [tf.argmax(self.logits, axis=2)], message='Argmax: ',
+        stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [tf.argmax(logits, axis=2)], message='Argmax: ',
                                           summarize=100)
         # stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [stepwise_cross_entropy], message='CE PRE: ',
         #                                  summarize=1000)
@@ -336,7 +363,8 @@ class NeuralTransducerLoss(Loss):
 
         # Manage variables
         current_block_index = 1
-        current_alignments = [Alignment(cons_manager=self.cons_manager)]
+        current_alignments = [Alignment(transducer_hidden_units=self.transducer_hidden_units,
+                                        E_SYMBOL=self.e_symbol_index)]
 
         # Do assertions to check whether everything was correctly set up.
         assert transducer_max_width * amount_of_blocks >= len(
@@ -402,3 +430,36 @@ class NeuralTransducerLoss(Loss):
         # print 'Mask: ' + str(mask.T)
 
         return m_targets, mask
+
+    def get_alignment_from_logits_manager(self, logits, targets):
+        """
+        Get the modified targets & mask.
+        :param logits: Logits of shape [max_time, batch_size, vocab_size]
+        :param targets: Targets of shape [max_time, batch_size]. Each entry denotes the index of the correct target.
+        :return: modified targets of shape [max_time, batch_size, vocab_size]
+        & mask of shape [max_time, batch_size]
+        """
+        logits = np.copy(logits)
+        targets = np.copy(targets)
+
+        # print 'Manager: Logits init shape: ' + str(logits.shape)
+
+        m_targets = []
+        masks = []
+
+        amount_of_blocks = logits.shape[0]/self.transducer_max_width
+
+        # Go over every sequence in batch
+        for batch_index in range(logits.shape[1]):
+            temp_target, temp_mask = self.get_alignment_from_logits(logits=logits[:, batch_index, :],
+                                                                    targets=targets[:, batch_index],
+                                                                    amount_of_blocks=amount_of_blocks,
+                                                                    transducer_max_width=self.transducer_max_width)
+            m_targets.append(temp_target)
+            masks.append(temp_mask)
+
+        # Concatenate the targets & masks on the time axis; due to padding m_targets are all the same
+        m_targets = np.concatenate(m_targets, axis=1)
+        masks = np.concatenate(masks, axis=1)
+
+        return m_targets, masks
