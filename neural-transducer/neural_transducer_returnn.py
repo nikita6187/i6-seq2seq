@@ -15,7 +15,17 @@ class NeuralTransducerLayer(_ConcatInputLayer):
 
     def __init__(self, transducer_hidden_units, num_outputs, transducer_max_width, input_block_size, go_symbol_index,
                  embedding_size, e_symbol_index, **kwargs):
-        " docstring, document the args! "
+        """
+        Initialize the Neural Transducer.
+        :param int transducer_hidden_units: Amount of units the transducer should have.
+        :param int num_outputs: The size of the output layer, i.e. the size of the vocabulary including <E> and <GO>
+        symbols.
+        :param int transducer_max_width: The max amount of outputs in one NT block (including the final <E> symbol)
+        :param int input_block_size: Amount of inputs to use for each NT block.
+        :param int go_symbol_index: Index of go symbol that is used in the NT block.
+        :param int embedding_size: Embeddding size of
+        :param int e_symbol_index:
+        """
 
         super(NeuralTransducerLayer, self).__init__(**kwargs)
 
@@ -27,7 +37,7 @@ class NeuralTransducerLayer(_ConcatInputLayer):
                                  name='nt_embedding')
 
         # Ensure encoder is time major
-        encoder_outputs = self.input_data.copy_as_time_major()
+        encoder_outputs = self.input_data.get_placeholder_as_time_major()
 
         # Do assertions
         assert 0 <= go_symbol_index <= num_outputs, 'NT: Go symbol outside possible outputs!'
@@ -36,6 +46,7 @@ class NeuralTransducerLayer(_ConcatInputLayer):
                                                                             'input block size (add padding or see if ' \
                                                                             'batch first).'
 
+        # self.output.placeholder is of shape [transducer_max_width * amount_of_blocks, batch_size, num_outputs]
         self.output.placeholder = self.build_full_transducer(transducer_hidden_units=transducer_hidden_units,
                                                              embeddings=embeddings,
                                                              num_outputs=num_outputs,
@@ -51,7 +62,6 @@ class NeuralTransducerLayer(_ConcatInputLayer):
 
     def build_full_transducer(self, transducer_hidden_units, embeddings, num_outputs, input_block_size,
                               go_symbol_index, transducer_max_width, encoder_outputs):
-        # TODO: Get the following variables
         # - transducer_hidden_units (int32, static)
         # - batch_size (int32, static)
         # - vocab_size (int32, static)
@@ -173,6 +183,9 @@ class NeuralTransducerLayer(_ConcatInputLayer):
         batch_size = data.get_batch_dim()
         output_blocks = int(data.time_dimension()/input_block_size)
         data.shape = (transducer_max_width * output_blocks, batch_size, num_outputs)
+        data.time_dim_axis = 0
+        data.batch_dim_axis = 1
+        # TODO: do we need to set size_placeholder?
         return data
 
 
@@ -196,8 +209,6 @@ class Alignment(object):
                     return np.log(transducer_outputs[timestep][0][targets[start_index + timestep]])
             else:
                 # For last timestep, so the <e> symbol
-                #print transducer_outputs
-                #print transducer_outputs.shape
                 if transducer_outputs[timestep][0][self.E_SYMBOL] <= 0:
                     return -10000000.0  # Some large negative number
                 else:
@@ -240,7 +251,7 @@ class NeuralTransducerLoss(Loss):
     The loss function that should be used with the NeuralTransducer layer. This loss function has the built in
     alignment algorithm from the original paper.
     """
-    class_name = "NeuralTransducerLoss"
+    class_name = "neural_transducer_loss"
 
     def __init__(self, transducer_hidden_units, num_outputs, transducer_max_width, input_block_size, go_symbol_index,
                  e_symbol_index, **kwargs):
