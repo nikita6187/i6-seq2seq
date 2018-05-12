@@ -1,15 +1,10 @@
 import tensorflow as tf
-import numpy as np
-from tensorflow.python.layers import core as layers_core
-from tensorflow.contrib.rnn import LSTMStateTuple
-import copy
-import time
 
 
 class NeuralTransducerLayer(_ConcatInputLayer):
     """
     Performs a neural transducer based on the paper "A Neural Transducer": https://arxiv.org/abs/1511.04868.
-    NOTE: Requires that the loss be NeuralTransducerLoss.
+    NOTE: Requires that the loss be neural_transducer_loss and be configured with the same parameters as this layer.
     """
     layer_class = "neural_transducer_layer"
 
@@ -22,9 +17,9 @@ class NeuralTransducerLayer(_ConcatInputLayer):
         symbols.
         :param int transducer_max_width: The max amount of outputs in one NT block (including the final <E> symbol)
         :param int input_block_size: Amount of inputs to use for each NT block.
-        :param int go_symbol_index: Index of go symbol that is used in the NT block.
-        :param int embedding_size: Embeddding size of
-        :param int e_symbol_index:
+        :param int go_symbol_index: Index of go symbol that is used in the NT block. 0 <= go_symbol_index < num_outputs
+        :param int embedding_size: Embeddding dimension size.
+        :param int e_symbol_index: Index of e symbol that is used in the NT block. 0 <= e_symbol_index < num_outputs
         """
 
         super(NeuralTransducerLayer, self).__init__(**kwargs)
@@ -131,12 +126,14 @@ class NeuralTransducerLayer(_ConcatInputLayer):
                     attention_mechanism,
                     attention_layer_size=transducer_hidden_units)
 
+                from tensorflow.python.layers import core as layers_core
                 projection_layer = layers_core.Dense(num_outputs, use_bias=False)
 
                 # Build previous state
                 trans_hidden_c, trans_hidden_h = tf.split(trans_hidden_state, num_or_size_splits=2, axis=0)
                 trans_hidden_c = tf.reshape(trans_hidden_c, shape=[-1, transducer_hidden_units])
                 trans_hidden_h = tf.reshape(trans_hidden_h, shape=[-1, transducer_hidden_units])
+                from tensorflow.contrib.rnn import LSTMStateTuple
                 trans_hidden_state_t = LSTMStateTuple(trans_hidden_c, trans_hidden_h)
 
                 decoder = tf.contrib.seq2seq.BasicDecoder(
@@ -189,63 +186,6 @@ class NeuralTransducerLayer(_ConcatInputLayer):
         return data
 
 
-class Alignment(object):
-
-    def __init__(self, transducer_hidden_units, E_SYMBOL):
-        self.alignment_position = (0, 1)  # x = position in target (y~), y = block index, both start at 1
-        self.log_prob = 0  # The sum log prob of this alignment over the target indices
-        self.alignment_locations = []  # At which indices in the target output we need to insert <e>
-        self.last_state_transducer = np.zeros(
-            shape=(2, 1, transducer_hidden_units))  # Transducer state
-        self.E_SYMBOL = E_SYMBOL
-
-    def __compute_sum_probabilities(self, transducer_outputs, targets, transducer_amount_outputs):
-        def get_prob_at_timestep(timestep):
-            if timestep + start_index < len(targets):
-                # For normal operations
-                if transducer_outputs[timestep][0][targets[start_index + timestep]] <= 0:
-                    return -10000000.0  # Some large negative number
-                else:
-                    return np.log(transducer_outputs[timestep][0][targets[start_index + timestep]])
-            else:
-                # For last timestep, so the <e> symbol
-                if transducer_outputs[timestep][0][self.E_SYMBOL] <= 0:
-                    return -10000000.0  # Some large negative number
-                else:
-                    return np.log(transducer_outputs[timestep][0][self.E_SYMBOL])
-
-        # print transducer_outputs
-        start_index = self.alignment_position[
-                          0] - transducer_amount_outputs  # The current position of this alignment
-        prob = 0
-        for i in range(0,
-                       transducer_amount_outputs + 1):  # Do not include e symbol in calculation, +1 due to last symbol
-            prob += get_prob_at_timestep(i)
-        return prob
-
-    def insert_alignment(self, index, block_index, transducer_outputs, targets, transducer_amount_outputs,
-                         new_transducer_state):
-        """
-        Inserts alignment properties for a new block.
-        :param index: The index of of y~ corresponding to the last target index.
-        :param block_index: The new block index.
-        :param transducer_outputs: The computed transducer outputs.
-        :param targets: The complete target array, should be of shape [total_target_length].
-        :param transducer_amount_outputs: The amount of outputs that the transducer created in this block.
-        :param new_transducer_state: The new transducer state of shape [2, 1, transducer_hidden_units]
-        :return:
-        """
-        self.alignment_locations.append(index)
-        self.alignment_position = (index, block_index)
-        self.log_prob += self.__compute_sum_probabilities(transducer_outputs, targets, transducer_amount_outputs)
-        self.last_state_transducer = new_transducer_state
-
-
-def softmax(x, axis=None):
-    e_x = np.exp(x - np.max(x, axis=axis, keepdims=True))
-    return e_x / np.sum(e_x, axis=axis, keepdims=True)
-
-
 class NeuralTransducerLoss(Loss):
     """
     The loss function that should be used with the NeuralTransducer layer. This loss function has the built in
@@ -253,8 +193,93 @@ class NeuralTransducerLoss(Loss):
     """
     class_name = "neural_transducer_loss"
 
+    class Alignment(object):
+        """
+        Class to manage the alignment generation in the NT.
+        """
+
+        def __init__(self, transducer_hidden_units, E_SYMBOL):
+            """
+            Alignment initiation.
+            :param transducer_hidden_units: Amount of hidden units that the transducer should have.
+            :param E_SYMBOL: The index of the <e> symbol.
+            """
+            import numpy as np
+            self.alignment_position = (0, 1)  # first entry is position in target (y~), second is the block index
+            self.log_prob = 0  # The sum log prob of this alignment over the target indices
+            self.alignment_locations = []  # At which indices in the target output we need to insert <e>
+            self.last_state_transducer = np.zeros(
+                shape=(2, 1, transducer_hidden_units))  # Transducer state
+            self.E_SYMBOL = E_SYMBOL  # Index of
+
+        def __compute_sum_probabilities(self, transducer_outputs, targets, transducer_amount_outputs):
+            """
+            Computes the sum log probabilities of the outputs based on the targets.
+            :param transducer_outputs: Softmaxed transducer outputs of one block.
+            Size: [transducer_amount_outputs, 1, num_outputs]
+            :param targets: List of targets.
+            :param transducer_amount_outputs: The width of this transducer block.
+            :return: The summed log prob for this block.
+            """
+            import numpy as np
+
+            def get_prob_at_timestep(timestep):
+                if timestep + start_index < len(targets):
+                    # For normal operations
+                    if transducer_outputs[timestep][0][targets[start_index + timestep]] <= 0:
+                        return -10000000.0  # Some large negative number
+                    else:
+                        return np.log(transducer_outputs[timestep][0][targets[start_index + timestep]])
+                else:
+                    # For last timestep, so the <e> symbol
+                    if transducer_outputs[timestep][0][self.E_SYMBOL] <= 0:
+                        return -10000000.0  # Some large negative number
+                    else:
+                        return np.log(transducer_outputs[timestep][0][self.E_SYMBOL])
+
+            # print transducer_outputs
+            start_index = self.alignment_position[
+                              0] - transducer_amount_outputs  # The current position of this alignment
+            prob = 0
+            for i in range(0,
+                           transducer_amount_outputs + 1):  # Do not include e symbol in calculation, +1 due to last symbol
+                prob += get_prob_at_timestep(i)
+            return prob
+
+        def insert_alignment(self, index, block_index, transducer_outputs, targets, transducer_amount_outputs,
+                             new_transducer_state):
+            """
+            Inserts alignment properties for a new block.
+            :param index: The index of of y~ corresponding to the last target index.
+            :param block_index: The new block index.
+            :param transducer_outputs: The computed transducer outputs.
+            :param targets: The complete target array, should be of shape [total_target_length].
+            :param transducer_amount_outputs: The amount of outputs that the transducer created in this block.
+            :param new_transducer_state: The new transducer state of shape [2, 1, transducer_hidden_units]
+            """
+            self.alignment_locations.append(index)
+            self.alignment_position = (index, block_index)
+            self.log_prob += self.__compute_sum_probabilities(transducer_outputs, targets, transducer_amount_outputs)
+            self.last_state_transducer = new_transducer_state
+
+    @classmethod
+    def softmax(cls, x, axis=None):
+        import numpy as np
+        e_x = np.exp(x - np.max(x, axis=axis, keepdims=True))
+        return e_x / np.sum(e_x, axis=axis, keepdims=True)
+
     def __init__(self, transducer_hidden_units, num_outputs, transducer_max_width, input_block_size, go_symbol_index,
                  e_symbol_index, **kwargs):
+        """
+        Initialize the Neural Transducer loss.
+        :param int transducer_hidden_units: Amount of units the transducer should have.
+        :param int num_outputs: The size of the output layer, i.e. the size of the vocabulary including <E> and <GO>
+        symbols.
+        :param int transducer_max_width: The max amount of outputs in one NT block (including the final <E> symbol)
+        :param int input_block_size: Amount of inputs to use for each NT block.
+        :param int go_symbol_index: Index of go symbol that is used in the NT block. 0 <= go_symbol_index < num_outputs
+        :param int e_symbol_index: Index of e symbol that is used in the NT block. 0 <= e_symbol_index < num_outputs
+        """
         super(NeuralTransducerLoss, self).__init__(**kwargs)
         self.transducer_hidden_units = transducer_hidden_units
         self.num_outputs = num_outputs
@@ -286,13 +311,10 @@ class NeuralTransducerLoss(Loss):
         zeros = tf.zeros_like(stepwise_cross_entropy)
         stepwise_cross_entropy = tf.where(mask, stepwise_cross_entropy, zeros)
 
-        # stepwise_cross_entropy = tf.Print(stepwise_cross_entropy, [stepwise_cross_entropy], message='CE POST: ', summarize=1000)
-
         # Normalize CE based on amount of True (relevant) elements in the mask
         loss = tf.reduce_sum(stepwise_cross_entropy) / tf.to_float(tf.reduce_sum(tf.cast(mask, tf.float32)))
         return loss
 
-    # TODO: modify so that cons_manager isn't used
     def get_alignment_from_logits(self, logits, targets, amount_of_blocks, transducer_max_width):
         """
         Finds the alignment of the target sequence to the actual output.
@@ -303,13 +325,12 @@ class NeuralTransducerLoss(Loss):
         :return: Returns a list of indices where <e>'s need to be inserted into the target sequence, shape: [max_time, 1]
         (see paper) and a boolean mask for use with a loss function of shape [max_time, 1].
         """
-
+        import numpy as np
+        import copy
         # Split logits into list of arrays with each array being one block
         # of shape [transducer_max_width, 1, vocab_size]
         logits = np.reshape(logits, newshape=[logits.shape[0], 1, logits.shape[1]])
-        print 'Input shape: ' + str(logits.shape)
-        print 'Amount of blocks: ' + str(amount_of_blocks)
-        # print 'Logits init shape: ' + str(logits.shape)
+
         split_logits = np.split(logits, amount_of_blocks)
 
         # print 'Raw logits: ' + str(softmax(split_logits[0][0:transducer_max_width], axis=2))
@@ -328,9 +349,7 @@ class NeuralTransducerLoss(Loss):
 
             def run_transducer(current_block, transducer_width):
                 # apply softmax on the correct outputs
-                # TODO: recheck indexing here
-                transducer_out = softmax(split_logits[current_block][0:transducer_width], axis=2)
-                print 'Transducer width: ' + str(transducer_width)
+                transducer_out = self.softmax(split_logits[current_block][0:transducer_width], axis=2)
                 return transducer_out
 
             # Look into every existing alignment
@@ -346,6 +365,7 @@ class NeuralTransducerLoss(Loss):
                                                   + alignment.alignment_position[0]))
                 max_index = alignment.alignment_position[0] + transducer_max_width + min(0, targets_length - (
                     alignment.alignment_position[0] + transducer_max_width))
+                # TODO: Set this to correct log manager
                 print '----------- New Alignment ------------'
                 print 'Min index: ' + str(min_index)
                 print 'Max index: ' + str(max_index)
@@ -363,7 +383,6 @@ class NeuralTransducerLoss(Loss):
 
                     new_alignment.insert_alignment(new_alignment_index, block_index, trans_out, targets,
                                                    new_alignment_width, None)
-                    #print str(new_alignment.alignment_locations) + ': ' + str(new_alignment.log_prob)
                     new_alignments.append(new_alignment)
 
             # Delete all overlapping alignments, keeping the highest log prob
@@ -377,7 +396,7 @@ class NeuralTransducerLoss(Loss):
 
         # Manage variables
         current_block_index = 1
-        current_alignments = [Alignment(transducer_hidden_units=self.transducer_hidden_units,
+        current_alignments = [self.Alignment(transducer_hidden_units=self.transducer_hidden_units,
                                         E_SYMBOL=self.e_symbol_index)]
 
         # Do assertions to check whether everything was correctly set up.
@@ -453,6 +472,7 @@ class NeuralTransducerLoss(Loss):
         :return: modified targets of shape [max_time, batch_size, vocab_size]
         & mask of shape [max_time, batch_size]
         """
+        import numpy as np
         logits = np.copy(logits)
         targets = np.copy(targets)
 
